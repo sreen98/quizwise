@@ -1,0 +1,21 @@
+.link {
+  display: inline-flex;
+  align-items: center;
+  min-height: 44px;
+  padding: 0 14px;
+  border-radius: var(--mantine-radius-md);
+  color: var(--mantine-color-dimmed);
+  font-size: var(--mantine-font-size-md);
+  font-weight: 600;
+  text-decoration: none;
+
+  &:hover {
+    color: var(--mantine-color-text);
+    background: var(--surface-2);
+  }
+
+  &[aria-current='page'] {
+    color: var(--mantine-primary-color-filled);
+    background: var(--accent-soft);
+  }
+}

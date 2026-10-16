@@ -29,5 +29,11 @@ export default defineConfig([
       'no-console': 'error',
       '@typescript-eslint/no-explicit-any': 'error'
     }
+  },
+  {
+    files: ['src/test/**', '**/*.test.{ts,tsx}'],
+    rules: {
+      'react-refresh/only-export-components': 'off'
+    }
   }
 ]);

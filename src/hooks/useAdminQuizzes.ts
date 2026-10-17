@@ -37,5 +37,7 @@ export const useAdminQuizzes = () => {
     };
   }, [changes]);
 
-  return data;
+  const deleteQuiz = (quizId: string) => quizService.deleteQuiz(quizId);
+
+  return { ...data, deleteQuiz };
 };

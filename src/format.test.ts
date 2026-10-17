@@ -1,5 +1,13 @@
 import { describe, expect, it } from 'vitest';
-import { formatClock, formatDateTime, formatSeconds, formatTimeLimits, greetingFor } from './format';
+import {
+  formatClock,
+  formatCount,
+  formatDateTime,
+  formatScore,
+  formatSeconds,
+  formatTimeLimits,
+  greetingFor
+} from './format';
 
 describe('formatSeconds', () => {
   it('shows whole minutes, seconds, or both', () => {
@@ -37,6 +45,20 @@ describe('formatDateTime', () => {
 
   it('shows the date for older times', () => {
     expect(formatDateTime(local(1, 10, 0), now)).toBe('1 Oct 2026, 10:00');
+  });
+});
+
+describe('formatCount', () => {
+  it('uses the singular for one and the plural otherwise', () => {
+    expect(formatCount(1, 'attempt')).toBe('1 attempt');
+    expect(formatCount(4, 'attempt')).toBe('4 attempts');
+    expect(formatCount(5, 'quiz', 'quizzes')).toBe('5 quizzes');
+  });
+});
+
+describe('formatScore', () => {
+  it('shows the score out of the number of questions', () => {
+    expect(formatScore(5, 6)).toBe('5/6');
   });
 });
 

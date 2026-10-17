@@ -1,31 +1,28 @@
 import {
   Anchor,
-  Avatar,
   Badge,
   Box,
   Button,
   Flex,
   Group,
   Paper,
-  Progress,
   Select,
   SimpleGrid,
   Skeleton,
   Stack,
-  Table,
   Text,
   TextInput,
-  Title,
-  VisuallyHidden
+  Title
 } from '@mantine/core';
 import { useState } from 'react';
 import { Link, Navigate, useNavigate, useParams, useSearchParams } from 'react-router';
-import { formatClock, formatDateTime } from '../../format';
+import { PodiumCard } from '../../components/PodiumCard';
+import { RankBanner } from '../../components/RankBanner';
+import { StandingsList } from '../../components/StandingsList';
 import { useLeaderboard } from '../../hooks/useLeaderboard';
 import type { Leaderboard, LeaderboardEntry } from '../../service/types';
 import { useSessionStore } from '../../session/sessionStore';
 import classes from './LeaderboardPage.module.css';
-import { standingLine } from './standing';
 
 const topOptions = [
   { value: '3', label: 'Top 3' },
@@ -34,272 +31,11 @@ const topOptions = [
 ];
 
 const PODIUM_SIZE = 3;
-const places = ['1st', '2nd', '3rd'];
-
-const scoreText = (entry: LeaderboardEntry) => `${String(entry.score)}/${String(entry.totalQuestions)}`;
-
-const rankChip = (rank: number, isMe: boolean) => (
-  <Flex
-    w={36}
-    h={36}
-    align="center"
-    justify="center"
-    bdrs="md"
-    fw={700}
-    bg={isMe ? 'blue' : 'var(--surface-2)'}
-    c={isMe ? 'white' : undefined}
-    bd={isMe ? undefined : '1px solid var(--mantine-color-default-border)'}
-  >
-    <VisuallyHidden>Rank </VisuallyHidden>
-    {rank}
-  </Flex>
-);
-
-const youBadge = (
-  <Badge variant="filled" size="xs">
-    You
-  </Badge>
-);
-
-const rankBanner = (leaderboard: Leaderboard, quizId: string) => {
-  const me = leaderboard.currentUser;
-  const showButton = !me || leaderboard.retakesAllowed;
-
-  return (
-    <Paper
-      component="section"
-      aria-label="Your standing"
-      radius="lg"
-      bd="2px solid var(--mantine-primary-color-filled)"
-      px={{ base: 18, sm: 24 }}
-      py={16}
-    >
-      <Flex direction={{ base: 'column', sm: 'row' }} align={{ base: 'stretch', sm: 'center' }} gap={16}>
-        <Box flex={1} miw={0}>
-          {me ? (
-            <>
-              <Group gap={10}>
-                <Text fz={18} fw={700}>
-                  Your rank: #{me.rank} of {leaderboard.rankedCount}
-                </Text>
-                <Badge>Top {Math.ceil((me.rank / leaderboard.rankedCount) * 100)}%</Badge>
-              </Group>
-              <Text c="dimmed" fz={14} mt={4}>
-                {standingLine(leaderboard, me)}
-              </Text>
-            </>
-          ) : (
-            <>
-              <Text fz={18} fw={700}>
-                Your rank: not ranked yet
-              </Text>
-              <Text c="dimmed" fz={14} mt={4}>
-                You haven't completed this quiz yet.
-              </Text>
-            </>
-          )}
-        </Box>
-        <Group gap={20} justify="space-between">
-          {me && (
-            <Box ta={{ base: 'left', sm: 'right' }}>
-              <Text fz={12} fw={700} tt="uppercase" lts="0.06em" c="dimmed">
-                Current standing
-              </Text>
-              <Text ff="monospace" fz={22} fw={700}>
-                {scoreText(me)}
-              </Text>
-            </Box>
-          )}
-          {showButton && (
-            <Button component={Link} to={`/quizzes/${quizId}`}>
-              {me ? 'Retake quiz' : 'Start quiz'}
-            </Button>
-          )}
-        </Group>
-      </Flex>
-    </Paper>
-  );
-};
-
-const podiumCard = (entry: LeaderboardEntry, isMe: boolean) => {
-  const isFirst = entry.rank === 1;
-
-  return (
-    <Paper
-      component="li"
-      key={entry.userId}
-      className={classes.place}
-      data-place={entry.rank}
-      display="block"
-      radius="lg"
-      withBorder={!isFirst}
-      bd={isFirst ? '2px solid var(--mantine-primary-color-filled)' : undefined}
-      bg={isMe ? 'var(--accent-soft)' : undefined}
-      px={{ base: 18, sm: 22 }}
-      py={{ base: 18, sm: isFirst ? 30 : 22 }}
-      aria-current={isMe || undefined}
-    >
-      <Group justify="space-between" align="flex-start" wrap="nowrap" mb={14}>
-        <Stack gap={4} align="center">
-          <Avatar
-            aria-hidden
-            name={entry.userName}
-            color="blue"
-            variant={isFirst ? 'filled' : 'light'}
-            size={isFirst ? 60 : 48}
-          />
-          <Badge size="sm" variant={isFirst ? 'filled' : 'light'}>
-            {places[entry.rank - 1]}
-          </Badge>
-        </Stack>
-        <Group gap={6} justify="flex-end">
-          {isMe && youBadge}
-          <Badge variant="default">{entry.countryName}</Badge>
-        </Group>
-      </Group>
-      <Text fw={700} fz={isFirst ? 22 : 18} truncate>
-        {entry.userName}
-      </Text>
-      <Paper bg="var(--surface-2)" radius="md" p={14} mt={14}>
-        <SimpleGrid cols={2} spacing={12}>
-          <Box>
-            <Text fz={12} c="dimmed">
-              Score (accuracy)
-            </Text>
-            <Text ff="monospace" fz={isFirst ? 28 : 22} fw={700} lh={1.2}>
-              {scoreText(entry)}{' '}
-              <Text component="span" fz={13} c="dimmed" ff="var(--mantine-font-family)" fw={500}>
-                / {entry.percentage}%
-              </Text>
-            </Text>
-          </Box>
-          <Box>
-            <Text fz={12} c="dimmed">
-              Time taken
-            </Text>
-            <Text ff="monospace" fz={isFirst ? 22 : 18} fw={700} lh={1.4}>
-              {formatClock(entry.timeTakenSeconds)}
-            </Text>
-          </Box>
-        </SimpleGrid>
-      </Paper>
-      <Text fz={13} c="dimmed" mt={14}>
-        {entry.completedAt ? `Completed ${formatDateTime(entry.completedAt)}` : ''}
-      </Text>
-    </Paper>
-  );
-};
 
 const matchesSearch = (entry: LeaderboardEntry, search: string) => {
   const query = search.trim().toLowerCase();
   return !query || `${entry.userName} ${entry.countryName}`.toLowerCase().includes(query);
 };
-
-const standingsTable = (leaderboard: Leaderboard, entries: LeaderboardEntry[], userId: string) => (
-  <Paper withBorder radius="lg" visibleFrom="sm">
-    <Table.ScrollContainer minWidth={720} type="native">
-      <Table verticalSpacing={14} horizontalSpacing={20} fz={15}>
-        <Table.Caption>
-          <VisuallyHidden>{leaderboard.quizTitle} standings</VisuallyHidden>
-        </Table.Caption>
-        <Table.Thead>
-          <Table.Tr>
-            {['Rank', 'Player', 'Country', 'Score', 'Accuracy', 'Time', 'Completed'].map(label => (
-              <Table.Th key={label} fz={12} fw={700} tt="uppercase" lts="0.06em" c="dimmed">
-                {label}
-              </Table.Th>
-            ))}
-          </Table.Tr>
-        </Table.Thead>
-        <Table.Tbody>
-          {entries.map(entry => {
-            const isMe = entry.userId === userId;
-            return (
-              <Table.Tr
-                key={entry.userId}
-                bg={isMe ? 'var(--accent-soft)' : undefined}
-                aria-current={isMe || undefined}
-              >
-                <Table.Td w={80}>{rankChip(entry.rank, isMe)}</Table.Td>
-                <Table.Td>
-                  <Group gap={10} wrap="nowrap">
-                    <Avatar aria-hidden name={entry.userName} color="blue" variant="light" size={32} />
-                    <Text fw={700} inherit>
-                      {entry.userName}
-                    </Text>
-                    {isMe && youBadge}
-                  </Group>
-                </Table.Td>
-                <Table.Td c="dimmed">{entry.countryName}</Table.Td>
-                <Table.Td fw={700} ff="monospace">
-                  {scoreText(entry)}
-                </Table.Td>
-                <Table.Td>
-                  <Group gap={10} wrap="nowrap">
-                    <Progress value={entry.percentage} w={80} size="sm" aria-hidden />
-                    <Text inherit>{entry.percentage}%</Text>
-                  </Group>
-                </Table.Td>
-                <Table.Td ff="monospace">{formatClock(entry.timeTakenSeconds)}</Table.Td>
-                <Table.Td c="dimmed">{entry.completedAt ? formatDateTime(entry.completedAt) : ''}</Table.Td>
-              </Table.Tr>
-            );
-          })}
-        </Table.Tbody>
-      </Table>
-    </Table.ScrollContainer>
-  </Paper>
-);
-
-const standingsCards = (entries: LeaderboardEntry[], userId: string) => (
-  <Stack component="ol" gap={10} m={0} p={0} hiddenFrom="sm" aria-label="Standings">
-    {entries.map(entry => {
-      const isMe = entry.userId === userId;
-      return (
-        <Paper
-          component="li"
-          key={entry.userId}
-          display="block"
-          withBorder
-          radius="lg"
-          px={14}
-          py={12}
-          bg={isMe ? 'var(--accent-soft)' : undefined}
-          aria-current={isMe || undefined}
-        >
-          <Group gap={12} wrap="nowrap">
-            {rankChip(entry.rank, isMe)}
-            <Box flex={1} miw={0}>
-              <Group gap={8} wrap="nowrap">
-                <Text fw={700} truncate>
-                  {entry.userName}
-                </Text>
-                {isMe && youBadge}
-              </Group>
-              <Text fz={13} c="dimmed">
-                {entry.countryName}
-              </Text>
-              <Group gap={16} fz={14} c="dimmed" mt={4}>
-                <span>
-                  <Text component="b" ff="monospace" c="var(--mantine-color-text)" fw={700} inherit>
-                    {scoreText(entry)}
-                  </Text>{' '}
-                  · {entry.percentage}%
-                </span>
-                <span>
-                  Time{' '}
-                  <Text component="b" ff="monospace" c="var(--mantine-color-text)" fw={700} inherit>
-                    {formatClock(entry.timeTakenSeconds)}
-                  </Text>
-                </span>
-              </Group>
-            </Box>
-          </Group>
-        </Paper>
-      );
-    })}
-  </Stack>
-);
 
 const board = (
   leaderboard: Leaderboard,
@@ -313,7 +49,7 @@ const board = (
 
   return (
     <Stack gap={28}>
-      {rankBanner(leaderboard, quizId)}
+      <RankBanner leaderboard={leaderboard} quizId={quizId} />
       <SimpleGrid
         component="ol"
         className={classes.podium}
@@ -323,7 +59,9 @@ const board = (
         p={0}
         aria-label="Top players"
       >
-        {podium.map(entry => podiumCard(entry, entry.userId === userId))}
+        {podium.map(entry => (
+          <PodiumCard key={entry.userId} entry={entry} isMe={entry.userId === userId} />
+        ))}
       </SimpleGrid>
       <Stack gap={14}>
         <Flex
@@ -353,10 +91,7 @@ const board = (
         {standings.length === 0 ? (
           <Text c="dimmed">No players match "{search.trim()}".</Text>
         ) : (
-          <>
-            {standingsTable(leaderboard, standings, userId)}
-            {standingsCards(standings, userId)}
-          </>
+          <StandingsList quizTitle={leaderboard.quizTitle} entries={standings} userId={userId} />
         )}
       </Stack>
     </Stack>

@@ -16,6 +16,9 @@ const limitSentence = ({ timeLimitSeconds, perQuestionSeconds }: EndedAttempt) =
   return 'Its time ran out';
 };
 
+const isPresentState = (state: unknown) =>
+  typeof state === 'object' && state !== null && 'isEndedWhileAway' in state && state.isEndedWhileAway === false;
+
 const focusOnMount = (heading: HTMLHeadingElement | null) => {
   heading?.focus();
 };
@@ -124,7 +127,7 @@ export const AttemptEndedPage = () => {
   const location = useLocation();
   const userId = useSessionStore(state => state.userId);
   const state = useEndedAttempt(attemptId, userId);
-  const { isEndedWhileAway = true } = (location.state ?? {}) as { isEndedWhileAway?: boolean };
+  const isEndedWhileAway = !isPresentState(location.state);
 
   if (state.status === 'missing') {
     return (

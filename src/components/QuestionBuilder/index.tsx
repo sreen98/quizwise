@@ -16,6 +16,7 @@ import {
 } from '@mantine/core';
 import { IconArrowDown, IconArrowUp, IconChevronDown, IconTrash, IconX } from '@tabler/icons-react';
 import { useState } from 'react';
+import { formatCount } from '../../format';
 import type { Question, QuestionType } from '../../types/models';
 import type { QuestionBuilderProps } from './types';
 
@@ -127,9 +128,7 @@ export const QuestionBuilder = ({ form }: QuestionBuilderProps) => {
               <Text fw={700} truncate>
                 Question {number}
               </Text>
-              {problems > 0 && (
-                <Badge color="orange">{problems === 1 ? '1 problem' : `${String(problems)} problems`}</Badge>
-              )}
+              {problems > 0 && <Badge color="orange">{formatCount(problems, 'problem')}</Badge>}
             </Group>
           </UnstyledButton>
           <ActionIcon

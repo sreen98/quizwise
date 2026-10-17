@@ -47,6 +47,19 @@ export default defineConfig([
     }
   },
   {
+    files: ['src/**/*.{ts,tsx}'],
+    ignores: ['src/test/**', '**/*.test.{ts,tsx}'],
+    rules: {
+      'max-lines': ['error', { max: 300, skipBlankLines: true, skipComments: true }]
+    }
+  },
+  {
+    files: ['src/service/quizService.ts'],
+    rules: {
+      'max-lines': ['error', { max: 450, skipBlankLines: true, skipComments: true }]
+    }
+  },
+  {
     files: ['src/test/**', '**/*.test.{ts,tsx}'],
     rules: {
       'react-refresh/only-export-components': 'off'

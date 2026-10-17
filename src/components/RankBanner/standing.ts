@@ -1,7 +1,5 @@
-import { formatSeconds } from '../../format';
+import { formatCount, formatSeconds } from '../../format';
 import type { Leaderboard, LeaderboardEntry } from '../../service/types';
-
-const playerCount = (count: number) => `${String(count)} ${count === 1 ? 'player' : 'players'}`;
 
 const tieHint = (leaderboard: Leaderboard, me: LeaderboardEntry) => {
   const above = leaderboard.entries.find(entry => entry.rank === me.rank - 1);
@@ -19,6 +17,6 @@ export const standingLine = (leaderboard: Leaderboard, me: LeaderboardEntry) => 
   if (me.rank === 1) return `You're in first place with ${accuracy}.`;
   const hint = tieHint(leaderboard, me);
   if (hint) return hint;
-  if (behind === 0) return `${playerCount(others)} ahead of you. Your score has ${accuracy}.`;
-  return `Ahead of ${String(behind)} of ${playerCount(others)} with ${accuracy}.`;
+  if (behind === 0) return `${formatCount(others, 'player')} ahead of you. Your score has ${accuracy}.`;
+  return `Ahead of ${String(behind)} of ${formatCount(others, 'player')} with ${accuracy}.`;
 };

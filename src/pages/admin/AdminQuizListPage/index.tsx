@@ -1,29 +1,10 @@
-import {
-  ActionIcon,
-  Badge,
-  Box,
-  Button,
-  Divider,
-  Flex,
-  Group,
-  Pagination,
-  Paper,
-  Select,
-  Skeleton,
-  Stack,
-  Table,
-  Text,
-  TextInput,
-  Title,
-  VisuallyHidden
-} from '@mantine/core';
+import { Box, Button, Flex, Pagination, Paper, Select, Skeleton, Stack, Text, TextInput, Title } from '@mantine/core';
 import { modals } from '@mantine/modals';
 import { notifications } from '@mantine/notifications';
-import { IconPencil, IconTrash } from '@tabler/icons-react';
 import { Link, useSearchParams } from 'react-router';
-import { formatClock, formatSeconds } from '../../../format';
+import { AdminQuizList } from '../../../components/AdminQuizList';
+import { formatCount } from '../../../format';
 import { useAdminQuizzes } from '../../../hooks/useAdminQuizzes';
-import { quizService } from '../../../service/quizService';
 import type { AdminQuizItem } from '../../../service/types';
 
 const PAGE_SIZE = 10;
@@ -45,30 +26,20 @@ const sortOptions: Record<SortKey, { label: string; compare: (a: AdminQuizItem, 
 
 const isSortKey = (value: string | null): value is SortKey => value !== null && value in sortOptions;
 
-const plural = (count: number, word: string, pluralWord = word + 's') =>
-  `${String(count)} ${count === 1 ? word : pluralWord}`;
-
-const timerText = ({ timeLimitSeconds, perQuestionSeconds }: AdminQuizItem) => {
-  if (timeLimitSeconds !== null && perQuestionSeconds !== null) {
-    return `${formatClock(timeLimitSeconds)} + ${formatSeconds(perQuestionSeconds)} / q`;
-  }
-  if (timeLimitSeconds !== null) return formatClock(timeLimitSeconds);
-  if (perQuestionSeconds !== null) return `${formatSeconds(perQuestionSeconds)} / q`;
-  return 'None';
-};
-
 const matchesSearch = (quiz: AdminQuizItem, search: string) => {
   const query = search.trim().toLowerCase();
   return !query || `${quiz.title} ${quiz.description}`.toLowerCase().includes(query);
 };
 
-const confirmDelete = (quiz: AdminQuizItem) => {
+type DeleteQuiz = (quizId: string) => Promise<void>;
+
+const confirmDelete = (quiz: AdminQuizItem, deleteQuiz: DeleteQuiz) => {
   modals.openConfirmModal({
     title: `Delete ${quiz.title}?`,
     children: (
       <Text size="sm">
         {quiz.attemptCount > 0
-          ? `Its ${plural(quiz.attemptCount, 'attempt')} and its leaderboard are deleted too.`
+          ? `Its ${formatCount(quiz.attemptCount, 'attempt')} and its leaderboard are deleted too.`
           : 'It has no attempts yet.'}{' '}
         Anyone taking it now will see that it's no longer available.
       </Text>
@@ -76,127 +47,22 @@ const confirmDelete = (quiz: AdminQuizItem) => {
     labels: { confirm: 'Delete quiz', cancel: 'Cancel' },
     confirmProps: { color: 'orange' },
     onConfirm: () => {
-      void quizService.deleteQuiz(quiz.id).then(() => {
-        notifications.show({ message: `${quiz.title} deleted` });
-      });
+      deleteQuiz(quiz.id)
+        .then(() => {
+          notifications.show({ message: `${quiz.title} deleted` });
+        })
+        .catch(() => {
+          notifications.show({
+            color: 'orange',
+            message: `Couldn't delete ${quiz.title}. It may already have been deleted.`
+          });
+        });
     }
   });
 };
 
-const countryBadges = (quiz: AdminQuizItem) => (
-  <Group gap={4}>
-    {quiz.countries.map(code => (
-      <Badge key={code} variant="default" size="md">
-        {code}
-      </Badge>
-    ))}
-  </Group>
-);
-
-const actions = (quiz: AdminQuizItem) => (
-  <Group gap={2} justify="flex-end" wrap="nowrap">
-    <ActionIcon
-      component={Link}
-      to={`/admin/quizzes/${quiz.id}/edit`}
-      variant="subtle"
-      color="gray"
-      size={44}
-      aria-label={`Edit ${quiz.title}`}
-    >
-      <IconPencil size={20} aria-hidden />
-    </ActionIcon>
-    <ActionIcon
-      variant="subtle"
-      color="gray"
-      size={44}
-      aria-label={`Delete ${quiz.title}`}
-      onClick={() => {
-        confirmDelete(quiz);
-      }}
-    >
-      <IconTrash size={20} aria-hidden />
-    </ActionIcon>
-  </Group>
-);
-
-const quizTable = (quizzes: AdminQuizItem[]) => (
-  <Box visibleFrom="md">
-    <Table.ScrollContainer minWidth={760} type="native">
-      <Table verticalSpacing={14} horizontalSpacing={16} fz={15}>
-        <Table.Caption>
-          <VisuallyHidden>Quizzes</VisuallyHidden>
-        </Table.Caption>
-        <Table.Thead>
-          <Table.Tr>
-            {['Title', 'Questions', 'Timer', 'Retakes', 'Countries', 'Attempts'].map(label => (
-              <Table.Th key={label} fz={12} fw={700} tt="uppercase" lts="0.06em" c="dimmed">
-                {label}
-              </Table.Th>
-            ))}
-            <Table.Th>
-              <VisuallyHidden>Actions</VisuallyHidden>
-            </Table.Th>
-          </Table.Tr>
-        </Table.Thead>
-        <Table.Tbody>
-          {quizzes.map(quiz => (
-            <Table.Tr key={quiz.id}>
-              <Table.Td>
-                <Text fw={700} inherit>
-                  {quiz.title}
-                </Text>
-                <Text fz={13} c="dimmed" lineClamp={1}>
-                  {quiz.description}
-                </Text>
-              </Table.Td>
-              <Table.Td>{quiz.questionCount}</Table.Td>
-              <Table.Td ff="monospace" fz={14}>
-                {timerText(quiz)}
-              </Table.Td>
-              <Table.Td>{quiz.retakesAllowed ? 'Yes' : 'No'}</Table.Td>
-              <Table.Td>{countryBadges(quiz)}</Table.Td>
-              <Table.Td>{quiz.attemptCount}</Table.Td>
-              <Table.Td>{actions(quiz)}</Table.Td>
-            </Table.Tr>
-          ))}
-        </Table.Tbody>
-      </Table>
-    </Table.ScrollContainer>
-  </Box>
-);
-
-const quizCards = (quizzes: AdminQuizItem[]) => (
-  <Stack component="ul" gap={0} m={0} p={0} hiddenFrom="md" aria-label="Quizzes">
-    {quizzes.map((quiz, index) => (
-      <Box component="li" key={quiz.id} display="block">
-        {index > 0 && <Divider />}
-        <Box px={16} py={14}>
-          <Group justify="space-between" align="flex-start" wrap="nowrap" gap={8}>
-            <Box miw={0}>
-              <Text fw={700}>{quiz.title}</Text>
-              <Text fz={13} c="dimmed" lineClamp={2}>
-                {quiz.description}
-              </Text>
-            </Box>
-            {actions(quiz)}
-          </Group>
-          <Group gap={16} mt={10} fz={14} c="dimmed">
-            <span>{plural(quiz.questionCount, 'question')}</span>
-            <Text component="span" ff="monospace" inherit>
-              {timerText(quiz)}
-            </Text>
-            <span>{quiz.retakesAllowed ? 'Retakes allowed' : 'One attempt'}</span>
-            <span>{plural(quiz.attemptCount, 'attempt')}</span>
-          </Group>
-          <Box mt={8}>{countryBadges(quiz)}</Box>
-        </Box>
-      </Box>
-    ))}
-  </Stack>
-);
-
 export const AdminQuizListPage = () => {
-  const { quizzes, loading, hasFailed } = useAdminQuizzes();
+  const { quizzes, loading, hasFailed, deleteQuiz } = useAdminQuizzes();
   const [searchParams, setSearchParams] = useSearchParams();
   const search = searchParams.get('q') ?? '';
   const sortParam = searchParams.get('sort');
@@ -226,7 +92,7 @@ export const AdminQuizListPage = () => {
           </Title>
           <Skeleton visible={loading} w="fit-content" mt={8}>
             <Text c="dimmed" fz={16}>
-              {plural(quizzes.length, 'quiz', 'quizzes')} · {plural(attemptTotal, 'attempt')} recorded
+              {formatCount(quizzes.length, 'quiz', 'quizzes')} · {formatCount(attemptTotal, 'attempt')} recorded
             </Text>
           </Skeleton>
         </Box>
@@ -297,8 +163,12 @@ export const AdminQuizListPage = () => {
 
         {!loading && shown.length > 0 && (
           <>
-            {quizTable(shown)}
-            {quizCards(shown)}
+            <AdminQuizList
+              quizzes={shown}
+              onDelete={quiz => {
+                confirmDelete(quiz, deleteQuiz);
+              }}
+            />
           </>
         )}
       </Paper>

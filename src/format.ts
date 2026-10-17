@@ -45,6 +45,11 @@ export const formatDateTime = (isoDate: string, now = Date.now()) => {
   return `${calendarDate.format(time)}, ${clock}`;
 };
 
+export const formatCount = (count: number, word: string, pluralWord = `${word}s`) =>
+  `${String(count)} ${count === 1 ? word : pluralWord}`;
+
+export const formatScore = (score: number, totalQuestions: number) => `${String(score)}/${String(totalQuestions)}`;
+
 export const greetingFor = (hour: number) => {
   if (hour < 12) return 'Good morning';
   if (hour < 18) return 'Good afternoon';

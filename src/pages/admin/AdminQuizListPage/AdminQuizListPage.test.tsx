@@ -114,6 +114,21 @@ describe('AdminQuizListPage', () => {
     expect(await screen.findByText('JavaScript Basics deleted')).toBeInTheDocument();
   });
 
+  it('says so when the quiz was already deleted before the delete is confirmed', async () => {
+    const user = userEvent.setup();
+    renderRoute('/admin');
+    await waitForRows();
+
+    await user.click(firstButton('Delete JavaScript Basics'));
+    const dialog = await screen.findByRole('dialog', { name: 'Delete JavaScript Basics?' });
+    await quizService.deleteQuiz('q1');
+    await user.click(within(dialog).getByRole('button', { name: 'Delete quiz' }));
+
+    expect(
+      await screen.findByText("Couldn't delete JavaScript Basics. It may already have been deleted.")
+    ).toBeInTheDocument();
+  });
+
   it('keeps the quiz when the delete is cancelled', async () => {
     const user = userEvent.setup();
     renderRoute('/admin');

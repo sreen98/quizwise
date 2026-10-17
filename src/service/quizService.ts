@@ -3,6 +3,7 @@ import { dataStore } from '../data/store';
 import { parseQuizInput } from '../data/schema';
 import type { Attempt, Quiz, QuizData, QuizInput, User } from '../types/models';
 import { finishAttempt, recordAnswer, settleAttempt, toPublicQuestion } from './attempts';
+import { simulatedDelay } from './latency';
 import { rankBestAttempts } from './ranking';
 import { getDeadlines } from './timing';
 import type {
@@ -15,9 +16,14 @@ import type {
   StartedAttempt
 } from './types';
 
-const respond = <T>(compute: () => T): Promise<T> =>
-  new Promise(resolve => {
-    resolve(compute());
+interface ServiceOptions {
+  now?: () => number;
+  delay?: () => number;
+}
+
+const wait = (milliseconds: number) =>
+  new Promise<void>(resolve => {
+    setTimeout(resolve, milliseconds);
   });
 
 const toDetails = (quiz: Quiz): QuizDetails => ({
@@ -95,7 +101,17 @@ const toResult = (attempt: Attempt): AttemptResult => {
   };
 };
 
-export const createQuizService = (store: StoreApi<QuizData>, now: () => number = Date.now) => {
+export const createQuizService = (
+  store: StoreApi<QuizData>,
+  { now = Date.now, delay = () => 0 }: ServiceOptions = {}
+) => {
+  const respond = async <T>(compute: () => T): Promise<T> => {
+    const result = compute();
+    const milliseconds = delay();
+    if (milliseconds > 0) await wait(milliseconds);
+    return result;
+  };
+
   const findQuiz = (quizId: string) => {
     const quiz = store.getState().quizzes.find(item => item.id === quizId);
     if (!quiz) throw new Error('Quiz not found');
@@ -265,4 +281,4 @@ export const createQuizService = (store: StoreApi<QuizData>, now: () => number =
   };
 };
 
-export const quizService = createQuizService(dataStore);
+export const quizService = createQuizService(dataStore, { delay: simulatedDelay });

@@ -1,4 +1,4 @@
-import { beforeEach, describe, expect, it } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { createDataStore } from '../data/store';
 import type { Attempt, QuizInput } from '../types/models';
 import { createQuizService } from './quizService';
@@ -10,7 +10,7 @@ const setup = () => {
   localStorage.clear();
   const store = createDataStore();
   const clock = { now: NOW };
-  return { store, clock, service: createQuizService(store, () => clock.now) };
+  return { store, clock, service: createQuizService(store, { now: () => clock.now }) };
 };
 
 const ids = (items: { id: string }[]) => items.map(item => item.id);
@@ -384,7 +384,7 @@ describe('saveDraft', () => {
     const { service, attemptId, wrong } = await startQ1();
 
     await service.saveDraft(attemptId, wrong(0));
-    const reloaded = createQuizService(createDataStore(), () => NOW);
+    const reloaded = createQuizService(createDataStore(), { now: () => NOW });
 
     expect(await reloaded.getCurrentQuestion(attemptId)).toMatchObject({ index: 0, draftOptionIds: wrong(0) });
   });
@@ -600,5 +600,53 @@ describe('getQuizForEdit', () => {
 
   it('rejects an unknown quiz', async () => {
     await expect(setup().service.getQuizForEdit('q99')).rejects.toThrow('Quiz not found');
+  });
+});
+
+describe('simulated delay', () => {
+  const slowService = () => {
+    localStorage.clear();
+    const store = createDataStore();
+    return { store, service: createQuizService(store, { now: () => NOW, delay: () => 500 }) };
+  };
+
+  afterEach(() => {
+    vi.useRealTimers();
+  });
+
+  it('answers only after the delay', async () => {
+    vi.useFakeTimers();
+    let answered = false;
+    void slowService()
+      .service.getQuiz('q1')
+      .then(() => {
+        answered = true;
+      });
+
+    await vi.advanceTimersByTimeAsync(499);
+    expect(answered).toBe(false);
+
+    await vi.advanceTimersByTimeAsync(1);
+    expect(answered).toBe(true);
+  });
+
+  it('saves a change straight away even though the reply is delayed', async () => {
+    vi.useFakeTimers();
+    const { store, service } = slowService();
+
+    const started = service.startOrResumeAttempt('q1', 'u5');
+
+    expect(store.getState().attempts.some(attempt => attempt.userId === 'u5')).toBe(true);
+    await vi.advanceTimersByTimeAsync(500);
+    await expect(started).resolves.toMatchObject({ resumed: false });
+  });
+
+  it('still rejects after the delay when something is wrong', async () => {
+    vi.useFakeTimers();
+    const failed = slowService().service.getQuiz('q99');
+    const assertion = expect(failed).rejects.toThrow('Quiz not found');
+
+    await vi.advanceTimersByTimeAsync(500);
+    await assertion;
   });
 });

@@ -2,7 +2,7 @@ import type { StoreApi } from 'zustand/vanilla';
 import { dataStore, resetDataStore } from '../data/store';
 import { parseQuizInput } from '../data/schema';
 import type { Attempt, Quiz, QuizData, QuizInput, User } from '../types/models';
-import { finishAttempt, recordAnswer, settleAttempt, toPublicQuestion } from './attempts';
+import { finishAttempt, recordAnswer, settleAttempt, toPublicQuestion, toSelection } from './attempts';
 import { simulatedDelay } from './latency';
 import { rankBestAttempts } from './ranking';
 import { getDeadlines } from './timing';
@@ -130,12 +130,19 @@ export const createQuizService = (
     }));
   };
 
-  const loadAttempt = (attemptId: string) => {
+  const loadAttempt = (attemptId: string, time: number) => {
     const stored = findAttempt(attemptId);
     const quiz = store.getState().quizzes.find(item => item.id === stored.quizId);
-    const attempt = settleAttempt(stored, quiz, now());
+    const attempt = settleAttempt(stored, quiz, time);
     if (attempt !== stored) saveAttempt(attempt);
     return { attempt, quiz };
+  };
+
+  const loadCurrentQuestion = (attemptId: string, questionId: string, time: number) => {
+    const { attempt, quiz } = loadAttempt(attemptId, time);
+    const question = quiz?.questions[attempt.currentQuestionIndex];
+    const isCurrent = attempt.status === 'in_progress' && question?.id === questionId;
+    return { attempt, quiz, question: isCurrent ? question : undefined };
   };
 
   return {
@@ -212,41 +219,37 @@ export const createQuizService = (
 
     getCurrentQuestion: (attemptId: string) =>
       respond(() => {
-        const { attempt, quiz } = loadAttempt(attemptId);
+        const { attempt, quiz } = loadAttempt(attemptId, now());
         return toCurrentQuestion(attempt, quiz);
       }),
 
     submitAnswer: (attemptId: string, questionId: string, optionIds: string[]) =>
       respond(() => {
-        const { attempt, quiz } = loadAttempt(attemptId);
-        const question = quiz?.questions[attempt.currentQuestionIndex];
-        if (attempt.status !== 'in_progress' || !quiz || !question || question.id !== questionId) {
-          return toCurrentQuestion(attempt, quiz);
-        }
+        const time = now();
+        const { attempt, quiz, question } = loadCurrentQuestion(attemptId, questionId, time);
+        if (!quiz || !question) return toCurrentQuestion(attempt, quiz);
 
-        const optionIdsInQuestion = new Set(question.options.map(option => option.id));
-        if (!optionIds.every(optionId => optionIdsInQuestion.has(optionId))) throw new Error('Invalid answer');
-
-        const answered = recordAnswer(attempt, question, optionIds, now());
+        const answered = recordAnswer(attempt, question, toSelection(question, optionIds), time);
         const next =
           answered.currentQuestionIndex >= quiz.questions.length
-            ? finishAttempt(answered, now(), 'submitted')
+            ? finishAttempt(answered, time, 'submitted')
             : answered;
         saveAttempt(next);
         return toCurrentQuestion(next, quiz);
       }),
 
-    saveDraft: (attemptId: string, optionIds: string[]) =>
+    saveDraft: (attemptId: string, questionId: string, optionIds: string[]) =>
       respond(() => {
-        const { attempt } = loadAttempt(attemptId);
-        if (attempt.status === 'in_progress') saveAttempt({ ...attempt, draftOptionIds: optionIds });
+        const { attempt, question } = loadCurrentQuestion(attemptId, questionId, now());
+        if (question) saveAttempt({ ...attempt, draftOptionIds: toSelection(question, optionIds) });
       }),
 
     completeAttempt: (attemptId: string) =>
       respond((): AttemptResult => {
-        const loaded = loadAttempt(attemptId).attempt;
+        const time = now();
+        const loaded = loadAttempt(attemptId, time).attempt;
         if (loaded.status === 'closed') throw new Error('Attempt was closed');
-        const attempt = loaded.status === 'in_progress' ? finishAttempt(loaded, now(), 'submitted') : loaded;
+        const attempt = loaded.status === 'in_progress' ? finishAttempt(loaded, time, 'submitted') : loaded;
         if (attempt !== loaded) saveAttempt(attempt);
         return toResult(attempt);
       }),

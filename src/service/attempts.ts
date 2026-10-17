@@ -11,6 +11,17 @@ export const toPublicQuestion = ({ id, text, type, options }: Question): PublicQ
   options
 });
 
+export const toSelection = (question: Question, optionIds: string[]): string[] => {
+  const selection = [...new Set(optionIds)];
+  const optionIdsInQuestion = new Set(question.options.map(option => option.id));
+  const tooMany = question.type === 'single' && selection.length > 1;
+
+  if (tooMany || !selection.every(optionId => optionIdsInQuestion.has(optionId))) {
+    throw new Error('Invalid answer');
+  }
+  return selection;
+};
+
 export const recordAnswer = (
   attempt: Attempt,
   question: Question,

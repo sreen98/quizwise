@@ -315,6 +315,12 @@ const startQ1 = async () => {
   return { ...context, attemptId, questions, correct, wrong, answers };
 };
 
+const startQ2 = async () => {
+  const context = setup();
+  const { attemptId } = await context.service.startOrResumeAttempt('q2', 'u5');
+  return { ...context, attemptId };
+};
+
 describe('submitAnswer', () => {
   it('records the answer and moves to the next question', async () => {
     const { service, attemptId, correct, answers } = await startQ1();
@@ -383,10 +389,55 @@ describe('saveDraft', () => {
   it('keeps the current selection after a reload', async () => {
     const { service, attemptId, wrong } = await startQ1();
 
-    await service.saveDraft(attemptId, wrong(0));
+    await service.saveDraft(attemptId, 'q1-1', wrong(0));
     const reloaded = createQuizService(createDataStore(), { now: () => NOW });
 
     expect(await reloaded.getCurrentQuestion(attemptId)).toMatchObject({ index: 0, draftOptionIds: wrong(0) });
+  });
+
+  it('ignores a draft for a question that is no longer current', async () => {
+    const { store, clock, service, attemptId } = await startQ2();
+
+    clock.now = later(31);
+    await service.saveDraft(attemptId, 'q2-1', ['q2-1-o2']);
+
+    const attempt = store.getState().attempts.find(item => item.id === attemptId);
+    expect(attempt).toMatchObject({ currentQuestionIndex: 1, draftOptionIds: [] });
+  });
+
+  it('rejects a draft with an option from another question', async () => {
+    const { service, attemptId, correct } = await startQ1();
+
+    await expect(service.saveDraft(attemptId, 'q1-1', correct(1))).rejects.toThrow('Invalid answer');
+  });
+});
+
+describe('answer selection', () => {
+  it('rejects two options for a single choice question', async () => {
+    const { service, attemptId, questions } = await startQ1();
+    const options = questions[0]?.options.slice(0, 2).map(option => option.id) ?? [];
+
+    await expect(service.submitAnswer(attemptId, 'q1-1', options)).rejects.toThrow('Invalid answer');
+  });
+
+  it('stores each selected option once', async () => {
+    const { service, attemptId, correct, answers } = await startQ1();
+
+    await service.submitAnswer(attemptId, 'q1-1', [...correct(0), ...correct(0)]);
+
+    expect(answers()[0]?.selectedOptionIds).toEqual(correct(0));
+  });
+
+  it('records the last answer and the finish at the same moment', async () => {
+    const { store, clock, service, attemptId, questions, correct } = await startQ1();
+
+    for (const [index, question] of questions.entries()) {
+      clock.now = later(10 * (index + 1));
+      await service.submitAnswer(attemptId, question.id, correct(index));
+    }
+
+    const attempt = store.getState().attempts.find(item => item.id === attemptId);
+    expect(attempt?.completedAt).toBe(attempt?.answers.at(-1)?.answeredAt);
   });
 });
 

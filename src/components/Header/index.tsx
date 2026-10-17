@@ -2,6 +2,7 @@ import { Anchor, Group, ThemeIcon } from '@mantine/core';
 import { IconCheck } from '@tabler/icons-react';
 import { useEffect } from 'react';
 import { Link, NavLink } from 'react-router';
+import { useCurrentUser } from '../../hooks/useCurrentUser';
 import { useUserOptions } from '../../hooks/useUserOptions';
 import { DEFAULT_USER_ID, useSessionStore } from '../../session/sessionStore';
 import { SettingsMenu } from '../SettingsMenu';
@@ -9,13 +10,14 @@ import { UserSelect } from '../UserSelect';
 import classes from './Header.module.css';
 
 const navLinks = [
-  { to: '/quizzes', label: 'Quizzes' },
-  { to: '/leaderboard', label: 'Leaderboard' },
-  { to: '/admin', label: 'Admin' }
+  { to: '/quizzes', label: 'Quizzes', isAdminOnly: false },
+  { to: '/leaderboard', label: 'Leaderboard', isAdminOnly: false },
+  { to: '/admin', label: 'Admin', isAdminOnly: true }
 ];
 
 export const Header = () => {
   const userOptions = useUserOptions();
+  const { isAdmin } = useCurrentUser();
   const userId = useSessionStore(state => state.userId);
   const setUserId = useSessionStore(state => state.setUserId);
 
@@ -24,11 +26,13 @@ export const Header = () => {
     if (userOptions.length > 0 && !knownUser) setUserId(DEFAULT_USER_ID);
   }, [userOptions, userId, setUserId]);
 
-  const links = navLinks.map(link => (
-    <NavLink key={link.to} to={link.to} className={classes.link}>
-      {link.label}
-    </NavLink>
-  ));
+  const links = navLinks
+    .filter(link => isAdmin || !link.isAdminOnly)
+    .map(link => (
+      <NavLink key={link.to} to={link.to} className={classes.link}>
+        {link.label}
+      </NavLink>
+    ));
 
   return (
     <Group h="100%" px={{ base: 16, sm: 24 }} gap={20} wrap="nowrap">

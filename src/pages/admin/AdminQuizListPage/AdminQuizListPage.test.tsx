@@ -3,6 +3,7 @@ import { screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { beforeEach, describe, expect, it } from 'vitest';
 import { quizService } from '../../../service/quizService';
+import { useSessionStore } from '../../../session/sessionStore';
 import { renderRoute } from '../../../test/renderWithProviders';
 
 const rowTitles = () =>
@@ -24,6 +25,7 @@ const firstButton = (name: string) => {
 describe('AdminQuizListPage', () => {
   beforeEach(async () => {
     notifications.clean();
+    useSessionStore.setState({ userId: 'u5', country: null, slowNetwork: false });
     await quizService.resetData();
   });
 

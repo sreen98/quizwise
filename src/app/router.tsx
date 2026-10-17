@@ -1,4 +1,5 @@
 import { Navigate, type RouteObject } from 'react-router';
+import { AdminOnly } from '../components/AdminOnly';
 import { AppLayout } from '../components/AppLayout';
 import { RouteError } from '../components/RouteError';
 import { AttemptEndedPage } from '../pages/AttemptEndedPage';
@@ -23,9 +24,14 @@ export const routes: RouteObject[] = [
       { path: 'attempts/:attemptId/ended', Component: AttemptEndedPage },
       { path: 'attempts/:attemptId/results', Component: ResultsPage },
       { path: 'leaderboard/:quizId?', Component: LeaderboardPage },
-      { path: 'admin', Component: AdminQuizListPage },
-      { path: 'admin/quizzes/new', Component: QuizEditorPage },
-      { path: 'admin/quizzes/:quizId/edit', Component: QuizEditorPage },
+      {
+        Component: AdminOnly,
+        children: [
+          { path: 'admin', Component: AdminQuizListPage },
+          { path: 'admin/quizzes/new', Component: QuizEditorPage },
+          { path: 'admin/quizzes/:quizId/edit', Component: QuizEditorPage }
+        ]
+      },
       { path: '*', Component: NotFoundPage }
     ]
   },

@@ -3,6 +3,7 @@ import { useDisclosure } from '@mantine/hooks';
 import { IconListCheck, IconSettings, IconTrophy, IconUserCircle } from '@tabler/icons-react';
 import type { ReactNode } from 'react';
 import { NavLink } from 'react-router';
+import { useCurrentUser } from '../../hooks/useCurrentUser';
 import { useUserOptions } from '../../hooks/useUserOptions';
 import { ResetDataButton } from '../ResetDataButton';
 import { SlowNetworkSwitch } from '../SlowNetworkSwitch';
@@ -10,9 +11,9 @@ import { UserSelect } from '../UserSelect';
 import classes from './BottomNav.module.css';
 
 const tabs = [
-  { to: '/quizzes', label: 'Quizzes', icon: <IconListCheck size={22} aria-hidden /> },
-  { to: '/leaderboard', label: 'Leaderboard', icon: <IconTrophy size={22} aria-hidden /> },
-  { to: '/admin', label: 'Admin', icon: <IconSettings size={22} aria-hidden /> }
+  { to: '/quizzes', label: 'Quizzes', icon: <IconListCheck size={22} aria-hidden />, isAdminOnly: false },
+  { to: '/leaderboard', label: 'Leaderboard', icon: <IconTrophy size={22} aria-hidden />, isAdminOnly: false },
+  { to: '/admin', label: 'Admin', icon: <IconSettings size={22} aria-hidden />, isAdminOnly: true }
 ];
 
 const tabContent = (icon: ReactNode, label: string) => (
@@ -29,12 +30,14 @@ const tabContent = (icon: ReactNode, label: string) => (
 export const BottomNav = () => {
   const [accountOpened, { open: openAccount, close: closeAccount }] = useDisclosure();
   const userOptions = useUserOptions();
+  const { isAdmin } = useCurrentUser();
+  const shownTabs = tabs.filter(tab => isAdmin || !tab.isAdminOnly);
 
   return (
     <>
       <Box component="nav" aria-label="Main" className={classes.bar}>
-        <SimpleGrid cols={4} spacing={0} h={64}>
-          {tabs.map(tab => (
+        <SimpleGrid cols={shownTabs.length + 1} spacing={0} h={64}>
+          {shownTabs.map(tab => (
             <NavLink key={tab.to} to={tab.to} className={classes.tab}>
               {tabContent(tab.icon, tab.label)}
             </NavLink>

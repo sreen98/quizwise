@@ -3,13 +3,20 @@ import { screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { beforeEach, describe, expect, it } from 'vitest';
 import { quizService } from '../../../service/quizService';
+import { useSessionStore } from '../../../session/sessionStore';
 import { renderRoute } from '../../../test/renderWithProviders';
 
 const titleInput = () => screen.findByRole('textbox', { name: /Title/ });
 
+const toggleCountry = async (user: ReturnType<typeof userEvent.setup>, name: string) => {
+  await user.click(screen.getByRole('combobox', { name: 'Available in' }));
+  await user.click(await screen.findByRole('option', { name }));
+};
+
 describe('QuizEditorPage', () => {
   beforeEach(async () => {
     notifications.clean();
+    useSessionStore.setState({ userId: 'u5', country: null, slowNetwork: false });
     await quizService.resetData();
   });
 
@@ -23,8 +30,9 @@ describe('QuizEditorPage', () => {
     expect(screen.getByRole('checkbox', { name: 'Each question' })).toBeChecked();
     expect(screen.getByRole('textbox', { name: 'Seconds for each question' })).toHaveValue('45');
     expect(screen.getByRole('switch', { name: 'Allow retakes' })).toBeChecked();
-    expect(screen.getByRole('checkbox', { name: 'United Arab Emirates' })).toBeChecked();
-    expect(screen.getByRole('checkbox', { name: 'India' })).not.toBeChecked();
+    const countries = screen.getByRole('combobox', { name: 'Available in' }).parentElement;
+    expect(countries).toHaveTextContent('United Arab EmiratesUnited Kingdom');
+    expect(countries).not.toHaveTextContent('India');
     expect(screen.getByRole('heading', { name: 'Questions (6)' })).toBeInTheDocument();
   });
 
@@ -33,8 +41,8 @@ describe('QuizEditorPage', () => {
     renderRoute('/admin/quizzes/q5/edit');
 
     await user.clear(await titleInput());
-    await user.click(screen.getByRole('checkbox', { name: 'United Arab Emirates' }));
-    await user.click(screen.getByRole('checkbox', { name: 'United Kingdom' }));
+    await toggleCountry(user, 'United Arab Emirates');
+    await toggleCountry(user, 'United Kingdom');
     await user.clear(screen.getByRole('textbox', { name: 'Minutes for the whole quiz' }));
     await user.click(screen.getByRole('button', { name: 'Save quiz' }));
 
@@ -80,11 +88,96 @@ describe('QuizEditorPage', () => {
     const { router } = renderRoute('/admin/quizzes/new');
 
     await user.type(await titleInput(), 'Astronomy');
-    await user.click(screen.getByRole('checkbox', { name: 'India' }));
+    await toggleCountry(user, 'India');
     await user.click(screen.getByRole('button', { name: 'Create quiz' }));
 
     expect(await screen.findByText('Add at least one question')).toBeInTheDocument();
     expect(router.state.location.pathname).toBe('/admin/quizzes/new');
+  });
+
+  it('creates a new quiz with a question built from scratch', async () => {
+    const user = userEvent.setup();
+    const { router } = renderRoute('/admin/quizzes/new');
+
+    await user.type(await titleInput(), 'Astronomy');
+    await toggleCountry(user, 'India');
+    await user.click(screen.getByRole('button', { name: 'Add question' }));
+    await user.type(screen.getByRole('textbox', { name: 'Question text' }), 'Which planet is largest?');
+    await user.type(screen.getByRole('textbox', { name: 'Option 1' }), 'Mars');
+    await user.type(screen.getByRole('textbox', { name: 'Option 2' }), 'Jupiter');
+    await user.click(screen.getByRole('checkbox', { name: 'Option 2 is correct' }));
+    await user.click(screen.getByRole('button', { name: 'Create quiz' }));
+
+    await waitFor(() => {
+      expect(router.state.location.pathname).toBe('/admin');
+    });
+    const created = (await quizService.getAdminQuizzes()).find(quiz => quiz.title === 'Astronomy');
+    expect(created).toMatchObject({ questionCount: 1, countries: ['IN'], questionTypes: ['single'] });
+  });
+
+  it('shows the problems of an incomplete question when saving', async () => {
+    const user = userEvent.setup();
+    renderRoute('/admin/quizzes/new');
+
+    await user.type(await titleInput(), 'Astronomy');
+    await toggleCountry(user, 'India');
+    await user.click(screen.getByRole('button', { name: 'Add question' }));
+    await user.click(screen.getByRole('button', { name: 'Create quiz' }));
+
+    expect(await screen.findByText('Enter the question text')).toBeInTheDocument();
+    expect(screen.getAllByText('Enter the option text')).toHaveLength(2);
+    expect(screen.getByText('Mark at least one correct option')).toBeInTheDocument();
+    expect(screen.getByText('4 problems')).toBeInTheDocument();
+  });
+
+  it('allows only one correct answer for a single choice question', async () => {
+    const user = userEvent.setup();
+    renderRoute('/admin/quizzes/q5/edit');
+
+    await user.click(await screen.findByRole('button', { name: 'Edit question 1' }));
+    await user.click(screen.getByRole('checkbox', { name: 'Option 1 is correct' }));
+
+    expect(screen.getByRole('checkbox', { name: 'Option 1 is correct' })).toBeChecked();
+    expect(screen.getByRole('checkbox', { name: 'Option 2 is correct' })).not.toBeChecked();
+  });
+
+  it('keeps one correct answer when a multiple choice question becomes single choice', async () => {
+    const user = userEvent.setup();
+    renderRoute('/admin/quizzes/q5/edit');
+
+    await user.click(await screen.findByRole('button', { name: 'Edit question 2' }));
+    expect(screen.getByRole('checkbox', { name: 'Option 3 is correct' })).toBeChecked();
+    await user.click(screen.getByRole('radio', { name: 'Single choice' }));
+
+    expect(screen.getByRole('checkbox', { name: 'Option 1 is correct' })).toBeChecked();
+    expect(screen.getByRole('checkbox', { name: 'Option 3 is correct' })).not.toBeChecked();
+  });
+
+  it('adds and removes options', async () => {
+    const user = userEvent.setup();
+    renderRoute('/admin/quizzes/q5/edit');
+
+    await user.click(await screen.findByRole('button', { name: 'Edit question 1' }));
+    await user.click(screen.getByRole('button', { name: 'Add option' }));
+    expect(screen.getByRole('textbox', { name: 'Option 5' })).toHaveValue('');
+
+    await user.click(screen.getByRole('button', { name: 'Remove option 5' }));
+    expect(screen.queryByRole('textbox', { name: 'Option 5' })).not.toBeInTheDocument();
+  });
+
+  it('moves and deletes questions', async () => {
+    const user = userEvent.setup();
+    renderRoute('/admin/quizzes/q5/edit');
+
+    await user.click(await screen.findByRole('button', { name: 'Edit question 2' }));
+    await user.click(screen.getByRole('button', { name: 'Move question 2 up' }));
+    expect(screen.getByRole('textbox', { name: 'Question text' })).toHaveValue('Which of these are noble gases?');
+    expect(screen.getByRole('button', { name: 'Move question 1 down' })).toBeInTheDocument();
+
+    await user.click(screen.getByRole('button', { name: 'Delete question 1' }));
+
+    expect(screen.getByRole('heading', { name: 'Questions (5)' })).toBeInTheDocument();
+    expect(screen.queryByText('Which of these are noble gases?')).not.toBeInTheDocument();
   });
 
   it('says when the quiz to edit does not exist', async () => {

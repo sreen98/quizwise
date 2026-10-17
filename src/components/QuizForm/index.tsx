@@ -1,14 +1,14 @@
 import {
-  Anchor,
+  ActionIcon,
   Badge,
   Box,
   Button,
   Card,
   Checkbox,
-  Chip,
   Fieldset,
   Flex,
   Group,
+  MultiSelect,
   NumberInput,
   Stack,
   Switch,
@@ -18,10 +18,13 @@ import {
   Title
 } from '@mantine/core';
 import { schemaResolver, useForm, type UseFormReturnType } from '@mantine/form';
+import { IconArrowLeft } from '@tabler/icons-react';
 import { useState } from 'react';
 import { Link } from 'react-router';
 import { quizInputSchema } from '../../data/schema';
 import type { QuizInput } from '../../types/models';
+import { QuestionBuilder } from '../QuestionBuilder';
+import classes from './QuizForm.module.css';
 import type { QuizFormProps } from './types';
 
 type LimitField = 'timeLimitSeconds' | 'perQuestionSeconds';
@@ -113,23 +116,54 @@ export const QuizForm = ({ initialValues, countries, isNew, onSubmit }: QuizForm
 
   return (
     <Box component="form" noValidate onSubmit={form.onSubmit(values => void handleSubmit(values))}>
-      <Text component="nav" aria-label="Breadcrumb" fz={14} mb={6}>
-        <Anchor component={Link} to="/admin" fw={600} display="inline-block" lh="44px">
-          Manage quizzes
-        </Anchor>{' '}
-        <Text component="span" c="dimmed" inherit>
-          / {isNew ? 'New quiz' : 'Edit quiz'}
-        </Text>
-      </Text>
-      <Group gap={14} mb={24}>
-        <Title order={1} fz={{ base: 28, sm: 32 }} lts="-0.01em">
-          {isNew ? 'New quiz' : 'Edit quiz'}
-        </Title>
-        {form.isDirty() && <Badge color="orange">Unsaved changes</Badge>}
-      </Group>
+      <Flex
+        pos={{ base: 'static', sm: 'sticky' }}
+        top={{ base: 60, sm: 68 }}
+        bg="var(--bg)"
+        wrap="wrap"
+        align="center"
+        justify="space-between"
+        gap={12}
+        py={12}
+        mt={-12}
+        mb={12}
+        className={classes.toolbar}
+      >
+        <Group gap={8} wrap="nowrap" miw={0}>
+          <ActionIcon
+            component={Link}
+            to="/admin"
+            variant="subtle"
+            color="gray"
+            size={44}
+            aria-label="Back to Manage quizzes"
+          >
+            <IconArrowLeft size={20} aria-hidden />
+          </ActionIcon>
+          <Title order={1} fz={{ base: 22, sm: 26 }} lts="-0.01em">
+            {isNew ? 'New quiz' : 'Edit quiz'}
+          </Title>
+          {form.isDirty() && <Badge color="orange">Unsaved changes</Badge>}
+        </Group>
+        <Group gap={12}>
+          <Button component={Link} to="/admin" variant="default">
+            Cancel
+          </Button>
+          <Button type="submit" loading={saving}>
+            {isNew ? 'Create quiz' : 'Save quiz'}
+          </Button>
+        </Group>
+      </Flex>
 
       <Flex wrap="wrap" gap={24} align="flex-start">
-        <Card component="section" aria-labelledby="details-title" withBorder radius="lg" p={24} flex="1 1 340px">
+        <Card
+          component="section"
+          aria-labelledby="details-title"
+          withBorder
+          radius="lg"
+          p={{ base: 16, sm: 24 }}
+          flex="1 1 340px"
+        >
           <Title id="details-title" order={2} fz={18} mb={20}>
             Details
           </Title>
@@ -149,28 +183,14 @@ export const QuizForm = ({ initialValues, countries, isNew, onSubmit }: QuizForm
               labelPosition="left"
               {...form.getInputProps('retakesAllowed', { type: 'checkbox' })}
             />
-            <Fieldset legend="Available in" variant="unstyled" p={0}>
-              <Chip.Group
-                multiple
-                value={form.values.countries}
-                onChange={value => {
-                  form.setFieldValue('countries', value);
-                }}
-              >
-                <Group gap={8}>
-                  {countries.map(country => (
-                    <Chip key={country.code} value={country.code}>
-                      {country.name}
-                    </Chip>
-                  ))}
-                </Group>
-              </Chip.Group>
-              {form.errors.countries && (
-                <Text c="var(--mantine-color-error)" fz={13} mt={6}>
-                  {form.errors.countries}
-                </Text>
-              )}
-            </Fieldset>
+            <MultiSelect
+              label="Available in"
+              placeholder="Search countries"
+              data={countries.map(country => ({ value: country.code, label: country.name }))}
+              searchable
+              nothingFoundMessage="No countries found"
+              {...form.getInputProps('countries')}
+            />
           </Stack>
         </Card>
 
@@ -179,59 +199,13 @@ export const QuizForm = ({ initialValues, countries, isNew, onSubmit }: QuizForm
           aria-labelledby="questions-title"
           withBorder
           radius="lg"
-          p={24}
+          p={{ base: 16, sm: 24 }}
           flex="999 1 560px"
           miw={0}
         >
-          <Title id="questions-title" order={2} fz={18} mb={18}>
-            Questions{' '}
-            <Text component="span" c="dimmed" fw={600} inherit>
-              ({form.values.questions.length})
-            </Text>
-          </Title>
-          {form.values.questions.length === 0 ? (
-            <Text c="dimmed">No questions yet.</Text>
-          ) : (
-            <Stack component="ol" gap={10} m={0} p={0}>
-              {form.values.questions.map((question, index) => (
-                <Group
-                  component="li"
-                  key={question.id}
-                  display="flex"
-                  gap={12}
-                  wrap="nowrap"
-                  px={14}
-                  py={12}
-                  bd="1px solid var(--mantine-color-default-border)"
-                  bdrs="md"
-                >
-                  <Text ff="monospace" c="dimmed" fw={700} w={24}>
-                    {index + 1}
-                  </Text>
-                  <Text fw={600} flex={1} miw={0}>
-                    {question.text}
-                  </Text>
-                  <Badge variant="default">{question.type === 'single' ? 'Single' : 'Multiple'}</Badge>
-                </Group>
-              ))}
-            </Stack>
-          )}
-          {form.errors.questions && (
-            <Text c="var(--mantine-color-error)" fz={13} mt={10}>
-              {form.errors.questions}
-            </Text>
-          )}
+          <QuestionBuilder form={form} />
         </Card>
       </Flex>
-
-      <Group justify="flex-end" gap={12} mt={24} mb={8}>
-        <Button component={Link} to="/admin" variant="default">
-          Cancel
-        </Button>
-        <Button type="submit" loading={saving}>
-          {isNew ? 'Create quiz' : 'Save quiz'}
-        </Button>
-      </Group>
     </Box>
   );
 };

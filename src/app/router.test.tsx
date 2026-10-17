@@ -1,5 +1,6 @@
 import { screen, within } from '@testing-library/react';
 import { describe, expect, it } from 'vitest';
+import { useSessionStore } from '../session/sessionStore';
 import { renderRoute } from '../test/renderWithProviders';
 
 describe('routes', () => {
@@ -11,6 +12,7 @@ describe('routes', () => {
   });
 
   it('opens a deep link with its route params', async () => {
+    useSessionStore.setState({ userId: 'u5', country: null, slowNetwork: false });
     renderRoute('/admin/quizzes/q2/edit');
 
     expect(await screen.findByRole('heading', { level: 1, name: 'Edit quiz' })).toBeInTheDocument();

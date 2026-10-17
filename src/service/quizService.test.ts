@@ -300,3 +300,138 @@ describe('getCurrentQuestion', () => {
     await expect(setup().service.getCurrentQuestion('nope')).rejects.toThrow('Attempt not found');
   });
 });
+
+const startQ1 = async () => {
+  const context = setup();
+  const { attemptId } = await context.service.startOrResumeAttempt('q1', 'u5');
+  const questions = context.store.getState().quizzes.find(quiz => quiz.id === 'q1')?.questions ?? [];
+  const correct = (index: number) => questions[index]?.correctOptionIds ?? [];
+  const wrong = (index: number) => {
+    const question = questions[index];
+    const option = question?.options.find(item => !question.correctOptionIds.includes(item.id));
+    return option ? [option.id] : [];
+  };
+  const answers = () => context.store.getState().attempts.find(attempt => attempt.id === attemptId)?.answers ?? [];
+  return { ...context, attemptId, questions, correct, wrong, answers };
+};
+
+describe('submitAnswer', () => {
+  it('records the answer and moves to the next question', async () => {
+    const { service, attemptId, correct, answers } = await startQ1();
+
+    const next = await service.submitAnswer(attemptId, 'q1-1', correct(0));
+
+    expect(next).toMatchObject({ status: 'in_progress', index: 1 });
+    expect(answers()).toEqual([
+      { questionId: 'q1-1', selectedOptionIds: correct(0), isCorrect: true, answeredAt: new Date(NOW).toISOString() }
+    ]);
+  });
+
+  it('ignores a repeated submit for the same question', async () => {
+    const { service, attemptId, correct, wrong, answers } = await startQ1();
+
+    await service.submitAnswer(attemptId, 'q1-1', correct(0));
+    const repeated = await service.submitAnswer(attemptId, 'q1-1', wrong(0));
+
+    expect(repeated).toMatchObject({ status: 'in_progress', index: 1 });
+    expect(answers()).toHaveLength(1);
+    expect(answers()[0]?.isCorrect).toBe(true);
+  });
+
+  it('stores a wrong choice as incorrect', async () => {
+    const { service, attemptId, wrong, answers } = await startQ1();
+
+    await service.submitAnswer(attemptId, 'q1-1', wrong(0));
+
+    expect(answers()[0]?.isCorrect).toBe(false);
+  });
+
+  it('finishes the attempt after the last answer', async () => {
+    const { store, service, attemptId, questions, correct, wrong } = await startQ1();
+
+    let result = await service.getCurrentQuestion(attemptId);
+    for (const [index, question] of questions.entries()) {
+      result = await service.submitAnswer(attemptId, question.id, index === 0 ? wrong(0) : correct(index));
+    }
+
+    expect(result).toEqual({ status: 'completed', endReason: 'submitted' });
+    expect(store.getState().attempts.find(attempt => attempt.id === attemptId)).toMatchObject({
+      status: 'completed',
+      score: 5,
+      percentage: 83.3
+    });
+  });
+
+  it('does not record an answer that arrives after the time ran out', async () => {
+    const { clock, service, attemptId, correct, answers } = await startQ1();
+
+    clock.now = later(301);
+    const result = await service.submitAnswer(attemptId, 'q1-1', correct(0));
+
+    expect(result).toEqual({ status: 'completed', endReason: 'timeout' });
+    expect(answers()).toEqual([expect.objectContaining({ questionId: 'q1-1', selectedOptionIds: [] })]);
+  });
+
+  it('rejects an option from another question', async () => {
+    const { service, attemptId, correct } = await startQ1();
+
+    await expect(service.submitAnswer(attemptId, 'q1-1', correct(1))).rejects.toThrow('Invalid answer');
+  });
+});
+
+describe('saveDraft', () => {
+  it('keeps the current selection after a reload', async () => {
+    const { service, attemptId, wrong } = await startQ1();
+
+    await service.saveDraft(attemptId, wrong(0));
+    const reloaded = createQuizService(createDataStore(), () => NOW);
+
+    expect(await reloaded.getCurrentQuestion(attemptId)).toMatchObject({ index: 0, draftOptionIds: wrong(0) });
+  });
+});
+
+describe('completeAttempt', () => {
+  it('returns the score, counts and time taken', async () => {
+    const { clock, service, attemptId, questions, correct, wrong } = await startQ1();
+
+    for (const [index, question] of questions.entries()) {
+      clock.now = later((index + 1) * 20);
+      await service.submitAnswer(attemptId, question.id, index < 2 ? wrong(index) : correct(index));
+    }
+
+    expect(await service.completeAttempt(attemptId)).toMatchObject({
+      score: 4,
+      totalQuestions: 6,
+      correctCount: 4,
+      incorrectCount: 2,
+      percentage: 66.7,
+      timeTakenSeconds: 120,
+      endReason: 'submitted'
+    });
+  });
+
+  it('counts unanswered questions as incorrect when finishing early', async () => {
+    const { clock, service, attemptId, correct } = await startQ1();
+
+    await service.submitAnswer(attemptId, 'q1-1', correct(0));
+    clock.now = later(50);
+
+    expect(await service.completeAttempt(attemptId)).toMatchObject({
+      score: 1,
+      correctCount: 1,
+      incorrectCount: 5,
+      percentage: 16.7,
+      timeTakenSeconds: 50
+    });
+  });
+
+  it('returns the stored result of a completed seed attempt', async () => {
+    expect(await setup().service.completeAttempt('a1')).toMatchObject({
+      score: 5,
+      totalQuestions: 6,
+      percentage: 83.3,
+      timeTakenSeconds: 142,
+      endReason: 'submitted'
+    });
+  });
+});

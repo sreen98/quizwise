@@ -1,10 +1,11 @@
 import type { StoreApi } from 'zustand/vanilla';
 import { dataStore } from '../data/store';
 import type { Attempt, Quiz, QuizData, User } from '../types/models';
-import { catchUp, toPublicQuestion } from './attempts';
+import { catchUp, finishAttempt, recordAnswer, toPublicQuestion } from './attempts';
 import { rankBestAttempts } from './ranking';
 import { getDeadlines } from './timing';
 import type {
+  AttemptResult,
   CurrentQuestion,
   Leaderboard,
   LeaderboardEntry,
@@ -60,6 +61,39 @@ const toLeaderboardEntry = (attempt: Attempt, index: number, users: User[]): Lea
   timeTakenSeconds: attempt.timeTakenSeconds ?? 0
 });
 
+const toCurrentQuestion = (attempt: Attempt, quiz: Quiz): CurrentQuestion => {
+  if (attempt.status !== 'in_progress') return { status: attempt.status, endReason: attempt.endReason };
+
+  const question = quiz.questions[attempt.currentQuestionIndex];
+  if (!question) throw new Error('Question not found');
+
+  return {
+    status: 'in_progress',
+    question: toPublicQuestion(question),
+    index: attempt.currentQuestionIndex,
+    total: quiz.questions.length,
+    ...getDeadlines(quiz, attempt),
+    draftOptionIds: attempt.draftOptionIds
+  };
+};
+
+const toResult = (attempt: Attempt): AttemptResult => {
+  const score = attempt.score ?? 0;
+
+  return {
+    attemptId: attempt.id,
+    quizId: attempt.quizId,
+    score,
+    totalQuestions: attempt.totalQuestions,
+    correctCount: score,
+    incorrectCount: attempt.totalQuestions - score,
+    percentage: attempt.percentage ?? 0,
+    timeTakenSeconds: attempt.timeTakenSeconds ?? 0,
+    endReason: attempt.endReason,
+    completedAt: attempt.completedAt
+  };
+};
+
 export const createQuizService = (store: StoreApi<QuizData>, now: () => number = Date.now) => {
   const findQuiz = (quizId: string) => {
     const quiz = store.getState().quizzes.find(item => item.id === quizId);
@@ -77,6 +111,14 @@ export const createQuizService = (store: StoreApi<QuizData>, now: () => number =
     store.setState(state => ({
       attempts: state.attempts.map(item => (item.id === attempt.id ? attempt : item))
     }));
+  };
+
+  const loadAttempt = (attemptId: string) => {
+    const stored = findAttempt(attemptId);
+    const quiz = findQuiz(stored.quizId);
+    const attempt = catchUp(stored, quiz, now());
+    if (attempt !== stored) saveAttempt(attempt);
+    return { attempt, quiz };
   };
 
   return {
@@ -152,27 +194,43 @@ export const createQuizService = (store: StoreApi<QuizData>, now: () => number =
       }),
 
     getCurrentQuestion: (attemptId: string) =>
-      respond((): CurrentQuestion => {
-        const stored = findAttempt(attemptId);
-        const quiz = findQuiz(stored.quizId);
-        const attempt = catchUp(stored, quiz, now());
-        if (attempt !== stored) saveAttempt(attempt);
+      respond(() => {
+        const { attempt, quiz } = loadAttempt(attemptId);
+        return toCurrentQuestion(attempt, quiz);
+      }),
 
-        if (attempt.status !== 'in_progress') {
-          return { status: attempt.status, endReason: attempt.endReason };
+    submitAnswer: (attemptId: string, questionId: string, optionIds: string[]) =>
+      respond(() => {
+        const { attempt, quiz } = loadAttempt(attemptId);
+        const question = quiz.questions[attempt.currentQuestionIndex];
+        if (attempt.status !== 'in_progress' || !question || question.id !== questionId) {
+          return toCurrentQuestion(attempt, quiz);
         }
 
-        const question = quiz.questions[attempt.currentQuestionIndex];
-        if (!question) throw new Error('Question not found');
+        const optionIdsInQuestion = new Set(question.options.map(option => option.id));
+        if (!optionIds.every(optionId => optionIdsInQuestion.has(optionId))) throw new Error('Invalid answer');
 
-        return {
-          status: 'in_progress',
-          question: toPublicQuestion(question),
-          index: attempt.currentQuestionIndex,
-          total: quiz.questions.length,
-          ...getDeadlines(quiz, attempt),
-          draftOptionIds: attempt.draftOptionIds
-        };
+        const answered = recordAnswer(attempt, question, optionIds, now());
+        const next =
+          answered.currentQuestionIndex >= quiz.questions.length
+            ? finishAttempt(answered, now(), 'submitted')
+            : answered;
+        saveAttempt(next);
+        return toCurrentQuestion(next, quiz);
+      }),
+
+    saveDraft: (attemptId: string, optionIds: string[]) =>
+      respond(() => {
+        const { attempt } = loadAttempt(attemptId);
+        if (attempt.status === 'in_progress') saveAttempt({ ...attempt, draftOptionIds: optionIds });
+      }),
+
+    completeAttempt: (attemptId: string) =>
+      respond((): AttemptResult => {
+        const loaded = loadAttempt(attemptId).attempt;
+        const attempt = loaded.status === 'in_progress' ? finishAttempt(loaded, now(), 'submitted') : loaded;
+        if (attempt !== loaded) saveAttempt(attempt);
+        return toResult(attempt);
       }),
 
     subscribe: (listener: () => void) => store.subscribe(listener)

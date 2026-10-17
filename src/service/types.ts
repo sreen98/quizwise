@@ -65,3 +65,16 @@ export interface AttemptFinished {
 }
 
 export type CurrentQuestion = QuestionInProgress | AttemptFinished;
+
+export interface AttemptResult {
+  attemptId: string;
+  quizId: string;
+  score: number;
+  totalQuestions: number;
+  correctCount: number;
+  incorrectCount: number;
+  percentage: number;
+  timeTakenSeconds: number;
+  endReason: AttemptEndReason | null;
+  completedAt: string | null;
+}

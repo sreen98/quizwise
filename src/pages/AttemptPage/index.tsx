@@ -49,7 +49,7 @@ const timersFor = (question: QuestionInProgress) => {
 
 export const AttemptPage = () => {
   const { attemptId = '' } = useParams();
-  const { state, selection, select, submit, submitting, now, announcement } = useQuizAttempt(attemptId);
+  const { state, endedWhileAway, selection, select, submit, submitting, now, announcement } = useQuizAttempt(attemptId);
   const question = state.status === 'in_progress' ? state : null;
   const timers = question ? timersFor(question) : [];
   const urgent = timers.find(timer => timer.deadlineAt === question?.deadlineAt);
@@ -61,7 +61,7 @@ export const AttemptPage = () => {
     [
       'Enter',
       event => {
-        if (!question || (event.target instanceof Element && event.target.closest('a'))) return;
+        if (!question || (event.target instanceof Element && event.target.closest('a, [role="dialog"]'))) return;
         event.preventDefault();
         if (canSubmit) submit();
       },
@@ -69,8 +69,12 @@ export const AttemptPage = () => {
     ]
   ]);
 
-  if (state.status === 'completed' || state.status === 'closed') {
+  if (state.status === 'completed' && state.endReason === 'submitted') {
     return <Navigate to={`/attempts/${attemptId}/results`} replace />;
+  }
+
+  if (state.status === 'completed' || state.status === 'closed') {
+    return <Navigate to={`/attempts/${attemptId}/ended`} replace state={{ whileAway: endedWhileAway }} />;
   }
 
   const handleSubmit = (event: SubmitEvent<HTMLFormElement>) => {
@@ -83,6 +87,7 @@ export const AttemptPage = () => {
       <AppShell.Header>
         <AttemptHeader
           quizTitle={question?.quizTitle ?? null}
+          confirmExit={timers.length > 0}
           timers={timers.map(timer => (
             <TimerBadge
               key={timer.scope}

@@ -82,3 +82,21 @@ export interface AttemptResult {
   endReason: AttemptEndReason | null;
   completedAt: string | null;
 }
+
+export interface EndedAttempt {
+  attemptId: string;
+  quizId: string;
+  quizTitle: string | null;
+  status: Exclude<AttemptStatus, 'in_progress'>;
+  endReason: AttemptEndReason | null;
+  startedAt: string;
+  timeLimitSeconds: number | null;
+  perQuestionSeconds: number | null;
+  answeredCount: number;
+  totalQuestions: number;
+  score: number | null;
+  percentage: number | null;
+  timeTakenSeconds: number | null;
+  bestResult: { score: number; totalQuestions: number } | null;
+  canStartAgain: boolean;
+}

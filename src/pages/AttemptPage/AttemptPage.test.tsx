@@ -1,4 +1,4 @@
-import { act, screen, waitFor } from '@testing-library/react';
+import { act, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { quizService } from '../../service/quizService';
@@ -14,6 +14,12 @@ const firstOption = () => {
   const [option] = [...screen.queryAllByRole('radio'), ...screen.queryAllByRole('checkbox')];
   if (!option) throw new Error('The question has no options');
   return option;
+};
+
+const findExitLink = async () => {
+  const [link] = await screen.findAllByRole('link', { name: 'Save and exit' });
+  if (!link) throw new Error('Save and exit is missing');
+  return link;
 };
 
 describe('AttemptPage', () => {
@@ -125,6 +131,64 @@ describe('AttemptPage', () => {
     });
   });
 
+  it('asks before leaving a timed quiz and stays when the user keeps going', async () => {
+    const user = userEvent.setup();
+    const { router } = renderRoute(`/attempts/${await startQuiz()}`);
+
+    await user.click(await findExitLink());
+    const dialog = await screen.findByRole('dialog', { name: 'Leave the quiz?' });
+    await user.click(within(dialog).getByRole('button', { name: 'Keep going' }));
+
+    await waitFor(() => {
+      expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
+    });
+    expect(router.state.location.pathname).toMatch(/^\/attempts\//);
+  });
+
+  it('opens the quiz list after confirming Save and exit', async () => {
+    const user = userEvent.setup();
+    const { router } = renderRoute(`/attempts/${await startQuiz()}`);
+
+    await user.click(await findExitLink());
+    const dialog = await screen.findByRole('dialog', { name: 'Leave the quiz?' });
+    await user.click(within(dialog).getByRole('button', { name: 'Save and exit' }));
+
+    await waitFor(() => {
+      expect(router.state.location.pathname).toBe('/quizzes');
+    });
+  });
+
+  it('does not submit the answer when Enter is pressed in the leave dialog', async () => {
+    const user = userEvent.setup();
+    renderRoute(`/attempts/${await startQuiz()}`);
+
+    await user.click(await screen.findByRole('radio', { name: 'const' }));
+    await user.click(await findExitLink());
+    const dialog = await screen.findByRole('dialog', { name: 'Leave the quiz?' });
+    within(dialog).getByRole('button', { name: 'Keep going' }).focus();
+    await user.keyboard('{Enter}');
+
+    await waitFor(() => {
+      expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
+    });
+    expect(screen.getByText('Question 1 of 6')).toBeInTheDocument();
+    expect(screen.getByRole('radio', { name: 'const' })).toBeChecked();
+  });
+
+  it('leaves an untimed quiz without asking', async () => {
+    const user = userEvent.setup();
+    const quiz = await quizService.getQuizForEdit('q1');
+    const untimed = await quizService.createQuiz({ ...quiz, timeLimitSeconds: null, perQuestionSeconds: null });
+    const { router } = renderRoute(`/attempts/${await startQuiz(untimed.id)}`);
+
+    await user.click(await findExitLink());
+
+    await waitFor(() => {
+      expect(router.state.location.pathname).toBe('/quizzes');
+    });
+    expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
+  });
+
   it('says when an attempt does not exist', async () => {
     renderRoute('/attempts/a99');
 
@@ -185,6 +249,16 @@ describe('AttemptPage', () => {
 
       expect(await screen.findByText('Question 2 of 7')).toBeInTheDocument();
       expect(screen.getByText('1 answered')).toBeInTheDocument();
+    });
+
+    it('says time ran out when the whole quiz runs out while the user is on it', async () => {
+      const { router } = renderRoute(`/attempts/${await startQuiz()}`);
+      await screen.findByText('Question 1 of 6');
+
+      await advance(300_000);
+
+      expect(await screen.findByRole('heading', { name: 'Time ran out' })).toBeInTheDocument();
+      expect(router.state.location.pathname).toMatch(/\/ended$/);
     });
 
     it('shows no timer for an untimed quiz', async () => {

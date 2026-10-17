@@ -8,7 +8,16 @@ type AttemptState = { status: 'loading' } | { status: 'missing' } | CurrentQuest
 interface Loaded {
   attemptId: string;
   state: AttemptState;
+  sawQuestion: boolean;
 }
+
+const nextLoaded =
+  (attemptId: string, state: AttemptState) =>
+  (previous: Loaded | null): Loaded => ({
+    attemptId,
+    state,
+    sawQuestion: state.status === 'in_progress' || (previous?.attemptId === attemptId && previous.sawQuestion)
+  });
 
 const limitFor = (question: QuestionInProgress) =>
   question.deadlineAt !== null && question.deadlineAt === question.questionDeadlineAt
@@ -25,6 +34,7 @@ export const useQuizAttempt = (attemptId: string) => {
 
   const state: AttemptState = loaded?.attemptId === attemptId ? loaded.state : { status: 'loading' };
   const question = state.status === 'in_progress' ? state : null;
+  const endedWhileAway = loaded?.attemptId === attemptId && !loaded.sawQuestion;
 
   useEffect(() => {
     const request = ++latestRequest.current;
@@ -33,11 +43,11 @@ export const useQuizAttempt = (attemptId: string) => {
       .getCurrentQuestion(attemptId)
       .then(current => {
         if (request !== latestRequest.current) return;
-        setLoaded({ attemptId, state: current });
+        setLoaded(nextLoaded(attemptId, current));
         setSelection(current.status === 'in_progress' ? current.draftOptionIds : []);
       })
       .catch(() => {
-        if (request === latestRequest.current) setLoaded({ attemptId, state: { status: 'missing' } });
+        if (request === latestRequest.current) setLoaded(nextLoaded(attemptId, { status: 'missing' }));
       });
   }, [attemptId, reloadKey]);
 
@@ -65,7 +75,7 @@ export const useQuizAttempt = (attemptId: string) => {
       .submitAnswer(attemptId, question.question.id, selection)
       .then(current => {
         if (request !== latestRequest.current) return;
-        setLoaded({ attemptId, state: current });
+        setLoaded(nextLoaded(attemptId, current));
         setSelection(current.status === 'in_progress' ? current.draftOptionIds : []);
       })
       .catch(() => {
@@ -77,5 +87,5 @@ export const useQuizAttempt = (attemptId: string) => {
       });
   };
 
-  return { state, selection, select, submit, submitting, now, remainingMs, announcement };
+  return { state, endedWhileAway, selection, select, submit, submitting, now, remainingMs, announcement };
 };

@@ -9,6 +9,7 @@ import { getDeadlines } from './timing';
 import type {
   AttemptResult,
   CurrentQuestion,
+  EndedAttempt,
   Leaderboard,
   LeaderboardEntry,
   QuizDetails,
@@ -268,6 +269,34 @@ export const createQuizService = (
         const attempt = loaded.status === 'in_progress' ? finishAttempt(loaded, time, 'submitted') : loaded;
         if (attempt !== loaded) saveAttempt(attempt);
         return toResult(attempt);
+      }),
+
+    getEndedAttempt: (attemptId: string) =>
+      respond((): EndedAttempt => {
+        const { attempt, quiz } = loadAttempt(attemptId, now());
+        if (attempt.status === 'in_progress') throw new Error('Attempt is still in progress');
+        const userAttempts = store
+          .getState()
+          .attempts.filter(item => item.quizId === attempt.quizId && item.userId === attempt.userId);
+        const [best] = rankBestAttempts(userAttempts);
+
+        return {
+          attemptId: attempt.id,
+          quizId: attempt.quizId,
+          quizTitle: quiz?.title ?? null,
+          status: attempt.status,
+          endReason: attempt.endReason,
+          startedAt: attempt.startedAt,
+          timeLimitSeconds: quiz?.timeLimitSeconds ?? null,
+          perQuestionSeconds: quiz?.perQuestionSeconds ?? null,
+          answeredCount: attempt.answers.filter(answer => answer.selectedOptionIds.length > 0).length,
+          totalQuestions: attempt.totalQuestions,
+          score: attempt.score,
+          percentage: attempt.percentage,
+          timeTakenSeconds: attempt.timeTakenSeconds,
+          bestResult: best ? { score: best.score ?? 0, totalQuestions: best.totalQuestions } : null,
+          canStartAgain: quiz !== undefined && (quiz.retakesAllowed || !best)
+        };
       }),
 
     getUsers: () => respond(() => store.getState().users),

@@ -1,6 +1,7 @@
 import { Navigate, type RouteObject } from 'react-router';
 import { AppLayout } from '../components/AppLayout';
 import { RouteError } from '../components/RouteError';
+import { AttemptEndedPage } from '../pages/AttemptEndedPage';
 import { AttemptPage } from '../pages/AttemptPage';
 import { LeaderboardPage } from '../pages/LeaderboardPage';
 import { NotFoundPage } from '../pages/NotFoundPage';
@@ -19,6 +20,7 @@ export const routes: RouteObject[] = [
       { index: true, element: <Navigate to="/quizzes" replace /> },
       { path: 'quizzes', Component: QuizListPage },
       { path: 'quizzes/:quizId', Component: QuizStartPage },
+      { path: 'attempts/:attemptId/ended', Component: AttemptEndedPage },
       { path: 'attempts/:attemptId/results', Component: ResultsPage },
       { path: 'leaderboard/:quizId?', Component: LeaderboardPage },
       { path: 'admin', Component: AdminQuizListPage },

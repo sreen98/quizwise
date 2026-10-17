@@ -574,6 +574,60 @@ describe('quiz edited or deleted during an attempt', () => {
   });
 });
 
+describe('getEndedAttempt', () => {
+  it('describes an attempt that timed out while the user was away', async () => {
+    const { service } = setup();
+
+    expect(await service.getEndedAttempt('a11')).toMatchObject({
+      quizTitle: 'World Geography',
+      status: 'completed',
+      endReason: 'timeout',
+      startedAt: '2026-10-16T09:00:00Z',
+      timeLimitSeconds: 240,
+      answeredCount: 2,
+      totalQuestions: 5,
+      score: 2,
+      percentage: 40,
+      timeTakenSeconds: 240
+    });
+  });
+
+  it('keeps the earlier best result when the quiz was updated during the attempt', async () => {
+    const { service } = setup();
+    const { attemptId } = await service.startOrResumeAttempt('q1', 'u1');
+    await service.updateQuiz('q1', await service.getQuizForEdit('q1'));
+
+    expect(await service.getEndedAttempt(attemptId)).toMatchObject({
+      quizTitle: 'JavaScript Basics',
+      status: 'closed',
+      endReason: 'quiz_changed',
+      score: null,
+      bestResult: { score: 5, totalQuestions: 6 },
+      canStartAgain: true
+    });
+  });
+
+  it('cannot start a deleted quiz again and has no title for it', async () => {
+    const { service } = setup();
+    const { attemptId } = await service.startOrResumeAttempt('q2', 'u5');
+    await service.deleteQuiz('q2');
+
+    expect(await service.getEndedAttempt(attemptId)).toMatchObject({
+      quizTitle: null,
+      status: 'closed',
+      endReason: 'quiz_deleted',
+      canStartAgain: false
+    });
+  });
+
+  it('refuses an attempt that is still in progress', async () => {
+    const { service } = setup();
+    const { attemptId } = await service.startOrResumeAttempt('q1', 'u5');
+
+    await expect(service.getEndedAttempt(attemptId)).rejects.toThrow('Attempt is still in progress');
+  });
+});
+
 const newQuiz = (correctOptionIds = ['paris']): QuizInput => ({
   title: 'Capitals',
   description: 'European capitals',

@@ -1,14 +1,32 @@
 import { ActionIcon, Button, Flex, Group, Skeleton, Text } from '@mantine/core';
+import { modals } from '@mantine/modals';
 import { IconArrowLeft } from '@tabler/icons-react';
-import { Link } from 'react-router';
+import type { MouseEvent } from 'react';
+import { Link, useNavigate } from 'react-router';
 import type { AttemptHeaderProps } from './types';
 
-export const AttemptHeader = ({ quizTitle, timers }: AttemptHeaderProps) => {
+export const AttemptHeader = ({ quizTitle, timers, confirmExit }: AttemptHeaderProps) => {
+  const navigate = useNavigate();
+
+  const handleExit = (event: MouseEvent) => {
+    if (!confirmExit) return;
+    event.preventDefault();
+    modals.openConfirmModal({
+      title: 'Leave the quiz?',
+      children: <Text size="sm">Your answers are saved, but the timer keeps running while you're away.</Text>,
+      labels: { confirm: 'Save and exit', cancel: 'Keep going' },
+      onConfirm: () => {
+        void navigate('/quizzes');
+      }
+    });
+  };
+
   return (
     <Group h="100%" pl={{ base: 4, sm: 12 }} pr={{ base: 8, sm: 24 }} gap={14} wrap="nowrap">
       <Button
         component={Link}
         to="/quizzes"
+        onClick={handleExit}
         variant="subtle"
         color="gray"
         px={12}
@@ -20,6 +38,7 @@ export const AttemptHeader = ({ quizTitle, timers }: AttemptHeaderProps) => {
       <ActionIcon
         component={Link}
         to="/quizzes"
+        onClick={handleExit}
         variant="subtle"
         color="gray"
         size={44}

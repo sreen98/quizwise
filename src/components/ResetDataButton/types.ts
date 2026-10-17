@@ -1,3 +1,3 @@
 export interface ResetDataButtonProps {
-  onDone?: () => void;
+  onDialogOpen: () => void;
 }

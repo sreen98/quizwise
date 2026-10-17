@@ -1,0 +1,31 @@
+.badge {
+  border: 1px solid var(--mantine-color-default-border);
+  background-color: var(--surface-2);
+
+  &[data-warning] {
+    border-color: var(--warn);
+    background-color: var(--warn-soft);
+    color: var(--warn);
+  }
+
+  @mixin smaller-than $mantine-breakpoint-sm {
+    border-color: transparent;
+    background-color: transparent;
+
+    &[data-warning] {
+      border-color: transparent;
+      background-color: transparent;
+    }
+  }
+}
+
+.label {
+  @mixin smaller-than $mantine-breakpoint-sm {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip-path: inset(50%);
+    white-space: nowrap;
+  }
+}

@@ -9,6 +9,11 @@ interface CountdownOptions {
   onExpire: () => void;
 }
 
+export const isWarning = (remainingMs: number, limitSeconds: number) => {
+  const warningSeconds = WARNING_SECONDS.filter(seconds => limitSeconds > seconds).at(-1);
+  return warningSeconds !== undefined && remainingMs <= warningSeconds * 1000;
+};
+
 const announcementFor = (remainingMs: number | null, limitSeconds: number | null) => {
   if (remainingMs === null || limitSeconds === null || remainingMs <= 0) return '';
   const warning = WARNING_SECONDS.find(seconds => remainingMs <= seconds * 1000 && limitSeconds > seconds);
@@ -48,5 +53,5 @@ export const useCountdown = ({ deadlineAt, limitSeconds, onExpire }: CountdownOp
 
   const remainingMs = deadlineAt === null ? null : Math.max(0, deadlineAt - now);
 
-  return { remainingMs, announcement: announcementFor(remainingMs, limitSeconds) };
+  return { now, remainingMs, announcement: announcementFor(remainingMs, limitSeconds) };
 };

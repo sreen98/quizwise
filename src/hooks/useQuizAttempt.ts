@@ -41,7 +41,7 @@ export const useQuizAttempt = (attemptId: string) => {
       });
   }, [attemptId, reloadKey]);
 
-  const { remainingMs, announcement } = useCountdown({
+  const { now, remainingMs, announcement } = useCountdown({
     deadlineAt: question?.deadlineAt ?? null,
     limitSeconds: question ? limitFor(question) : null,
     onExpire: () => {
@@ -77,5 +77,5 @@ export const useQuizAttempt = (attemptId: string) => {
       });
   };
 
-  return { state, selection, select, submit, submitting, remainingMs, announcement };
+  return { state, selection, select, submit, submitting, now, remainingMs, announcement };
 };

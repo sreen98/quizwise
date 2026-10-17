@@ -80,7 +80,7 @@ export const Header = () => {
         <Stack gap="sm">
           <UserSelect userOptions={userOptions} onDone={closeMenu} />
           <SlowNetworkSwitch />
-          <ResetDataButton onDone={closeMenu} />
+          <ResetDataButton onDialogOpen={closeMenu} />
         </Stack>
       </Drawer>
     </Group>

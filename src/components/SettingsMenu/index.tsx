@@ -21,7 +21,7 @@ export const SettingsMenu = () => {
           </Text>
           <SlowNetworkSwitch />
           <Divider />
-          <ResetDataButton onDone={close} />
+          <ResetDataButton onDialogOpen={close} />
         </Stack>
       </Popover.Dropdown>
     </Popover>

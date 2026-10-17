@@ -3,7 +3,6 @@
     position: fixed;
     inset-inline: 0;
     bottom: 0;
-    margin-top: 0;
     padding: 12px 16px 24px;
     background-color: var(--surface);
     border-top: 1px solid var(--mantine-color-default-border);

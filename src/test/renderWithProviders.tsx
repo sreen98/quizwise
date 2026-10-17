@@ -5,7 +5,7 @@ import { AppProviders } from '../app/AppProviders';
 import { routes } from '../app/router';
 
 export const renderWithProviders = (ui: ReactNode) => {
-  return render(<AppProviders>{ui}</AppProviders>);
+  return render(ui, { wrapper: AppProviders });
 };
 
 export const renderRoute = (path: string) => {

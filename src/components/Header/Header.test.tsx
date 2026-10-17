@@ -99,6 +99,17 @@ describe('Header user controls', () => {
     await expect(quizService.getQuiz('q1')).resolves.toMatchObject({ id: 'q1' });
   });
 
+  it('closes the settings before showing the reset dialog', async () => {
+    renderRoute('/quizzes');
+
+    await openResetDialog();
+
+    expect(await screen.findByRole('dialog', { name: 'Reset all data?' })).toBeInTheDocument();
+    await waitFor(() => {
+      expect(screen.queryByRole('switch', { name: /Simulate slow network/ })).not.toBeInTheDocument();
+    });
+  });
+
   it('changes nothing when the reset is cancelled', async () => {
     const user = userEvent.setup();
     await quizService.deleteQuiz('q1');

@@ -1,11 +1,11 @@
-import { ActionIcon, Button, Group, Skeleton, Text } from '@mantine/core';
+import { ActionIcon, Button, Flex, Group, Skeleton, Text } from '@mantine/core';
 import { IconArrowLeft } from '@tabler/icons-react';
 import { Link } from 'react-router';
 import type { AttemptHeaderProps } from './types';
 
-export const AttemptHeader = ({ quizTitle }: AttemptHeaderProps) => {
+export const AttemptHeader = ({ quizTitle, timers }: AttemptHeaderProps) => {
   return (
-    <Group h="100%" maw={1000} mx="auto" px={{ base: 8, sm: 24 }} gap={14} wrap="nowrap">
+    <Group h="100%" pl={{ base: 4, sm: 12 }} pr={{ base: 8, sm: 24 }} gap={14} wrap="nowrap">
       <Button
         component={Link}
         to="/quizzes"
@@ -33,6 +33,9 @@ export const AttemptHeader = ({ quizTitle }: AttemptHeaderProps) => {
           {quizTitle ?? 'Loading quiz'}
         </Text>
       </Skeleton>
+      <Flex direction={{ base: 'column', sm: 'row' }} gap={{ base: 0, sm: 8 }} align="flex-end" ml="auto">
+        {timers}
+      </Flex>
     </Group>
   );
 };

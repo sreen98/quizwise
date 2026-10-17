@@ -1,15 +1,39 @@
 import { Card, Fieldset, Text, Title } from '@mantine/core';
+import { useEffect, useRef } from 'react';
 import { OptionList } from '../OptionList';
+import classes from './QuestionView.module.css';
 import type { QuestionViewProps } from './types';
 
 export const QuestionView = ({ question, value, onChange }: QuestionViewProps) => {
+  const headingRef = useRef<HTMLHeadingElement>(null);
+
+  useEffect(() => {
+    headingRef.current?.focus();
+  }, []);
+
   return (
-    <Card component="section" aria-labelledby="question-text" withBorder radius="lg" p={{ base: 20, sm: 36 }}>
+    <Card
+      component="section"
+      aria-labelledby="question-text"
+      className={classes.card}
+      withBorder
+      radius="lg"
+      p={{ base: 20, sm: 36 }}
+    >
       <Fieldset
         variant="unstyled"
         p={0}
         legend={
-          <Title id="question-text" order={1} tabIndex={-1} fz={{ base: 22, sm: 28 }} lh={1.25} lts="-0.01em">
+          <Title
+            ref={headingRef}
+            id="question-text"
+            className={classes.heading}
+            order={1}
+            tabIndex={-1}
+            fz={{ base: 22, sm: 28 }}
+            lh={1.25}
+            lts="-0.01em"
+          >
             {question.text}
           </Title>
         }

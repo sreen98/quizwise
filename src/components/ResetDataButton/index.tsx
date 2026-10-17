@@ -6,19 +6,19 @@ import { quizService } from '../../service/quizService';
 import { useSessionStore } from '../../session/sessionStore';
 import type { ResetDataButtonProps } from './types';
 
-export const ResetDataButton = ({ onDone }: ResetDataButtonProps) => {
+export const ResetDataButton = ({ onDialogOpen }: ResetDataButtonProps) => {
   const setCountry = useSessionStore(state => state.setCountry);
   const leaveAttemptPages = useLeaveAttemptPages();
 
   const resetData = async () => {
     leaveAttemptPages();
     setCountry(null);
-    onDone?.();
     await quizService.resetData();
     notifications.show({ message: 'Data reset' });
   };
 
   const handleClick = () => {
+    onDialogOpen();
     modals.openConfirmModal({
       title: 'Reset all data?',
       children: (

@@ -1,7 +1,7 @@
 import type { StoreApi } from 'zustand/vanilla';
 import { dataStore } from '../data/store';
 import type { Attempt, Quiz, QuizData, User } from '../types/models';
-import { catchUp, finishAttempt, recordAnswer, toPublicQuestion } from './attempts';
+import { finishAttempt, recordAnswer, settleAttempt, toPublicQuestion } from './attempts';
 import { rankBestAttempts } from './ranking';
 import { getDeadlines } from './timing';
 import type {
@@ -61,11 +61,11 @@ const toLeaderboardEntry = (attempt: Attempt, index: number, users: User[]): Lea
   timeTakenSeconds: attempt.timeTakenSeconds ?? 0
 });
 
-const toCurrentQuestion = (attempt: Attempt, quiz: Quiz): CurrentQuestion => {
+const toCurrentQuestion = (attempt: Attempt, quiz: Quiz | undefined): CurrentQuestion => {
   if (attempt.status !== 'in_progress') return { status: attempt.status, endReason: attempt.endReason };
 
-  const question = quiz.questions[attempt.currentQuestionIndex];
-  if (!question) throw new Error('Question not found');
+  const question = quiz?.questions[attempt.currentQuestionIndex];
+  if (!quiz || !question) throw new Error('Question not found');
 
   return {
     status: 'in_progress',
@@ -115,8 +115,8 @@ export const createQuizService = (store: StoreApi<QuizData>, now: () => number =
 
   const loadAttempt = (attemptId: string) => {
     const stored = findAttempt(attemptId);
-    const quiz = findQuiz(stored.quizId);
-    const attempt = catchUp(stored, quiz, now());
+    const quiz = store.getState().quizzes.find(item => item.id === stored.quizId);
+    const attempt = settleAttempt(stored, quiz, now());
     if (attempt !== stored) saveAttempt(attempt);
     return { attempt, quiz };
   };
@@ -202,8 +202,8 @@ export const createQuizService = (store: StoreApi<QuizData>, now: () => number =
     submitAnswer: (attemptId: string, questionId: string, optionIds: string[]) =>
       respond(() => {
         const { attempt, quiz } = loadAttempt(attemptId);
-        const question = quiz.questions[attempt.currentQuestionIndex];
-        if (attempt.status !== 'in_progress' || !question || question.id !== questionId) {
+        const question = quiz?.questions[attempt.currentQuestionIndex];
+        if (attempt.status !== 'in_progress' || !quiz || !question || question.id !== questionId) {
           return toCurrentQuestion(attempt, quiz);
         }
 
@@ -228,6 +228,7 @@ export const createQuizService = (store: StoreApi<QuizData>, now: () => number =
     completeAttempt: (attemptId: string) =>
       respond((): AttemptResult => {
         const loaded = loadAttempt(attemptId).attempt;
+        if (loaded.status === 'closed') throw new Error('Attempt was closed');
         const attempt = loaded.status === 'in_progress' ? finishAttempt(loaded, now(), 'submitted') : loaded;
         if (attempt !== loaded) saveAttempt(attempt);
         return toResult(attempt);

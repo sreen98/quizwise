@@ -435,3 +435,68 @@ describe('completeAttempt', () => {
     });
   });
 });
+
+describe('quiz edited or deleted during an attempt', () => {
+  type Store = ReturnType<typeof setup>['store'];
+
+  const editQuiz = (store: Store, quizId: string) => {
+    store.setState(state => ({
+      quizzes: state.quizzes.map(quiz => (quiz.id === quizId ? { ...quiz, version: quiz.version + 1 } : quiz))
+    }));
+  };
+
+  const deleteQuiz = (store: Store, quizId: string) => {
+    store.setState(state => ({ quizzes: state.quizzes.filter(quiz => quiz.id !== quizId) }));
+  };
+
+  it('closes the attempt when the quiz is edited', async () => {
+    const { store, service, attemptId } = await startQ1();
+    editQuiz(store, 'q1');
+
+    expect(await service.getCurrentQuestion(attemptId)).toEqual({ status: 'closed', endReason: 'quiz_changed' });
+    expect(store.getState().attempts.find(attempt => attempt.id === attemptId)).toMatchObject({
+      status: 'closed',
+      endReason: 'quiz_changed',
+      score: null,
+      completedAt: null
+    });
+  });
+
+  it('ignores an answer submitted after the quiz was edited', async () => {
+    const { store, service, attemptId, correct, answers } = await startQ1();
+    editQuiz(store, 'q1');
+
+    const result = await service.submitAnswer(attemptId, 'q1-1', correct(0));
+
+    expect(result).toEqual({ status: 'closed', endReason: 'quiz_changed' });
+    expect(answers()).toEqual([]);
+  });
+
+  it('closes the attempt when the quiz is deleted', async () => {
+    const { store, service, attemptId } = await startQ1();
+    deleteQuiz(store, 'q1');
+
+    expect(await service.getCurrentQuestion(attemptId)).toEqual({ status: 'closed', endReason: 'quiz_deleted' });
+  });
+
+  it('lets the user start again after a closed attempt even without retakes', async () => {
+    const { store, service } = setup();
+    const first = await service.startOrResumeAttempt('q2', 'u5');
+    editQuiz(store, 'q2');
+    await service.getCurrentQuestion(first.attemptId);
+
+    const second = await service.startOrResumeAttempt('q2', 'u5');
+    const listed = (await service.getQuizzes('u5')).find(quiz => quiz.id === 'q2');
+
+    expect(second).toMatchObject({ resumed: false });
+    expect(second.attemptId).not.toBe(first.attemptId);
+    expect(listed).toMatchObject({ completed: false, bestScore: null });
+  });
+
+  it('refuses to complete a closed attempt', async () => {
+    const { store, service, attemptId } = await startQ1();
+    editQuiz(store, 'q1');
+
+    await expect(service.completeAttempt(attemptId)).rejects.toThrow('Attempt was closed');
+  });
+});

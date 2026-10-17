@@ -66,7 +66,7 @@ const attemptSchema = z.object({
   userId: id,
   quizVersion: z.number().int().positive().default(1),
   status: z.enum(['in_progress', 'completed', 'closed']),
-  endReason: z.enum(['submitted', 'timeout', 'quiz_changed']).nullable().default(null),
+  endReason: z.enum(['submitted', 'timeout', 'quiz_changed', 'quiz_deleted']).nullable().default(null),
   startedAt: timestamp,
   currentQuestionIndex: z.number().int().nonnegative(),
   answers: z.array(answerSchema),

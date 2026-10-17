@@ -45,7 +45,21 @@ export const finishAttempt = (attempt: Attempt, completedAt: number, endReason: 
   };
 };
 
-export const catchUp = (attempt: Attempt, quiz: Quiz, now: number): Attempt => {
+const closeAttempt = (attempt: Attempt, endReason: AttemptEndReason): Attempt => ({
+  ...attempt,
+  status: 'closed',
+  endReason,
+  draftOptionIds: []
+});
+
+export const settleAttempt = (attempt: Attempt, quiz: Quiz | undefined, now: number): Attempt => {
+  if (attempt.status !== 'in_progress') return attempt;
+  if (!quiz) return closeAttempt(attempt, 'quiz_deleted');
+  if (quiz.version !== attempt.quizVersion) return closeAttempt(attempt, 'quiz_changed');
+  return catchUp(attempt, quiz, now);
+};
+
+const catchUp = (attempt: Attempt, quiz: Quiz, now: number): Attempt => {
   let current = attempt;
 
   while (current.status === 'in_progress') {

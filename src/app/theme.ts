@@ -1,4 +1,6 @@
-import { createTheme, type CSSVariablesResolver } from '@mantine/core';
+import { Button, createTheme, Input, Modal, Switch, type CSSVariablesResolver } from '@mantine/core';
+
+const TOUCH_TARGET = '44px';
 
 export const theme = createTheme({
   white: '#FFFDFA',
@@ -54,7 +56,13 @@ export const theme = createTheme({
     xl: '12px'
   },
   defaultRadius: 'md',
-  respectReducedMotion: true
+  respectReducedMotion: true,
+  components: {
+    Modal: Modal.extend({ defaultProps: { centered: true } }),
+    Button: Button.extend({ vars: () => ({ root: { '--button-height': TOUCH_TARGET } }) }),
+    Input: Input.extend({ vars: () => ({ wrapper: { '--input-height': TOUCH_TARGET } }) }),
+    Switch: Switch.extend({ styles: { body: { minHeight: TOUCH_TARGET, alignItems: 'center' } } })
+  }
 });
 
 export const cssVariablesResolver: CSSVariablesResolver = () => ({

@@ -1,5 +1,5 @@
 import type { StoreApi } from 'zustand/vanilla';
-import { dataStore } from '../data/store';
+import { dataStore, resetDataStore } from '../data/store';
 import { parseQuizInput } from '../data/schema';
 import type { Attempt, Quiz, QuizData, QuizInput, User } from '../types/models';
 import { finishAttempt, recordAnswer, settleAttempt, toPublicQuestion } from './attempts';
@@ -249,6 +249,15 @@ export const createQuizService = (
         const attempt = loaded.status === 'in_progress' ? finishAttempt(loaded, now(), 'submitted') : loaded;
         if (attempt !== loaded) saveAttempt(attempt);
         return toResult(attempt);
+      }),
+
+    getUsers: () => respond(() => store.getState().users),
+
+    getCountries: () => respond(() => store.getState().countries),
+
+    resetData: () =>
+      respond(() => {
+        resetDataStore(store);
       }),
 
     getQuizForEdit: (quizId: string) => respond(() => findQuiz(quizId)),

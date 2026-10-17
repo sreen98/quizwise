@@ -27,3 +27,5 @@ class ResizeObserverStub {
 }
 
 window.ResizeObserver = ResizeObserverStub;
+
+Element.prototype.scrollIntoView = vi.fn();

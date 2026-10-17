@@ -1,16 +1,11 @@
-import { MantineProvider } from '@mantine/core';
 import { render } from '@testing-library/react';
 import type { ReactNode } from 'react';
 import { createMemoryRouter, RouterProvider } from 'react-router';
+import { AppProviders } from '../app/AppProviders';
 import { routes } from '../app/router';
-import { cssVariablesResolver, theme } from '../app/theme';
 
 export const renderWithProviders = (ui: ReactNode) => {
-  return render(
-    <MantineProvider theme={theme} cssVariablesResolver={cssVariablesResolver}>
-      {ui}
-    </MantineProvider>
-  );
+  return render(<AppProviders>{ui}</AppProviders>);
 };
 
 export const renderRoute = (path: string) => {

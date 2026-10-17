@@ -1,14 +1,13 @@
-import { MantineProvider } from '@mantine/core';
 import { createBrowserRouter, RouterProvider } from 'react-router';
+import { AppProviders } from './AppProviders';
 import { routes } from './router';
-import { cssVariablesResolver, theme } from './theme';
 
 const router = createBrowserRouter(routes);
 
 export const App = () => {
   return (
-    <MantineProvider theme={theme} cssVariablesResolver={cssVariablesResolver} defaultColorScheme="light">
+    <AppProviders>
       <RouterProvider router={router} />
-    </MantineProvider>
+    </AppProviders>
   );
 };

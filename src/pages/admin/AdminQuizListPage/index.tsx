@@ -1,8 +1,22 @@
-import { Box, Button, Flex, Pagination, Paper, Select, Skeleton, Stack, Text, TextInput, Title } from '@mantine/core';
+import {
+  Box,
+  Button,
+  Flex,
+  Group,
+  Pagination,
+  Paper,
+  Select,
+  Skeleton,
+  Stack,
+  Text,
+  TextInput,
+  Title
+} from '@mantine/core';
 import { modals } from '@mantine/modals';
 import { notifications } from '@mantine/notifications';
 import { Link, useSearchParams } from 'react-router';
 import { AdminQuizList } from '../../../components/AdminQuizList';
+import { ImportQuizButton } from '../../../components/ImportQuizButton';
 import { formatCount } from '../../../format';
 import { useAdminQuizzes } from '../../../hooks/useAdminQuizzes';
 import type { AdminQuizItem } from '../../../service/types';
@@ -62,7 +76,7 @@ const confirmDelete = (quiz: AdminQuizItem, deleteQuiz: DeleteQuiz) => {
 };
 
 export const AdminQuizListPage = () => {
-  const { quizzes, loading, hasFailed, deleteQuiz } = useAdminQuizzes();
+  const { quizzes, loading, hasFailed, deleteQuiz, exportQuiz, importQuiz } = useAdminQuizzes();
   const [searchParams, setSearchParams] = useSearchParams();
   const search = searchParams.get('q') ?? '';
   const sortParam = searchParams.get('sort');
@@ -96,9 +110,12 @@ export const AdminQuizListPage = () => {
             </Text>
           </Skeleton>
         </Box>
-        <Button component={Link} to="/admin/quizzes/new">
-          New quiz
-        </Button>
+        <Group gap={10}>
+          <ImportQuizButton onImport={importQuiz} />
+          <Button component={Link} to="/admin/quizzes/new">
+            New quiz
+          </Button>
+        </Group>
       </Flex>
 
       <Paper withBorder radius="lg">
@@ -165,6 +182,14 @@ export const AdminQuizListPage = () => {
           <>
             <AdminQuizList
               quizzes={shown}
+              onExport={quiz => {
+                exportQuiz(quiz).catch(() => {
+                  notifications.show({
+                    color: 'orange',
+                    message: `Couldn't export ${quiz.title}. It may have been deleted.`
+                  });
+                });
+              }}
               onDelete={quiz => {
                 confirmDelete(quiz, deleteQuiz);
               }}

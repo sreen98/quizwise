@@ -1,4 +1,5 @@
 import { Badge, Button, Flex, Paper, Skeleton, Text, Title } from '@mantine/core';
+import { Suspense } from 'react';
 import { Link, Outlet } from 'react-router';
 import { useCurrentUser } from '../../hooks/useCurrentUser';
 import { useSessionStore } from '../../session/sessionStore';
@@ -7,9 +8,17 @@ export const AdminOnly = () => {
   const { user, adminUser, loading, isAdmin } = useCurrentUser();
   const setUserId = useSessionStore(state => state.setUserId);
 
-  if (loading) return <Skeleton h={320} radius="lg" />;
+  const placeholder = <Skeleton h={320} radius="lg" />;
 
-  if (isAdmin) return <Outlet />;
+  if (loading) return placeholder;
+
+  if (isAdmin) {
+    return (
+      <Suspense fallback={placeholder}>
+        <Outlet />
+      </Suspense>
+    );
+  }
 
   return (
     <Flex align="center" justify="center" mih={{ base: 'auto', sm: 'calc(100dvh - 116px)' }}>

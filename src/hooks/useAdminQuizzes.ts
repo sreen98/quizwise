@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { downloadJson, jsonFileName } from '../download';
 import { quizService } from '../service/quizService';
 import type { AdminQuizItem } from '../service/types';
 
@@ -39,5 +40,11 @@ export const useAdminQuizzes = () => {
 
   const deleteQuiz = (quizId: string) => quizService.deleteQuiz(quizId);
 
-  return { ...data, deleteQuiz };
+  const exportQuiz = async (quiz: AdminQuizItem) => {
+    downloadJson(jsonFileName(quiz.title), await quizService.exportQuiz(quiz.id));
+  };
+
+  const importQuiz = (json: string) => quizService.importQuiz(json);
+
+  return { ...data, deleteQuiz, exportQuiz, importQuiz };
 };

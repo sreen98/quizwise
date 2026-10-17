@@ -1,7 +1,7 @@
 import { notifications } from '@mantine/notifications';
 import { screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { beforeEach, describe, expect, it } from 'vitest';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { quizService } from '../../../service/quizService';
 import { useSessionStore } from '../../../session/sessionStore';
 import { renderRoute } from '../../../test/renderWithProviders';
@@ -140,5 +140,71 @@ describe('AdminQuizListPage', () => {
 
     await expect(quizService.getQuiz('q1')).resolves.toMatchObject({ id: 'q1' });
     expect(rowTitles()).toContain('JavaScript Basics');
+  });
+
+  it('downloads a quiz as a JSON file named after its title', async () => {
+    const user = userEvent.setup();
+    const blobs: Blob[] = [];
+    URL.createObjectURL = vi.fn((blob: Blob) => {
+      blobs.push(blob);
+      return 'blob:quiz';
+    });
+    URL.revokeObjectURL = vi.fn();
+    const click = vi.spyOn(HTMLAnchorElement.prototype, 'click').mockImplementation(() => undefined);
+    renderRoute('/admin');
+
+    await waitForRows();
+    await user.click(firstButton('Export JavaScript Basics as JSON'));
+
+    await waitFor(() => {
+      expect(click).toHaveBeenCalledOnce();
+    });
+    expect(click.mock.contexts[0]).toHaveProperty('download', 'javascript-basics.json');
+    const [blob] = blobs;
+    expect(JSON.parse((await blob?.text()) ?? '')).toMatchObject({ title: 'JavaScript Basics' });
+    click.mockRestore();
+  });
+
+  it('imports a quiz from a JSON file', async () => {
+    const user = userEvent.setup();
+    const exported = await quizService.exportQuiz('q1');
+    renderRoute('/admin');
+
+    await waitForRows();
+    const file = new File([JSON.stringify({ ...exported, title: 'Imported basics' })], 'quiz.json', {
+      type: 'application/json'
+    });
+    await user.upload(screen.getByLabelText('Quiz file to import'), file);
+
+    expect(await screen.findByText('Imported basics imported')).toBeInTheDocument();
+    await waitFor(() => {
+      expect(rowTitles()).toContain('Imported basics');
+    });
+  });
+
+  it('lists the problems of a file that is not a valid quiz', async () => {
+    const user = userEvent.setup();
+    renderRoute('/admin');
+
+    await waitForRows();
+    const file = new File([JSON.stringify({ title: '', questions: [] })], 'quiz.json', { type: 'application/json' });
+    await user.upload(screen.getByLabelText('Quiz file to import'), file);
+
+    const dialog = await screen.findByRole('dialog', { name: "Couldn't import this file" });
+    expect(within(dialog).getByText('Title: Enter a title')).toBeInTheDocument();
+    expect(within(dialog).getByText('Description: Missing or not the right kind of value')).toBeInTheDocument();
+    expect(within(dialog).getAllByRole('listitem')).toHaveLength(6);
+    expect(within(dialog).getByText('And 2 more problems.')).toBeInTheDocument();
+  });
+
+  it('says when the file is not JSON', async () => {
+    const user = userEvent.setup();
+    renderRoute('/admin');
+
+    await waitForRows();
+    await user.upload(screen.getByLabelText('Quiz file to import'), new File(['not json'], 'quiz.json'));
+
+    const dialog = await screen.findByRole('dialog', { name: "Couldn't import this file" });
+    expect(within(dialog).getByText("This file isn't valid JSON.")).toBeInTheDocument();
   });
 });

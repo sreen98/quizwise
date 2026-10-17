@@ -9,8 +9,7 @@ import { NotFoundPage } from '../pages/NotFoundPage';
 import { QuizListPage } from '../pages/QuizListPage';
 import { QuizStartPage } from '../pages/QuizStartPage';
 import { ResultsPage } from '../pages/ResultsPage';
-import { AdminQuizListPage } from '../pages/admin/AdminQuizListPage';
-import { QuizEditorPage } from '../pages/admin/QuizEditorPage';
+import { AdminQuizListPage, QuizEditorPage } from './adminPages';
 
 export const routes: RouteObject[] = [
   {

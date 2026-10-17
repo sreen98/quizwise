@@ -1,7 +1,8 @@
 import { ActionIcon, Badge, Box, Divider, Group, Stack, Table, Text, VisuallyHidden } from '@mantine/core';
-import { IconPencil, IconTrash } from '@tabler/icons-react';
+import { IconDownload, IconPencil, IconTrash } from '@tabler/icons-react';
 import { Link } from 'react-router';
 import { formatClock, formatCount, formatSeconds } from '../../format';
+import { TruncatedText } from '../TruncatedText';
 import type { AdminQuizItem } from '../../service/types';
 import type { AdminQuizListProps } from './types';
 
@@ -14,6 +15,15 @@ const timerText = ({ timeLimitSeconds, perQuestionSeconds }: AdminQuizItem) => {
   return 'None';
 };
 
+const columns = [
+  { label: 'Title', width: undefined },
+  { label: 'Questions', width: 110 },
+  { label: 'Timer', width: 160 },
+  { label: 'Retakes', width: 90 },
+  { label: 'Countries', width: 150 },
+  { label: 'Attempts', width: 100 }
+];
+
 const countryBadges = (quiz: AdminQuizItem) => (
   <Group gap={4}>
     {quiz.countries.map(code => (
@@ -24,7 +34,7 @@ const countryBadges = (quiz: AdminQuizItem) => (
   </Group>
 );
 
-const actions = (quiz: AdminQuizItem, onDelete: (quiz: AdminQuizItem) => void) => (
+const actions = (quiz: AdminQuizItem, { onExport, onDelete }: AdminQuizListProps) => (
   <Group gap={2} justify="flex-end" wrap="nowrap">
     <ActionIcon
       component={Link}
@@ -40,6 +50,17 @@ const actions = (quiz: AdminQuizItem, onDelete: (quiz: AdminQuizItem) => void) =
       variant="subtle"
       color="gray"
       size={44}
+      aria-label={`Export ${quiz.title} as JSON`}
+      onClick={() => {
+        onExport(quiz);
+      }}
+    >
+      <IconDownload size={20} aria-hidden />
+    </ActionIcon>
+    <ActionIcon
+      variant="subtle"
+      color="gray"
+      size={44}
       aria-label={`Delete ${quiz.title}`}
       onClick={() => {
         onDelete(quiz);
@@ -50,44 +71,46 @@ const actions = (quiz: AdminQuizItem, onDelete: (quiz: AdminQuizItem) => void) =
   </Group>
 );
 
-const quizTable = (quizzes: AdminQuizItem[], onDelete: (quiz: AdminQuizItem) => void) => (
-  <Box visibleFrom="md">
-    <Table.ScrollContainer minWidth={760} type="native">
-      <Table verticalSpacing={14} horizontalSpacing={16} fz={15}>
+const quizTable = (props: AdminQuizListProps) => (
+  <Box visibleFrom="lg">
+    <Table.ScrollContainer minWidth={1020} type="native">
+      <Table layout="fixed" verticalSpacing={14} horizontalSpacing={16} fz={15}>
         <Table.Caption>
           <VisuallyHidden>Quizzes</VisuallyHidden>
         </Table.Caption>
         <Table.Thead>
           <Table.Tr>
-            {['Title', 'Questions', 'Timer', 'Retakes', 'Countries', 'Attempts'].map(label => (
-              <Table.Th key={label} fz={12} fw={700} tt="uppercase" lts="0.06em" c="dimmed">
+            {columns.map(({ label, width }) => (
+              <Table.Th key={label} w={width} fz={12} fw={700} tt="uppercase" lts="0.06em" c="dimmed">
                 {label}
               </Table.Th>
             ))}
-            <Table.Th>
+            <Table.Th w={170}>
               <VisuallyHidden>Actions</VisuallyHidden>
             </Table.Th>
           </Table.Tr>
         </Table.Thead>
         <Table.Tbody>
-          {quizzes.map(quiz => (
+          {props.quizzes.map(quiz => (
             <Table.Tr key={quiz.id}>
               <Table.Td>
-                <Text fw={700} inherit>
+                <TruncatedText fw={700} inherit>
                   {quiz.title}
-                </Text>
-                <Text fz={13} c="dimmed" lineClamp={1}>
+                </TruncatedText>
+                <TruncatedText fz={13} c="dimmed">
                   {quiz.description}
-                </Text>
+                </TruncatedText>
               </Table.Td>
               <Table.Td>{quiz.questionCount}</Table.Td>
-              <Table.Td ff="monospace" fz={14}>
-                {timerText(quiz)}
+              <Table.Td>
+                <TruncatedText ff="monospace" fz={14}>
+                  {timerText(quiz)}
+                </TruncatedText>
               </Table.Td>
               <Table.Td>{quiz.retakesAllowed ? 'Yes' : 'No'}</Table.Td>
               <Table.Td>{countryBadges(quiz)}</Table.Td>
               <Table.Td>{quiz.attemptCount}</Table.Td>
-              <Table.Td>{actions(quiz, onDelete)}</Table.Td>
+              <Table.Td>{actions(quiz, props)}</Table.Td>
             </Table.Tr>
           ))}
         </Table.Tbody>
@@ -96,9 +119,9 @@ const quizTable = (quizzes: AdminQuizItem[], onDelete: (quiz: AdminQuizItem) => 
   </Box>
 );
 
-const quizCards = (quizzes: AdminQuizItem[], onDelete: (quiz: AdminQuizItem) => void) => (
-  <Stack component="ul" gap={0} m={0} p={0} hiddenFrom="md" aria-label="Quizzes">
-    {quizzes.map((quiz, index) => (
+const quizCards = (props: AdminQuizListProps) => (
+  <Stack component="ul" gap={0} m={0} p={0} hiddenFrom="lg" aria-label="Quizzes">
+    {props.quizzes.map((quiz, index) => (
       <Box component="li" key={quiz.id} display="block">
         {index > 0 && <Divider />}
         <Box px={16} py={14}>
@@ -109,7 +132,7 @@ const quizCards = (quizzes: AdminQuizItem[], onDelete: (quiz: AdminQuizItem) => 
                 {quiz.description}
               </Text>
             </Box>
-            {actions(quiz, onDelete)}
+            {actions(quiz, props)}
           </Group>
           <Group gap={16} mt={10} fz={14} c="dimmed">
             <span>{formatCount(quiz.questionCount, 'question')}</span>
@@ -126,11 +149,13 @@ const quizCards = (quizzes: AdminQuizItem[], onDelete: (quiz: AdminQuizItem) => 
   </Stack>
 );
 
-export const AdminQuizList = ({ quizzes, onDelete }: AdminQuizListProps) => {
+export const AdminQuizList = ({ quizzes, onExport, onDelete }: AdminQuizListProps) => {
+  const props = { quizzes, onExport, onDelete };
+
   return (
     <>
-      {quizTable(quizzes, onDelete)}
-      {quizCards(quizzes, onDelete)}
+      {quizTable(props)}
+      {quizCards(props)}
     </>
   );
 };

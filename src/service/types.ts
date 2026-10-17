@@ -127,3 +127,5 @@ export interface ResultDetails extends AttemptResult {
 }
 
 export type AttemptResultView = ResultDetails | { status: 'in_progress' };
+
+export type ImportResult = { isImported: true; title: string } | { isImported: false; problems: string[] };

@@ -829,6 +829,80 @@ describe('getQuizForEdit', () => {
   });
 });
 
+describe('exportQuiz', () => {
+  it('returns the quiz with its answers but without its id or version', async () => {
+    const exported = await setup().service.exportQuiz('q1');
+
+    expect(exported).toMatchObject({ title: 'JavaScript Basics' });
+    expect(exported.questions[0]).toHaveProperty('correctOptionIds', ['q1-1-o3']);
+    expect(exported).not.toHaveProperty('id');
+    expect(exported).not.toHaveProperty('version');
+  });
+
+  it('rejects an unknown quiz', async () => {
+    await expect(setup().service.exportQuiz('q99')).rejects.toThrow('Quiz not found');
+  });
+});
+
+describe('importQuiz', () => {
+  it('adds an exported quiz back as a new quiz', async () => {
+    const { service } = setup();
+    const exported = await service.exportQuiz('q1');
+
+    const result = await service.importQuiz(JSON.stringify(exported));
+    const copies = (await service.getAdminQuizzes()).filter(quiz => quiz.title === 'JavaScript Basics');
+
+    expect(result).toEqual({ isImported: true, title: 'JavaScript Basics' });
+    expect(copies).toHaveLength(2);
+    expect(copies[1]).toMatchObject({ questionCount: exported.questions.length, attemptCount: 0 });
+  });
+
+  it('says when the file is not JSON', async () => {
+    await expect(setup().service.importQuiz('{ title: ')).resolves.toEqual({
+      isImported: false,
+      problems: ["This file isn't valid JSON."]
+    });
+  });
+
+  it('says when the file does not contain a quiz', async () => {
+    await expect(setup().service.importQuiz('[1, 2]')).resolves.toEqual({
+      isImported: false,
+      problems: ["This file doesn't contain a quiz."]
+    });
+  });
+
+  it('names where each problem is', async () => {
+    const quiz = newQuiz([]);
+    const broken = {
+      ...quiz,
+      title: ' ',
+      retakesAllowed: 'yes',
+      questions: [{ ...quiz.questions[0], options: [{ id: 'paris', text: '' }, quiz.questions[0]?.options[1]] }]
+    };
+
+    const result = await setup().service.importQuiz(JSON.stringify(broken));
+
+    expect(result).toEqual({
+      isImported: false,
+      problems: [
+        'Title: Enter a title',
+        'Allow retakes: Missing or not the right kind of value',
+        'Question 1, option 1: Enter the option text',
+        'Question 1, correct answers: Mark at least one correct option'
+      ]
+    });
+  });
+
+  it('rejects a country the app does not know', async () => {
+    const { service } = setup();
+
+    const result = await service.importQuiz(JSON.stringify({ ...newQuiz(), countries: ['GB', 'XX'] }));
+
+    expect(result).toEqual({ isImported: false, problems: ['Available in: Unknown country code XX'] });
+    expect((await service.getAdminQuizzes()).some(quiz => quiz.title === 'Capitals')).toBe(false);
+  });
+});
+
 describe('simulated delay', () => {
   const slowService = () => {
     localStorage.clear();

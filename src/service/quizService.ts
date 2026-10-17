@@ -1,8 +1,9 @@
 import type { StoreApi } from 'zustand/vanilla';
 import { dataStore, resetDataStore } from '../data/store';
-import { parseQuizInput } from '../data/schema';
+import { parseQuizInput, quizInputSchema } from '../data/schema';
 import type { Attempt, Quiz, QuizData, QuizInput } from '../types/models';
 import { finishAttempt, recordAnswer, settleAttempt, toPublicQuestion, toSelection } from './attempts';
+import { describeProblems } from './importProblems';
 import { simulatedDelay } from './latency';
 import { rankBestAttempts } from './ranking';
 import { getDeadlines } from './timing';
@@ -12,6 +13,7 @@ import type {
   AttemptResultView,
   CurrentQuestion,
   EndedAttempt,
+  ImportResult,
   Leaderboard,
   LeaderboardEntry,
   QuizDetails,
@@ -383,6 +385,35 @@ export const createQuizService = (
           quizzes: state.quizzes.filter(quiz => quiz.id !== quizId),
           attempts: state.attempts.filter(attempt => attempt.quizId !== quizId || attempt.status === 'in_progress')
         }));
+      }),
+
+    exportQuiz: (quizId: string) =>
+      respond((): QuizInput => {
+        const { title, description, countries, timeLimitSeconds, perQuestionSeconds, retakesAllowed, questions } =
+          findQuiz(quizId);
+        return { title, description, countries, timeLimitSeconds, perQuestionSeconds, retakesAllowed, questions };
+      }),
+
+    importQuiz: (json: string) =>
+      respond((): ImportResult => {
+        let data: unknown;
+        try {
+          data = JSON.parse(json);
+        } catch {
+          return { isImported: false, problems: ["This file isn't valid JSON."] };
+        }
+        const result = quizInputSchema.safeParse(data);
+        if (!result.success) return { isImported: false, problems: describeProblems(result.error.issues) };
+
+        const knownCodes = new Set(store.getState().countries.map(country => country.code));
+        const unknownCodes = result.data.countries.filter(code => !knownCodes.has(code));
+        if (unknownCodes.length > 0) {
+          return { isImported: false, problems: [`Available in: Unknown country code ${unknownCodes.join(', ')}`] };
+        }
+
+        const quiz: Quiz = { ...result.data, id: crypto.randomUUID(), version: 1 };
+        store.setState(state => ({ quizzes: [...state.quizzes, quiz] }));
+        return { isImported: true, title: quiz.title };
       }),
 
     subscribe: (listener: () => void) => store.subscribe(listener)

@@ -1,5 +1,5 @@
 import { createJSONStorage, persist } from 'zustand/middleware';
-import { createStore } from 'zustand/vanilla';
+import { createStore, type StoreApi } from 'zustand/vanilla';
 import type { QuizData } from '../types/models';
 import { migrateSeed } from './migrate';
 import { readQuizData } from './schema';
@@ -20,6 +20,10 @@ export const createDataStore = () => {
 
   store.setState(store.getState(), true);
   return store;
+};
+
+export const resetDataStore = (store: StoreApi<QuizData>) => {
+  store.setState(migrateSeed(seed), true);
 };
 
 export const dataStore = createDataStore();

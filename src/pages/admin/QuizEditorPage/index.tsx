@@ -1,8 +1,49 @@
-import { Title } from '@mantine/core';
-import { useParams } from 'react-router';
+import { Anchor, Skeleton, Stack, Text, Title } from '@mantine/core';
+import { notifications } from '@mantine/notifications';
+import { Link, useNavigate, useParams } from 'react-router';
+import { QuizForm } from '../../../components/QuizForm';
+import { useQuizEditor } from '../../../hooks/useQuizEditor';
+import type { QuizInput } from '../../../types/models';
 
 export const QuizEditorPage = () => {
   const { quizId } = useParams();
+  const navigate = useNavigate();
+  const { state, save } = useQuizEditor(quizId);
 
-  return <Title order={1}>{quizId ? 'Edit quiz' : 'New quiz'}</Title>;
+  if (state.status === 'missing') {
+    return (
+      <Stack gap="sm" align="flex-start">
+        <Title order={1}>Quiz not found</Title>
+        <Text c="dimmed">This quiz doesn't exist or has been removed.</Text>
+        <Anchor component={Link} to="/admin" fw={600} display="inline-block" lh="44px">
+          Back to Manage quizzes
+        </Anchor>
+      </Stack>
+    );
+  }
+
+  if (state.status === 'loading') {
+    return (
+      <Stack gap={24}>
+        <Skeleton h={40} w={240} />
+        <Skeleton h={480} radius="lg" />
+      </Stack>
+    );
+  }
+
+  const handleSubmit = async (values: QuizInput) => {
+    await save(values);
+    notifications.show({ message: quizId ? `${values.title} saved` : `${values.title} created` });
+    await navigate('/admin');
+  };
+
+  return (
+    <QuizForm
+      key={quizId ?? 'new'}
+      initialValues={state.quiz}
+      countries={state.countries}
+      isNew={!quizId}
+      onSubmit={handleSubmit}
+    />
+  );
 };

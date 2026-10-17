@@ -2,7 +2,11 @@ import { z } from 'zod';
 import type { QuizData, QuizInput } from '../types/models';
 
 const id = z.string().min(1);
-const seconds = z.number().int().positive().nullable();
+const seconds = z
+  .number({ message: 'Enter a whole number above 0' })
+  .int('Enter a whole number above 0')
+  .positive('Enter a whole number above 0')
+  .nullable();
 const timestamp = z.iso.datetime();
 
 const hasDuplicates = (values: string[]) => new Set(values).size !== values.length;
@@ -105,7 +109,7 @@ const quizDataSchema = z.object({
 
 export const parseQuizData = (json: unknown): QuizData => quizDataSchema.parse(json);
 
-const quizInputSchema = quizFields.omit({ id: true, version: true }).superRefine(checkQuestionIds);
+export const quizInputSchema = quizFields.omit({ id: true, version: true }).superRefine(checkQuestionIds);
 
 export const parseQuizInput = (data: unknown): QuizInput => {
   const result = quizInputSchema.safeParse(data);

@@ -29,3 +29,7 @@ class ResizeObserverStub {
 window.ResizeObserver = ResizeObserverStub;
 
 Element.prototype.scrollIntoView = vi.fn();
+
+Object.defineProperty(document, 'fonts', {
+  value: { addEventListener: vi.fn(), removeEventListener: vi.fn() }
+});

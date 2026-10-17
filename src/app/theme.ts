@@ -78,6 +78,7 @@ export const cssVariablesResolver: CSSVariablesResolver = () => ({
     '--accent-soft': '#E7EDFD',
     '--warn': '#A64B07',
     '--warn-soft': '#FDF0E2',
+    '--mantine-color-error': '#A64B07',
     '--skeleton': '#E8E3DA',
     '--mantine-color-body': '#FFFDFA',
     '--mantine-color-text': '#181B21',
@@ -91,6 +92,7 @@ export const cssVariablesResolver: CSSVariablesResolver = () => ({
     '--accent-soft': '#1B2947',
     '--warn': '#F6A963',
     '--warn-soft': '#3A2614',
+    '--mantine-color-error': '#F6A963',
     '--skeleton': '#223047'
   }
 });

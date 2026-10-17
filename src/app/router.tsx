@@ -19,7 +19,6 @@ export const routes: RouteObject[] = [
       { index: true, element: <Navigate to="/quizzes" replace /> },
       { path: 'quizzes', Component: QuizListPage },
       { path: 'quizzes/:quizId', Component: QuizStartPage },
-      { path: 'attempts/:attemptId', Component: AttemptPage },
       { path: 'attempts/:attemptId/results', Component: ResultsPage },
       { path: 'leaderboard/:quizId?', Component: LeaderboardPage },
       { path: 'admin', Component: AdminQuizListPage },
@@ -27,5 +26,6 @@ export const routes: RouteObject[] = [
       { path: 'admin/quizzes/:quizId/edit', Component: QuizEditorPage },
       { path: '*', Component: NotFoundPage }
     ]
-  }
+  },
+  { path: '/attempts/:attemptId', Component: AttemptPage, ErrorBoundary: RouteError }
 ];

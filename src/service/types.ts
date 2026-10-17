@@ -51,6 +51,7 @@ export interface StartedAttempt {
 
 export interface QuestionInProgress {
   status: 'in_progress';
+  quizTitle: string;
   question: PublicQuestion;
   index: number;
   total: number;

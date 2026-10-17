@@ -77,6 +77,7 @@ const toCurrentQuestion = (attempt: Attempt, quiz: Quiz | undefined): CurrentQue
 
   return {
     status: 'in_progress',
+    quizTitle: quiz.title,
     question: toPublicQuestion(question),
     index: attempt.currentQuestionIndex,
     total: quiz.questions.length,

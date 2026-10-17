@@ -52,17 +52,6 @@ describe('Header user controls', () => {
     expect(localStorage.getItem('quizwise:session')).toContain('"userId":"u2"');
   });
 
-  it('leaves an attempt page when the user changes', async () => {
-    const { router } = renderRoute('/attempts/a11');
-    await waitFor(() => {
-      expect(userSelect()).toHaveValue('Aarav Menon');
-    });
-
-    await chooseUser('Oliver Smith');
-
-    expect(router.state.location.pathname).toBe('/quizzes');
-  });
-
   it('leaves a results page when the user changes', async () => {
     const { router } = renderRoute('/attempts/a1/results');
     await waitFor(() => {
@@ -74,10 +63,10 @@ describe('Header user controls', () => {
     expect(router.state.location.pathname).toBe('/quizzes');
   });
 
-  it('leaves an attempt page and clears the country filter after a reset', async () => {
+  it('leaves a results page and clears the country filter after a reset', async () => {
     const user = userEvent.setup();
     useSessionStore.setState({ country: 'GB' });
-    const { router } = renderRoute('/attempts/a11');
+    const { router } = renderRoute('/attempts/a1/results');
 
     await openResetDialog();
     const dialog = await screen.findByRole('dialog', { name: 'Reset all data?' });

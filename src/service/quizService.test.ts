@@ -250,6 +250,7 @@ describe('getCurrentQuestion', () => {
 
     expect(current).toMatchObject({
       status: 'in_progress',
+      quizTitle: 'JavaScript Basics',
       index: 0,
       total: 6,
       overallDeadlineAt: later(300),

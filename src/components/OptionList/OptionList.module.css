@@ -1,0 +1,15 @@
+.card {
+  border-width: 2px;
+  transition:
+    border-color 150ms ease,
+    background-color 150ms ease;
+
+  &:hover {
+    border-color: var(--mantine-color-dimmed);
+  }
+
+  &[data-checked] {
+    border-color: var(--mantine-primary-color-filled);
+    background-color: var(--accent-soft);
+  }
+}

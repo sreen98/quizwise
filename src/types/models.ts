@@ -66,3 +66,10 @@ export interface Attempt {
   percentage: number | null;
   timeTakenSeconds: number | null;
 }
+
+export interface QuizData {
+  countries: Country[];
+  users: User[];
+  quizzes: Quiz[];
+  attempts: Attempt[];
+}

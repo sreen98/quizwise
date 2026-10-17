@@ -32,6 +32,7 @@ const toDetails = (quiz: Quiz): QuizDetails => ({
   description: quiz.description,
   countries: quiz.countries,
   questionCount: quiz.questions.length,
+  questionTypes: [...new Set(quiz.questions.map(question => question.type))],
   timeLimitSeconds: quiz.timeLimitSeconds,
   perQuestionSeconds: quiz.perQuestionSeconds,
   retakesAllowed: quiz.retakesAllowed
@@ -168,6 +169,18 @@ export const createQuizService = (
       }),
 
     getQuiz: (quizId: string) => respond(() => toDetails(findQuiz(quizId))),
+
+    getQuizSummary: (quizId: string, userId: string) =>
+      respond(() => {
+        const quiz = findQuiz(quizId);
+        const { users, attempts } = store.getState();
+        if (!users.some(user => user.id === userId)) throw new Error('User not found');
+        return toListItem(
+          quiz,
+          attempts.filter(attempt => attempt.quizId === quizId),
+          userId
+        );
+      }),
 
     getLeaderboard: (quizId: string, limit: number, userId: string) =>
       respond((): Leaderboard => {

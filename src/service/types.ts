@@ -1,4 +1,4 @@
-import type { AttemptEndReason, AttemptStatus, PublicQuestion } from '../types/models';
+import type { AttemptEndReason, AttemptStatus, PublicQuestion, QuestionType } from '../types/models';
 
 export interface QuizDetails {
   id: string;
@@ -6,6 +6,7 @@ export interface QuizDetails {
   description: string;
   countries: string[];
   questionCount: number;
+  questionTypes: QuestionType[];
   timeLimitSeconds: number | null;
   perQuestionSeconds: number | null;
   retakesAllowed: boolean;

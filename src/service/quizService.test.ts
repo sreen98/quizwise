@@ -119,6 +119,7 @@ describe('getQuiz', () => {
       description: expect.any(String) as string,
       countries: ['IN', 'GB'],
       questionCount: 7,
+      questionTypes: ['single', 'multiple'],
       timeLimitSeconds: null,
       perQuestionSeconds: 30,
       retakesAllowed: false
@@ -128,6 +129,26 @@ describe('getQuiz', () => {
 
   it('rejects an unknown quiz', async () => {
     await expect(setup().service.getQuiz('q99')).rejects.toThrow('Quiz not found');
+  });
+});
+
+describe('getQuizSummary', () => {
+  it("returns one quiz with the user's progress, like the quiz list", async () => {
+    const { service } = setup();
+
+    expect(await service.getQuizSummary('q3', 'u1')).toMatchObject({
+      id: 'q3',
+      completed: false,
+      inProgress: { attemptId: 'a11', answeredCount: 2 }
+    });
+    expect(await service.getQuizSummary('q2', 'u1')).toMatchObject({ completed: true, bestAttemptId: 'a5' });
+  });
+
+  it('rejects an unknown quiz or user', async () => {
+    const { service } = setup();
+
+    await expect(service.getQuizSummary('q99', 'u1')).rejects.toThrow('Quiz not found');
+    await expect(service.getQuizSummary('q1', 'nobody')).rejects.toThrow('User not found');
   });
 });
 

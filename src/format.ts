@@ -17,6 +17,12 @@ export const formatSeconds = (totalSeconds: number) => {
   return `${String(minutes)} min ${String(seconds)} s`;
 };
 
+export const formatClock = (totalSeconds: number) => {
+  const minutes = Math.floor(totalSeconds / 60);
+  const seconds = totalSeconds % 60;
+  return `${String(minutes)}:${String(seconds).padStart(2, '0')}`;
+};
+
 export const formatTimeLimits = (
   timeLimitSeconds: number | null,
   perQuestionSeconds: number | null

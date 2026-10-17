@@ -1,11 +1,19 @@
 import { describe, expect, it } from 'vitest';
-import { formatDateTime, formatSeconds, formatTimeLimits, greetingFor } from './format';
+import { formatClock, formatDateTime, formatSeconds, formatTimeLimits, greetingFor } from './format';
 
 describe('formatSeconds', () => {
   it('shows whole minutes, seconds, or both', () => {
     expect(formatSeconds(240)).toBe('4 min');
     expect(formatSeconds(45)).toBe('45 s');
     expect(formatSeconds(90)).toBe('1 min 30 s');
+  });
+});
+
+describe('formatClock', () => {
+  it('shows minutes and two digit seconds', () => {
+    expect(formatClock(180)).toBe('3:00');
+    expect(formatClock(142)).toBe('2:22');
+    expect(formatClock(9)).toBe('0:09');
   });
 });
 

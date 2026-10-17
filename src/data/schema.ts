@@ -88,3 +88,8 @@ const quizDataSchema = z.object({
 });
 
 export const parseQuizData = (json: unknown): QuizData => quizDataSchema.parse(json);
+
+export const readQuizData = (json: unknown): QuizData | null => {
+  const result = quizDataSchema.safeParse(json);
+  return result.success ? result.data : null;
+};

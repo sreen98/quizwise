@@ -1,0 +1,25 @@
+import { createJSONStorage, persist } from 'zustand/middleware';
+import { createStore } from 'zustand/vanilla';
+import type { QuizData } from '../types/models';
+import { migrateSeed } from './migrate';
+import { readQuizData } from './schema';
+import seed from './seed.json';
+
+export const STORAGE_KEY = 'quizwise:v1';
+
+export const createDataStore = () => {
+  const store = createStore<QuizData>()(
+    persist(() => migrateSeed(seed), {
+      name: STORAGE_KEY,
+      version: 1,
+      storage: createJSONStorage(() => localStorage),
+      migrate: stored => readQuizData(stored) ?? migrateSeed(seed),
+      merge: (stored, current) => readQuizData(stored) ?? current
+    })
+  );
+
+  store.setState(store.getState(), true);
+  return store;
+};
+
+export const dataStore = createDataStore();

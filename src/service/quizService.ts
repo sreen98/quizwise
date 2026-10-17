@@ -79,6 +79,8 @@ const toCurrentQuestion = (attempt: Attempt, quiz: Quiz | undefined): CurrentQue
     question: toPublicQuestion(question),
     index: attempt.currentQuestionIndex,
     total: quiz.questions.length,
+    timeLimitSeconds: quiz.timeLimitSeconds,
+    perQuestionSeconds: quiz.perQuestionSeconds,
     ...getDeadlines(quiz, attempt),
     draftOptionIds: attempt.draftOptionIds
   };
@@ -103,7 +105,7 @@ const toResult = (attempt: Attempt): AttemptResult => {
 
 export const createQuizService = (
   store: StoreApi<QuizData>,
-  { now = Date.now, delay = () => 0 }: ServiceOptions = {}
+  { now = () => Date.now(), delay = () => 0 }: ServiceOptions = {}
 ) => {
   const respond = async <T>(compute: () => T): Promise<T> => {
     const result = structuredClone(compute());

@@ -53,6 +53,8 @@ export interface QuestionInProgress {
   question: PublicQuestion;
   index: number;
   total: number;
+  timeLimitSeconds: number | null;
+  perQuestionSeconds: number | null;
   overallDeadlineAt: number | null;
   questionDeadlineAt: number | null;
   deadlineAt: number | null;

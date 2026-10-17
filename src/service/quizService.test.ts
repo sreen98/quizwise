@@ -96,4 +96,86 @@ describe('getQuizzes', () => {
   it('rejects an unknown user', async () => {
     await expect(context.service.getQuizzes('nobody')).rejects.toThrow('User not found');
   });
+
+  it("shows the user's leaderboard rank on each quiz", async () => {
+    const quizzes = await context.service.getQuizzes('u1');
+
+    expect(quizzes.find(quiz => quiz.id === 'q1')).toMatchObject({ rank: 3, rankedCount: 4 });
+    expect(quizzes.find(quiz => quiz.id === 'q3')).toMatchObject({ rank: null, rankedCount: 2 });
+  });
+});
+
+describe('getQuiz', () => {
+  it('returns the quiz details without the questions', async () => {
+    const quiz = await setup().service.getQuiz('q2');
+
+    expect(quiz).toEqual({
+      id: 'q2',
+      title: 'React Fundamentals',
+      description: expect.any(String) as string,
+      countries: ['IN', 'GB'],
+      questionCount: 7,
+      timeLimitSeconds: null,
+      perQuestionSeconds: 30,
+      retakesAllowed: false
+    });
+    expect(quiz).not.toHaveProperty('questions');
+  });
+
+  it('rejects an unknown quiz', async () => {
+    await expect(setup().service.getQuiz('q99')).rejects.toThrow('Quiz not found');
+  });
+});
+
+describe('getLeaderboard', () => {
+  it('orders by score and breaks ties by the faster time', async () => {
+    const { entries } = await setup().service.getLeaderboard('q1', 10, 'u1');
+
+    expect(entries.map(entry => [entry.rank, entry.userName, entry.score, entry.timeTakenSeconds])).toEqual([
+      [1, 'Fatima Al Mansoori', 6, 168],
+      [2, 'Diya Nair', 5, 119],
+      [3, 'Aarav Menon', 5, 142],
+      [4, 'Oliver Smith', 4, 201]
+    ]);
+  });
+
+  it('ranks the faster player first on q3 where both score 4 out of 5', async () => {
+    const { entries } = await setup().service.getLeaderboard('q3', 10, 'u1');
+
+    expect(entries.map(entry => entry.userId)).toEqual(['u2', 'u3']);
+  });
+
+  it("returns the current user's entry even outside the limit", async () => {
+    const leaderboard = await setup().service.getLeaderboard('q1', 2, 'u1');
+
+    expect(leaderboard.entries).toHaveLength(2);
+    expect(leaderboard.currentUser).toMatchObject({ rank: 3, userId: 'u1' });
+    expect(leaderboard.rankedCount).toBe(4);
+  });
+
+  it('returns no entry for a user who has not completed the quiz', async () => {
+    const leaderboard = await setup().service.getLeaderboard('q1', 10, 'u5');
+
+    expect(leaderboard.currentUser).toBeNull();
+  });
+
+  it('rejects an unknown quiz', async () => {
+    await expect(setup().service.getLeaderboard('q99', 10, 'u1')).rejects.toThrow('Quiz not found');
+  });
+});
+
+describe('subscribe', () => {
+  it('calls the listener when data changes and stops after unsubscribing', () => {
+    const { store, service } = setup();
+    let calls = 0;
+    const unsubscribe = service.subscribe(() => {
+      calls += 1;
+    });
+
+    store.setState({ quizzes: [] });
+    unsubscribe();
+    store.setState({ quizzes: [] });
+
+    expect(calls).toBe(1);
+  });
 });

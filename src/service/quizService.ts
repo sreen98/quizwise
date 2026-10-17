@@ -1,13 +1,14 @@
 import type { StoreApi } from 'zustand/vanilla';
 import { dataStore, resetDataStore } from '../data/store';
 import { parseQuizInput } from '../data/schema';
-import type { Attempt, Quiz, QuizData, QuizInput, User } from '../types/models';
+import type { Attempt, Quiz, QuizData, QuizInput } from '../types/models';
 import { finishAttempt, recordAnswer, settleAttempt, toPublicQuestion, toSelection } from './attempts';
 import { simulatedDelay } from './latency';
 import { rankBestAttempts } from './ranking';
 import { getDeadlines } from './timing';
 import type {
   AttemptResult,
+  AttemptResultView,
   CurrentQuestion,
   EndedAttempt,
   Leaderboard,
@@ -60,15 +61,21 @@ const toListItem = (quiz: Quiz, quizAttempts: Attempt[], userId: string): QuizLi
   };
 };
 
-const toLeaderboardEntry = (attempt: Attempt, index: number, users: User[]): LeaderboardEntry => ({
-  rank: index + 1,
-  userId: attempt.userId,
-  userName: users.find(user => user.id === attempt.userId)?.name ?? 'Unknown user',
-  score: attempt.score ?? 0,
-  totalQuestions: attempt.totalQuestions,
-  percentage: attempt.percentage ?? 0,
-  timeTakenSeconds: attempt.timeTakenSeconds ?? 0
-});
+const toLeaderboardEntry = (attempt: Attempt, index: number, { users, countries }: QuizData): LeaderboardEntry => {
+  const user = users.find(item => item.id === attempt.userId);
+
+  return {
+    rank: index + 1,
+    userId: attempt.userId,
+    userName: user?.name ?? 'Unknown user',
+    countryName: countries.find(country => country.code === user?.country)?.name ?? '',
+    score: attempt.score ?? 0,
+    totalQuestions: attempt.totalQuestions,
+    percentage: attempt.percentage ?? 0,
+    timeTakenSeconds: attempt.timeTakenSeconds ?? 0,
+    completedAt: attempt.completedAt
+  };
+};
 
 const toCurrentQuestion = (attempt: Attempt, quiz: Quiz | undefined): CurrentQuestion => {
   if (attempt.status !== 'in_progress') return { status: attempt.status, endReason: attempt.endReason };
@@ -123,9 +130,9 @@ export const createQuizService = (
     return quiz;
   };
 
-  const findAttempt = (attemptId: string) => {
+  const findAttempt = (attemptId: string, userId?: string) => {
     const attempt = store.getState().attempts.find(item => item.id === attemptId);
-    if (!attempt) throw new Error('Attempt not found');
+    if (!attempt || (userId !== undefined && attempt.userId !== userId)) throw new Error('Attempt not found');
     return attempt;
   };
 
@@ -135,16 +142,16 @@ export const createQuizService = (
     }));
   };
 
-  const loadAttempt = (attemptId: string, time: number) => {
-    const stored = findAttempt(attemptId);
+  const loadAttempt = (attemptId: string, time: number, userId?: string) => {
+    const stored = findAttempt(attemptId, userId);
     const quiz = store.getState().quizzes.find(item => item.id === stored.quizId);
     const attempt = settleAttempt(stored, quiz, time);
     if (attempt !== stored) saveAttempt(attempt);
     return { attempt, quiz };
   };
 
-  const loadCurrentQuestion = (attemptId: string, questionId: string, time: number) => {
-    const { attempt, quiz } = loadAttempt(attemptId, time);
+  const loadCurrentQuestion = (attemptId: string, questionId: string, time: number, userId?: string) => {
+    const { attempt, quiz } = loadAttempt(attemptId, time, userId);
     const question = quiz?.questions[attempt.currentQuestionIndex];
     const isCurrent = attempt.status === 'in_progress' && question?.id === questionId;
     return { attempt, quiz, question: isCurrent ? question : undefined };
@@ -187,12 +194,15 @@ export const createQuizService = (
     getLeaderboard: (quizId: string, limit: number, userId: string) =>
       respond((): Leaderboard => {
         const quiz = findQuiz(quizId);
-        const { users, attempts } = store.getState();
-        const entries = rankBestAttempts(attempts.filter(attempt => attempt.quizId === quiz.id)).map((attempt, index) =>
-          toLeaderboardEntry(attempt, index, users)
+        const state = store.getState();
+        const quizAttempts = state.attempts.filter(attempt => attempt.quizId === quiz.id);
+        const entries = rankBestAttempts(quizAttempts).map((attempt, index) =>
+          toLeaderboardEntry(attempt, index, state)
         );
 
         return {
+          quizTitle: quiz.title,
+          retakesAllowed: quiz.retakesAllowed,
           entries: entries.slice(0, limit),
           currentUser: entries.find(entry => entry.userId === userId) ?? null,
           rankedCount: entries.length
@@ -234,16 +244,16 @@ export const createQuizService = (
         return { attemptId: attempt.id, resumed: false };
       }),
 
-    getCurrentQuestion: (attemptId: string) =>
+    getCurrentQuestion: (attemptId: string, userId?: string) =>
       respond(() => {
-        const { attempt, quiz } = loadAttempt(attemptId, now());
+        const { attempt, quiz } = loadAttempt(attemptId, now(), userId);
         return toCurrentQuestion(attempt, quiz);
       }),
 
-    submitAnswer: (attemptId: string, questionId: string, optionIds: string[]) =>
+    submitAnswer: (attemptId: string, questionId: string, optionIds: string[], userId?: string) =>
       respond(() => {
         const time = now();
-        const { attempt, quiz, question } = loadCurrentQuestion(attemptId, questionId, time);
+        const { attempt, quiz, question } = loadCurrentQuestion(attemptId, questionId, time, userId);
         if (!quiz || !question) return toCurrentQuestion(attempt, quiz);
 
         const answered = recordAnswer(attempt, question, toSelection(question, optionIds), time);
@@ -255,25 +265,55 @@ export const createQuizService = (
         return toCurrentQuestion(next, quiz);
       }),
 
-    saveDraft: (attemptId: string, questionId: string, optionIds: string[]) =>
+    saveDraft: (attemptId: string, questionId: string, optionIds: string[], userId?: string) =>
       respond(() => {
-        const { attempt, question } = loadCurrentQuestion(attemptId, questionId, now());
+        const { attempt, question } = loadCurrentQuestion(attemptId, questionId, now(), userId);
         if (question) saveAttempt({ ...attempt, draftOptionIds: toSelection(question, optionIds) });
       }),
 
-    completeAttempt: (attemptId: string) =>
+    completeAttempt: (attemptId: string, userId?: string) =>
       respond((): AttemptResult => {
         const time = now();
-        const loaded = loadAttempt(attemptId, time).attempt;
+        const loaded = loadAttempt(attemptId, time, userId).attempt;
         if (loaded.status === 'closed') throw new Error('Attempt was closed');
         const attempt = loaded.status === 'in_progress' ? finishAttempt(loaded, time, 'submitted') : loaded;
         if (attempt !== loaded) saveAttempt(attempt);
         return toResult(attempt);
       }),
 
-    getEndedAttempt: (attemptId: string) =>
+    getAttemptResult: (attemptId: string, userId?: string) =>
+      respond((): AttemptResultView => {
+        const { attempt, quiz } = loadAttempt(attemptId, now(), userId);
+        if (attempt.status === 'in_progress') return { status: 'in_progress' };
+        if (attempt.status === 'closed' || !quiz) throw new Error('Result not found');
+        const { attempts, users } = store.getState();
+        const ranked = rankBestAttempts(attempts.filter(item => item.quizId === quiz.id));
+        const rankIndex = ranked.findIndex(item => item.userId === attempt.userId);
+        const best = ranked[rankIndex];
+
+        return {
+          ...toResult(attempt),
+          status: 'completed',
+          quizTitle: quiz.title,
+          userName: users.find(user => user.id === attempt.userId)?.name ?? 'Unknown user',
+          retakesAllowed: quiz.retakesAllowed,
+          rank: rankIndex === -1 ? null : rankIndex + 1,
+          rankedCount: ranked.length,
+          best: best ? { score: best.score ?? 0, totalQuestions: best.totalQuestions } : null,
+          breakdown:
+            quiz.version === attempt.quizVersion
+              ? quiz.questions.map(question => ({
+                  questionId: question.id,
+                  text: question.text,
+                  isCorrect: attempt.answers.find(answer => answer.questionId === question.id)?.isCorrect ?? false
+                }))
+              : null
+        };
+      }),
+
+    getEndedAttempt: (attemptId: string, userId?: string) =>
       respond((): EndedAttempt => {
-        const { attempt, quiz } = loadAttempt(attemptId, now());
+        const { attempt, quiz } = loadAttempt(attemptId, now(), userId);
         if (attempt.status === 'in_progress') throw new Error('Attempt is still in progress');
         const userAttempts = store
           .getState()

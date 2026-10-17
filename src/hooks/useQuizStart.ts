@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { useNavigate } from 'react-router';
 import { quizService } from '../service/quizService';
 import type { QuizListItem } from '../service/types';
 import type { Country } from '../types/models';
@@ -11,9 +12,12 @@ interface Loaded {
   state: QuizStartState;
 }
 
-export const useQuizStart = (quizId: string, userId: string): QuizStartState => {
+export const useQuizStart = (quizId: string, userId: string) => {
   const key = `${quizId}:${userId}`;
+  const navigate = useNavigate();
   const [loaded, setLoaded] = useState<Loaded | null>(null);
+  const [starting, setStarting] = useState(false);
+  const [hasStartFailed, setHasStartFailed] = useState(false);
 
   useEffect(() => {
     let current = true;
@@ -31,5 +35,19 @@ export const useQuizStart = (quizId: string, userId: string): QuizStartState => 
     };
   }, [key, quizId, userId]);
 
-  return loaded?.key === key ? loaded.state : { status: 'loading' };
+  const start = async () => {
+    setStarting(true);
+    setHasStartFailed(false);
+    try {
+      const { attemptId } = await quizService.startOrResumeAttempt(quizId, userId);
+      await navigate(`/attempts/${attemptId}`);
+    } catch {
+      setHasStartFailed(true);
+      setStarting(false);
+    }
+  };
+
+  const state: QuizStartState = loaded?.key === key ? loaded.state : { status: 'loading' };
+
+  return { state, start, starting, hasStartFailed };
 };

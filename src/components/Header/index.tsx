@@ -1,13 +1,10 @@
-import { Anchor, Burger, Divider, Drawer, Group, Stack, ThemeIcon } from '@mantine/core';
-import { useDisclosure } from '@mantine/hooks';
+import { Anchor, Group, ThemeIcon } from '@mantine/core';
 import { IconCheck } from '@tabler/icons-react';
 import { useEffect } from 'react';
 import { Link, NavLink } from 'react-router';
 import { useUserOptions } from '../../hooks/useUserOptions';
 import { DEFAULT_USER_ID, useSessionStore } from '../../session/sessionStore';
-import { ResetDataButton } from '../ResetDataButton';
 import { SettingsMenu } from '../SettingsMenu';
-import { SlowNetworkSwitch } from '../SlowNetworkSwitch';
 import { UserSelect } from '../UserSelect';
 import classes from './Header.module.css';
 
@@ -18,7 +15,6 @@ const navLinks = [
 ];
 
 export const Header = () => {
-  const [menuOpened, { toggle: toggleMenu, close: closeMenu }] = useDisclosure();
   const userOptions = useUserOptions();
   const userId = useSessionStore(state => state.userId);
   const setUserId = useSessionStore(state => state.setUserId);
@@ -29,13 +25,13 @@ export const Header = () => {
   }, [userOptions, userId, setUserId]);
 
   const links = navLinks.map(link => (
-    <NavLink key={link.to} to={link.to} className={classes.link} onClick={closeMenu}>
+    <NavLink key={link.to} to={link.to} className={classes.link}>
       {link.label}
     </NavLink>
   ));
 
   return (
-    <Group h="100%" pl={{ base: 16, sm: 24 }} pr={{ base: 8, sm: 24 }} gap={20} wrap="nowrap">
+    <Group h="100%" px={{ base: 16, sm: 24 }} gap={20} wrap="nowrap">
       <Anchor
         component={Link}
         to="/quizzes"
@@ -61,28 +57,6 @@ export const Header = () => {
         <UserSelect userOptions={userOptions} />
         <SettingsMenu />
       </Group>
-
-      <Burger
-        opened={menuOpened}
-        onClick={toggleMenu}
-        hiddenFrom="sm"
-        ml="auto"
-        w={44}
-        h={44}
-        aria-label={menuOpened ? 'Close menu' : 'Open menu'}
-      />
-
-      <Drawer opened={menuOpened} onClose={closeMenu} title="Menu" position="right" size="xs" hiddenFrom="sm">
-        <Stack component="nav" aria-label="Main" gap={4}>
-          {links}
-        </Stack>
-        <Divider my="md" />
-        <Stack gap="sm">
-          <UserSelect userOptions={userOptions} onDone={closeMenu} />
-          <SlowNetworkSwitch />
-          <ResetDataButton onDialogOpen={closeMenu} />
-        </Stack>
-      </Drawer>
     </Group>
   );
 };

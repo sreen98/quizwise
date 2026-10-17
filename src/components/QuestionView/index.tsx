@@ -4,7 +4,7 @@ import { OptionList } from '../OptionList';
 import classes from './QuestionView.module.css';
 import type { QuestionViewProps } from './types';
 
-export const QuestionView = ({ question, value, onChange }: QuestionViewProps) => {
+export const QuestionView = ({ question, value, onChange, disabled }: QuestionViewProps) => {
   const headingRef = useRef<HTMLHeadingElement>(null);
 
   useEffect(() => {
@@ -41,7 +41,13 @@ export const QuestionView = ({ question, value, onChange }: QuestionViewProps) =
         <Text c="dimmed" fz={{ base: 14, sm: 15 }} mt={10} mb={24}>
           {question.type === 'multiple' ? 'Multiple choice · Select all that apply' : 'Single choice · Pick one'}
         </Text>
-        <OptionList type={question.type} options={question.options} value={value} onChange={onChange} />
+        <OptionList
+          type={question.type}
+          options={question.options}
+          value={value}
+          onChange={onChange}
+          disabled={disabled}
+        />
       </Fieldset>
     </Card>
   );

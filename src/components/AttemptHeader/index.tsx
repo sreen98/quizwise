@@ -1,17 +1,27 @@
 import { ActionIcon, Button, Flex, Group, Skeleton, Text } from '@mantine/core';
 import { modals } from '@mantine/modals';
 import { IconArrowLeft } from '@tabler/icons-react';
-import type { MouseEvent } from 'react';
+import { useEffect, type MouseEvent } from 'react';
 import { Link, useNavigate } from 'react-router';
 import type { AttemptHeaderProps } from './types';
 
-export const AttemptHeader = ({ quizTitle, timers, confirmExit }: AttemptHeaderProps) => {
+const LEAVE_MODAL_ID = 'leave-quiz';
+
+export const AttemptHeader = ({ quizTitle, timers, showExitConfirm }: AttemptHeaderProps) => {
   const navigate = useNavigate();
 
+  useEffect(
+    () => () => {
+      modals.close(LEAVE_MODAL_ID);
+    },
+    []
+  );
+
   const handleExit = (event: MouseEvent) => {
-    if (!confirmExit) return;
+    if (!showExitConfirm) return;
     event.preventDefault();
     modals.openConfirmModal({
+      modalId: LEAVE_MODAL_ID,
       title: 'Leave the quiz?',
       children: <Text size="sm">Your answers are saved, but the timer keeps running while you're away.</Text>,
       labels: { confirm: 'Save and exit', cancel: 'Keep going' },

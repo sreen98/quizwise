@@ -27,7 +27,7 @@ export const QuizCardSkeleton = () => {
           {detailSkeleton('score', 1)}
         </Group>
         <Stack mt="auto" gap={18}>
-          <Skeleton h={6} radius="xl" />
+          <Skeleton h={6} radius="lg" />
           <Divider />
           <Group justify="space-between">
             <Skeleton h={14} w={110} />

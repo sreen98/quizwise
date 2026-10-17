@@ -184,6 +184,17 @@ describe('getLeaderboard', () => {
     expect(leaderboard.currentUser).toBeNull();
   });
 
+  it('includes the quiz title, country and completion date', async () => {
+    const leaderboard = await setup().service.getLeaderboard('q1', 10, 'u1');
+
+    expect(leaderboard).toMatchObject({ quizTitle: 'JavaScript Basics', retakesAllowed: true });
+    expect(leaderboard.entries[0]).toMatchObject({
+      userName: 'Fatima Al Mansoori',
+      countryName: 'United Arab Emirates'
+    });
+    expect(leaderboard.entries[0]?.completedAt).toEqual(expect.any(String));
+  });
+
   it('rejects an unknown quiz', async () => {
     await expect(setup().service.getLeaderboard('q99', 10, 'u1')).rejects.toThrow('Quiz not found');
   });
@@ -571,6 +582,79 @@ describe('quiz edited or deleted during an attempt', () => {
     editQuiz(store, 'q1');
 
     await expect(service.completeAttempt(attemptId)).rejects.toThrow('Attempt was closed');
+  });
+});
+
+describe('attempt ownership', () => {
+  it("refuses another user's attempt without changing it", async () => {
+    const { store, service } = setup();
+
+    await expect(service.getCurrentQuestion('a11', 'u2')).rejects.toThrow('Attempt not found');
+    await expect(service.submitAnswer('a11', 'q3-3', [], 'u2')).rejects.toThrow('Attempt not found');
+    await expect(service.getAttemptResult('a1', 'u2')).rejects.toThrow('Attempt not found');
+    await expect(service.getEndedAttempt('a1', 'u2')).rejects.toThrow('Attempt not found');
+
+    expect(store.getState().attempts.find(attempt => attempt.id === 'a11')?.status).toBe('in_progress');
+  });
+
+  it('opens the attempt for its own user', async () => {
+    const { service } = setup();
+
+    expect(await service.getAttemptResult('a1', 'u1')).toMatchObject({ status: 'completed', score: 5 });
+  });
+});
+
+describe('getAttemptResult', () => {
+  it('returns the score, rank and question breakdown of a finished attempt', async () => {
+    const { service } = setup();
+
+    const result = await service.getAttemptResult('a1');
+
+    expect(result).toMatchObject({
+      status: 'completed',
+      quizTitle: 'JavaScript Basics',
+      userName: 'Aarav Menon',
+      score: 5,
+      totalQuestions: 6,
+      correctCount: 5,
+      incorrectCount: 1,
+      timeTakenSeconds: 142,
+      retakesAllowed: true,
+      rank: 3,
+      rankedCount: 4,
+      best: { score: 5, totalQuestions: 6 }
+    });
+    expect(result.status === 'completed' && result.breakdown?.map(item => item.isCorrect)).toEqual([
+      true,
+      true,
+      true,
+      true,
+      false,
+      true
+    ]);
+  });
+
+  it('leaves out the breakdown once the quiz has changed since the attempt', async () => {
+    const { service } = setup();
+    await service.updateQuiz('q1', await service.getQuizForEdit('q1'));
+
+    expect(await service.getAttemptResult('a1')).toMatchObject({ score: 5, breakdown: null });
+  });
+
+  it('does not finish an attempt that is still in progress', async () => {
+    const { store, service } = setup();
+    const { attemptId } = await service.startOrResumeAttempt('q1', 'u5');
+
+    expect(await service.getAttemptResult(attemptId)).toEqual({ status: 'in_progress' });
+    expect(store.getState().attempts.find(attempt => attempt.id === attemptId)?.status).toBe('in_progress');
+  });
+
+  it('has no result for a closed attempt', async () => {
+    const { service } = setup();
+    const { attemptId } = await service.startOrResumeAttempt('q1', 'u5');
+    await service.deleteQuiz('q1');
+
+    await expect(service.getAttemptResult(attemptId)).rejects.toThrow('Result not found');
   });
 });
 

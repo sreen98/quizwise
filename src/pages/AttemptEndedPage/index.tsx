@@ -1,9 +1,11 @@
-import { Anchor, Box, Button, Card, Divider, Flex, Group, Skeleton, Stack, Text, Title } from '@mantine/core';
+import { Anchor, Box, Button, Card, Flex, Group, Skeleton, Stack, Text, Title } from '@mantine/core';
 import type { ReactNode } from 'react';
 import { Link, Navigate, useLocation, useParams } from 'react-router';
 import { formatClock, formatDateTime, formatSeconds } from '../../format';
 import { useEndedAttempt } from '../../hooks/useEndedAttempt';
+import { useSessionStore } from '../../session/sessionStore';
 import type { EndedAttempt } from '../../service/types';
+import classes from './AttemptEndedPage.module.css';
 
 const limitSentence = ({ timeLimitSeconds, perQuestionSeconds }: EndedAttempt) => {
   if (timeLimitSeconds !== null && perQuestionSeconds !== null) {
@@ -14,31 +16,25 @@ const limitSentence = ({ timeLimitSeconds, perQuestionSeconds }: EndedAttempt) =
   return 'Its time ran out';
 };
 
+const focusOnMount = (heading: HTMLHeadingElement | null) => {
+  heading?.focus();
+};
+
 const stat = (label: string, value: ReactNode) => (
-  <Box key={label}>
-    <Divider />
-    <Group justify="space-between" py={14} fz={15}>
-      <Text component="dt" c="dimmed" fw={600} inherit>
-        {label}
-      </Text>
-      <Box component="dd" m={0} fw={700}>
-        {value}
-      </Box>
-    </Group>
-  </Box>
+  <Group key={label} className={classes.stat} justify="space-between" py={14} fz={15}>
+    <Text component="dt" c="dimmed" fw={600} inherit>
+      {label}
+    </Text>
+    <Box component="dd" m={0} fw={700}>
+      {value}
+    </Box>
+  </Group>
 );
 
 const message = (title: string, body: ReactNode, actions: ReactNode) => (
   <Stack gap={16}>
-    <Card
-      component="section"
-      role="alert"
-      aria-labelledby="ended-title"
-      withBorder
-      radius="lg"
-      p={{ base: 22, sm: 32 }}
-    >
-      <Title id="ended-title" order={1} fz={{ base: 24, sm: 28 }} lh={1.25} mb={10}>
+    <Card component="section" aria-labelledby="ended-title" withBorder radius="lg" p={{ base: 22, sm: 32 }}>
+      <Title ref={focusOnMount} id="ended-title" tabIndex={-1} order={1} fz={{ base: 24, sm: 28 }} lh={1.25} mb={10}>
         {title}
       </Title>
       {body}
@@ -55,9 +51,9 @@ const backButton = (primary: boolean) => (
   </Button>
 );
 
-const timeoutMessage = (attempt: EndedAttempt, whileAway: boolean) =>
+const timeoutMessage = (attempt: EndedAttempt, isEndedWhileAway: boolean) =>
   message(
-    whileAway ? 'Time ran out while you were away' : 'Time ran out',
+    isEndedWhileAway ? 'Time ran out while you were away' : 'Time ran out',
     <>
       <Text c="dimmed" fz={15} lh={1.55} mb={20}>
         You started {attempt.quizTitle} {formatDateTime(attempt.startedAt)}. {limitSentence(attempt)}, so the attempt
@@ -126,15 +122,16 @@ const deletedMessage = message(
 export const AttemptEndedPage = () => {
   const { attemptId = '' } = useParams();
   const location = useLocation();
-  const state = useEndedAttempt(attemptId);
-  const { whileAway = true } = (location.state ?? {}) as { whileAway?: boolean };
+  const userId = useSessionStore(state => state.userId);
+  const state = useEndedAttempt(attemptId, userId);
+  const { isEndedWhileAway = true } = (location.state ?? {}) as { isEndedWhileAway?: boolean };
 
   if (state.status === 'missing') {
     return (
       <Stack gap="sm" align="flex-start">
         <Title order={1}>Attempt not found</Title>
         <Text c="dimmed">This attempt doesn't exist or has been removed.</Text>
-        <Anchor component={Link} to="/quizzes" fw={600}>
+        <Anchor component={Link} to="/quizzes" fw={600} display="inline-block" lh="44px">
           Back to quizzes
         </Anchor>
       </Stack>
@@ -154,7 +151,7 @@ export const AttemptEndedPage = () => {
 
   return (
     <Box maw={640} mx="auto">
-      {attempt.endReason === 'timeout' && timeoutMessage(attempt, whileAway)}
+      {attempt.endReason === 'timeout' && timeoutMessage(attempt, isEndedWhileAway)}
       {attempt.endReason === 'quiz_changed' && changedMessage(attempt)}
       {attempt.endReason === 'quiz_deleted' && deletedMessage}
     </Box>

@@ -14,11 +14,13 @@ const card = async (title: string) => {
 
 const cardTitles = () => screen.getAllByRole('heading', { level: 2 }).map(heading => heading.textContent);
 
-const chooseCountry = async (name: string) => {
+const choose = async (label: string, name: string) => {
   const user = userEvent.setup();
-  await user.click(screen.getByRole('combobox', { name: 'Country' }));
+  await user.click(screen.getByRole('combobox', { name: label }));
   await user.click(await screen.findByRole('option', { name }));
 };
+
+const chooseCountry = (name: string) => choose('Country', name);
 
 describe('QuizListPage', () => {
   beforeEach(async () => {
@@ -30,13 +32,48 @@ describe('QuizListPage', () => {
     renderRoute('/quizzes');
 
     expect(screen.getByRole('status')).toHaveTextContent('Loading quizzes');
-    expect(await screen.findByText('4 quizzes available in India · 2 completed · 1 in progress')).toBeInTheDocument();
+    await waitFor(() => {
+      expect(screen.getByRole('combobox', { name: 'Country' })).toHaveValue('India');
+    });
+    expect(screen.getByRole('combobox', { name: 'Status' })).toHaveValue('All (4)');
     expect(cardTitles()).toEqual([
       'JavaScript Basics',
       'React Fundamentals',
       'World Geography',
       'Kerala Culture and History'
     ]);
+  });
+
+  it('counts the quizzes by status and shows only the chosen ones', async () => {
+    const user = userEvent.setup();
+    renderRoute('/quizzes');
+    await card('JavaScript Basics');
+
+    await user.click(screen.getByRole('combobox', { name: 'Status' }));
+    expect((await screen.findAllByRole('option')).map(option => option.textContent)).toEqual([
+      'All (4)',
+      'Not started (1)',
+      'In progress (1)',
+      'Completed (2)'
+    ]);
+    await user.click(screen.getByRole('option', { name: 'Completed (2)' }));
+    expect(cardTitles()).toEqual(['JavaScript Basics', 'React Fundamentals']);
+
+    await choose('Status', 'In progress (1)');
+    expect(cardTitles()).toEqual(['World Geography']);
+  });
+
+  it('offers to show all quizzes when none have the chosen status', async () => {
+    const user = userEvent.setup();
+    useSessionStore.setState({ userId: 'u5' });
+    renderRoute('/quizzes');
+    await card('JavaScript Basics');
+
+    await choose('Status', 'Completed (0)');
+
+    expect(screen.getByText('No quizzes are completed here.')).toBeInTheDocument();
+    await user.click(screen.getByRole('button', { name: 'Show all quizzes' }));
+    expect(cardTitles()).toHaveLength(4);
   });
 
   it('offers to resume a quiz that is in progress', async () => {

@@ -12,7 +12,9 @@ const options = [
 
 describe('OptionList', () => {
   it('shows single choice options as radio buttons with the selected one checked', () => {
-    renderWithProviders(<OptionList type="single" options={options} value={['b']} onChange={vi.fn()} />);
+    renderWithProviders(
+      <OptionList type="single" options={options} value={['b']} onChange={vi.fn()} disabled={false} />
+    );
 
     expect(screen.getAllByRole('radio')).toHaveLength(3);
     expect(screen.getByRole('radio', { name: 'object' })).toBeChecked();
@@ -22,7 +24,9 @@ describe('OptionList', () => {
   it('replaces the selection when another single choice option is picked', async () => {
     const user = userEvent.setup();
     const onChange = vi.fn();
-    renderWithProviders(<OptionList type="single" options={options} value={['b']} onChange={onChange} />);
+    renderWithProviders(
+      <OptionList type="single" options={options} value={['b']} onChange={onChange} disabled={false} />
+    );
 
     await user.click(screen.getByRole('radio', { name: 'boolean' }));
 
@@ -30,7 +34,9 @@ describe('OptionList', () => {
   });
 
   it('shows multiple choice options as checkboxes with every selected one checked', () => {
-    renderWithProviders(<OptionList type="multiple" options={options} value={['a', 'c']} onChange={vi.fn()} />);
+    renderWithProviders(
+      <OptionList type="multiple" options={options} value={['a', 'c']} onChange={vi.fn()} disabled={false} />
+    );
 
     expect(screen.getAllByRole('checkbox')).toHaveLength(3);
     expect(screen.getByRole('checkbox', { name: 'string' })).toBeChecked();
@@ -41,7 +47,9 @@ describe('OptionList', () => {
   it('adds an option to the multiple choice selection', async () => {
     const user = userEvent.setup();
     const onChange = vi.fn();
-    renderWithProviders(<OptionList type="multiple" options={options} value={['a']} onChange={onChange} />);
+    renderWithProviders(
+      <OptionList type="multiple" options={options} value={['a']} onChange={onChange} disabled={false} />
+    );
 
     await user.click(screen.getByRole('checkbox', { name: 'object' }));
 
@@ -51,7 +59,9 @@ describe('OptionList', () => {
   it('removes an option from the multiple choice selection when it is picked again', async () => {
     const user = userEvent.setup();
     const onChange = vi.fn();
-    renderWithProviders(<OptionList type="multiple" options={options} value={['a', 'c']} onChange={onChange} />);
+    renderWithProviders(
+      <OptionList type="multiple" options={options} value={['a', 'c']} onChange={onChange} disabled={false} />
+    );
 
     await user.click(screen.getByRole('checkbox', { name: 'string' }));
 
@@ -61,7 +71,9 @@ describe('OptionList', () => {
   it('selects with the keyboard using Space', async () => {
     const user = userEvent.setup();
     const onChange = vi.fn();
-    renderWithProviders(<OptionList type="multiple" options={options} value={[]} onChange={onChange} />);
+    renderWithProviders(
+      <OptionList type="multiple" options={options} value={[]} onChange={onChange} disabled={false} />
+    );
 
     await user.tab();
     await user.keyboard(' ');

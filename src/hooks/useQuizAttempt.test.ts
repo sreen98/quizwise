@@ -6,8 +6,8 @@ import { useQuizAttempt } from './useQuizAttempt';
 
 const startAttempt = async (quizId: string) => (await quizService.startOrResumeAttempt(quizId, 'u5')).attemptId;
 
-const renderAttempt = async (attemptId: string) => {
-  const hook = renderHook(() => useQuizAttempt(attemptId));
+const renderAttempt = async (attemptId: string, userId = 'u5') => {
+  const hook = renderHook(() => useQuizAttempt(attemptId, userId));
   await waitFor(() => {
     expect(hook.result.current.state.status).not.toBe('loading');
   });
@@ -116,7 +116,7 @@ describe('useQuizAttempt', () => {
   });
 
   it('shows that time ran out for an attempt that expired while away', async () => {
-    const { result } = await renderAttempt('a11');
+    const { result } = await renderAttempt('a11', 'u1');
 
     expect(result.current.state).toEqual({ status: 'completed', endReason: 'timeout' });
   });

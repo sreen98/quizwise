@@ -1,6 +1,7 @@
 import { act, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { setSlowNetwork } from '../../service/latency';
 import { quizService } from '../../service/quizService';
 import { useSessionStore } from '../../session/sessionStore';
 import { renderRoute } from '../../test/renderWithProviders';
@@ -46,10 +47,11 @@ describe('AttemptPage', () => {
     const user = userEvent.setup();
     renderRoute(`/attempts/${await startQuiz()}`);
 
-    const submit = await screen.findByRole('button', { name: 'Submit answer' });
+    const option = await screen.findByRole('radio', { name: 'const' });
+    const submit = screen.getByRole('button', { name: 'Submit answer' });
     expect(submit).toBeDisabled();
 
-    await user.click(screen.getByRole('radio', { name: 'const' }));
+    await user.click(option);
 
     expect(submit).toBeEnabled();
   });
@@ -189,6 +191,52 @@ describe('AttemptPage', () => {
     expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
   });
 
+  it('scores single and multiple choice answers to the end of the quiz', async () => {
+    const user = userEvent.setup();
+    renderRoute(`/attempts/${await startQuiz()}`);
+    const answers = [
+      ['const'],
+      ['"object"'],
+      ['string', 'boolean', 'symbol'],
+      ['false'],
+      ['map', 'filter'],
+      ['Value and type']
+    ];
+
+    for (const [index, names] of answers.entries()) {
+      await screen.findByText(`Question ${String(index + 1)} of 6`);
+      for (const name of names) {
+        await user.click(screen.getByRole(names.length > 1 ? 'checkbox' : 'radio', { name }));
+      }
+      await user.click(screen.getByRole('button', { name: 'Submit answer' }));
+    }
+
+    expect(await screen.findByText(/You scored 6 out of 6/)).toBeInTheDocument();
+  });
+
+  it('disables the options while the answer is being saved', async () => {
+    const user = userEvent.setup();
+    setSlowNetwork(true);
+    try {
+      renderRoute(`/attempts/${await startQuiz()}`);
+
+      await user.click(await screen.findByRole('radio', { name: 'const' }, { timeout: 3000 }));
+      await user.click(screen.getByRole('button', { name: 'Submit answer' }));
+
+      expect(screen.getByRole('radio', { name: 'var' })).toBeDisabled();
+      expect(await screen.findByText('Question 2 of 6', {}, { timeout: 3000 })).toBeInTheDocument();
+    } finally {
+      setSlowNetwork(false);
+    }
+  });
+
+  it("does not open another user's attempt", async () => {
+    renderRoute('/attempts/a11');
+
+    expect(await screen.findByRole('heading', { name: 'Attempt not found' })).toBeInTheDocument();
+    expect(await quizService.getCurrentQuestion('a11', 'u1')).toMatchObject({ status: 'completed' });
+  });
+
   it('says when an attempt does not exist', async () => {
     renderRoute('/attempts/a99');
 
@@ -251,14 +299,31 @@ describe('AttemptPage', () => {
       expect(screen.getByText('1 answered')).toBeInTheDocument();
     });
 
-    it('says time ran out when the whole quiz runs out while the user is on it', async () => {
+    it('submits the selection and says time ran out when the whole quiz runs out', async () => {
+      const user = userEvent.setup({ advanceTimers: vi.advanceTimersByTime });
       const { router } = renderRoute(`/attempts/${await startQuiz()}`);
-      await screen.findByText('Question 1 of 6');
+      await user.click(await screen.findByRole('radio', { name: 'const' }));
 
       await advance(300_000);
 
       expect(await screen.findByRole('heading', { name: 'Time ran out' })).toBeInTheDocument();
       expect(router.state.location.pathname).toMatch(/\/ended$/);
+      expect(screen.getByText('1 of 6')).toBeInTheDocument();
+      expect(screen.getByText('1 / 6 · 16.7%')).toBeInTheDocument();
+    });
+
+    it('closes the leave dialog when the time runs out', async () => {
+      const user = userEvent.setup({ advanceTimers: vi.advanceTimersByTime });
+      renderRoute(`/attempts/${await startQuiz()}`);
+
+      await user.click(await findExitLink());
+      expect(await screen.findByRole('dialog', { name: 'Leave the quiz?' })).toBeInTheDocument();
+      await advance(300_000);
+
+      expect(await screen.findByRole('heading', { name: 'Time ran out' })).toBeInTheDocument();
+      await waitFor(() => {
+        expect(screen.queryByRole('dialog', { name: 'Leave the quiz?' })).not.toBeInTheDocument();
+      });
     });
 
     it('shows no timer for an untimed quiz', async () => {

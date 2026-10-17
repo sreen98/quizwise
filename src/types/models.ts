@@ -1,4 +1,4 @@
-export type UserRole = 'user' | 'admin';
+type UserRole = 'user' | 'admin';
 export type QuestionType = 'single' | 'multiple';
 export type AttemptStatus = 'in_progress' | 'completed' | 'closed';
 export type AttemptEndReason = 'submitted' | 'timeout' | 'quiz_changed' | 'quiz_deleted';

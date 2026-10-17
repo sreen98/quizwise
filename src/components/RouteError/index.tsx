@@ -7,7 +7,7 @@ export const RouteError = () => {
       <Stack gap="sm" align="flex-start">
         <Title order={1}>Something went wrong</Title>
         <Text c="dimmed">The page could not be shown. Try again from the quiz list.</Text>
-        <Anchor component={Link} to="/quizzes" fw={600}>
+        <Anchor component={Link} to="/quizzes" fw={600} display="inline-block" lh="44px">
           Back to quizzes
         </Anchor>
       </Stack>

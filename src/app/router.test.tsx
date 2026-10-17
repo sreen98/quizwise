@@ -26,8 +26,11 @@ describe('routes', () => {
   it('marks the current section in the main navigation', async () => {
     renderRoute('/leaderboard/q1');
 
-    const nav = await screen.findByRole('navigation', { name: 'Main' });
-    expect(within(nav).getByRole('link', { name: 'Leaderboard' })).toHaveAttribute('aria-current', 'page');
-    expect(within(nav).getByRole('link', { name: 'Quizzes' })).not.toHaveAttribute('aria-current');
+    const navs = await screen.findAllByRole('navigation', { name: 'Main' });
+    expect(navs).toHaveLength(2);
+    for (const nav of navs) {
+      expect(within(nav).getByRole('link', { name: 'Leaderboard' })).toHaveAttribute('aria-current', 'page');
+      expect(within(nav).getByRole('link', { name: 'Quizzes' })).not.toHaveAttribute('aria-current');
+    }
   });
 });

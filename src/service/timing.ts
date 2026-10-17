@@ -1,6 +1,6 @@
 import type { Attempt, Quiz } from '../types/models';
 
-export interface Deadlines {
+interface Deadlines {
   overallDeadlineAt: number | null;
   questionDeadlineAt: number | null;
   deadlineAt: number | null;

@@ -1,0 +1,15 @@
+.stat {
+  border-top: 1px solid var(--mantine-color-default-border);
+}
+
+.action {
+  transition: border-color 150ms ease;
+
+  &:hover {
+    border-color: var(--mantine-color-blue-3);
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    transition: none;
+  }
+}

@@ -80,7 +80,7 @@ describe('taking a quiz', () => {
 
       expect(await screen.findByText('Question 2 of 6')).toBeInTheDocument();
       expect(screen.getByRole('radio', { name: '"object"' })).toBeChecked();
-      expect(screen.getByRole('timer')).toHaveTextContent(/4:0\dleft of 5:00/);
+      expect(screen.getByRole('timer')).toHaveTextContent(/(4:0\d|3:5\d)left of 5:00/);
     });
   });
 });

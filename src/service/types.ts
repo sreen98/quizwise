@@ -32,13 +32,17 @@ export interface LeaderboardEntry {
   rank: number;
   userId: string;
   userName: string;
+  countryName: string;
   score: number;
   totalQuestions: number;
   percentage: number;
   timeTakenSeconds: number;
+  completedAt: string | null;
 }
 
 export interface Leaderboard {
+  quizTitle: string;
+  retakesAllowed: boolean;
   entries: LeaderboardEntry[];
   currentUser: LeaderboardEntry | null;
   rankedCount: number;
@@ -100,3 +104,22 @@ export interface EndedAttempt {
   bestResult: { score: number; totalQuestions: number } | null;
   canStartAgain: boolean;
 }
+
+export interface QuestionOutcome {
+  questionId: string;
+  text: string;
+  isCorrect: boolean;
+}
+
+export interface ResultDetails extends AttemptResult {
+  status: 'completed';
+  quizTitle: string;
+  userName: string;
+  retakesAllowed: boolean;
+  rank: number | null;
+  rankedCount: number;
+  best: { score: number; totalQuestions: number } | null;
+  breakdown: QuestionOutcome[] | null;
+}
+
+export type AttemptResultView = ResultDetails | { status: 'in_progress' };

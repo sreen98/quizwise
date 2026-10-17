@@ -1,6 +1,6 @@
 import type { Answer, Question } from '../types/models';
 
-export interface AttemptSummary {
+interface AttemptSummary {
   score: number;
   totalQuestions: number;
   correctCount: number;

@@ -5,4 +5,5 @@ export interface OptionListProps {
   options: Option[];
   value: string[];
   onChange: (optionIds: string[]) => void;
+  disabled: boolean;
 }

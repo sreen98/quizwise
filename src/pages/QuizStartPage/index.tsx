@@ -1,26 +1,12 @@
-import {
-  Anchor,
-  Box,
-  Button,
-  Card,
-  Divider,
-  Group,
-  List,
-  SimpleGrid,
-  Skeleton,
-  Stack,
-  Text,
-  Title
-} from '@mantine/core';
+import { Anchor, Box, Button, Card, Group, List, SimpleGrid, Skeleton, Stack, Text, Title } from '@mantine/core';
 import { IconArrowLeft } from '@tabler/icons-react';
-import { useState } from 'react';
 import type { ReactNode } from 'react';
-import { Link, Navigate, useNavigate, useParams } from 'react-router';
+import { Link, Navigate, useParams } from 'react-router';
 import { formatClock, formatSeconds } from '../../format';
 import { useQuizStart } from '../../hooks/useQuizStart';
-import { quizService } from '../../service/quizService';
 import type { QuizListItem } from '../../service/types';
 import { useSessionStore } from '../../session/sessionStore';
+import classes from './QuizStartPage.module.css';
 import type { Country } from '../../types/models';
 
 const KEEPS_RUNNING = 'keeps running if you refresh, switch tabs or close the window.';
@@ -69,7 +55,7 @@ const rules = (quiz: QuizListItem) => {
   ];
 };
 
-const PLACEHOLDER_RULES = [
+const placeholderRules = [
   `You have 3 min. The timer starts when you press Start and ${KEEPS_RUNNING}`,
   "You see one question at a time. Once you submit an answer you can't go back to it.",
   "If time runs out, whatever you've selected is submitted for you.",
@@ -77,8 +63,7 @@ const PLACEHOLDER_RULES = [
 ];
 
 const stat = (label: string, value: ReactNode) => (
-  <Box key={label}>
-    <Divider mb={16} />
+  <Box key={label} className={classes.stat} pt={16}>
     <Text component="dt" fz={13} fw={600} c="dimmed" mb={6}>
       {label}
     </Text>
@@ -100,17 +85,14 @@ const backLink = (
 export const QuizStartPage = () => {
   const { quizId = '' } = useParams();
   const userId = useSessionStore(state => state.userId);
-  const state = useQuizStart(quizId, userId);
-  const navigate = useNavigate();
-  const [starting, setStarting] = useState(false);
-  const [startFailed, setStartFailed] = useState(false);
+  const { state, start, starting, hasStartFailed } = useQuizStart(quizId, userId);
 
   if (state.status === 'missing') {
     return (
       <Stack gap="sm" align="flex-start">
         <Title order={1}>Quiz not found</Title>
         <Text c="dimmed">This quiz doesn't exist or has been removed.</Text>
-        <Anchor component={Link} to="/quizzes" fw={600}>
+        <Anchor component={Link} to="/quizzes" fw={600} display="inline-block" lh="44px">
           Back to quizzes
         </Anchor>
       </Stack>
@@ -123,18 +105,6 @@ export const QuizStartPage = () => {
       return <Navigate to={`/attempts/${quiz.bestAttemptId}/results`} replace />;
     }
   }
-
-  const handleStart = async () => {
-    setStarting(true);
-    setStartFailed(false);
-    try {
-      const { attemptId } = await quizService.startOrResumeAttempt(quizId, userId);
-      await navigate(`/attempts/${attemptId}`);
-    } catch {
-      setStartFailed(true);
-      setStarting(false);
-    }
-  };
 
   const quiz = state.status === 'ready' ? state.quiz : null;
   const countries = state.status === 'ready' ? state.countries : [];
@@ -215,20 +185,20 @@ export const QuizStartPage = () => {
             </Title>
             <Skeleton visible={!quiz} mb={32}>
               <List c="dimmed" fz={15} spacing={10}>
-                {(quiz ? rules(quiz) : PLACEHOLDER_RULES).map((rule, index) => (
+                {(quiz ? rules(quiz) : placeholderRules).map((rule, index) => (
                   <List.Item key={`${String(index)}-${rule}`}>{rule}</List.Item>
                 ))}
               </List>
             </Skeleton>
 
-            {startFailed && (
+            {hasStartFailed && (
               <Text c="orange" fz={14} mb={12} role="alert">
                 The quiz could not be started. Try again.
               </Text>
             )}
 
             <Group gap={12}>
-              <Button h={52} px={28} disabled={!quiz} loading={starting} onClick={() => void handleStart()}>
+              <Button h={52} px={28} disabled={!quiz} loading={starting} onClick={() => void start()}>
                 {quiz?.inProgress ? 'Resume quiz' : 'Start quiz'}
               </Button>
               <Button component={Link} to="/quizzes" h={52} px={28} variant="subtle" color="gray">

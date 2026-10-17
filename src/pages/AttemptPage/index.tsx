@@ -23,6 +23,7 @@ import type { TimerScope } from '../../components/TimerBadge/types';
 import { formatClock } from '../../format';
 import { isWarning } from '../../hooks/useCountdown';
 import { useQuizAttempt } from '../../hooks/useQuizAttempt';
+import { useSessionStore } from '../../session/sessionStore';
 import type { QuestionInProgress } from '../../service/types';
 import classes from './AttemptPage.module.css';
 
@@ -49,7 +50,11 @@ const timersFor = (question: QuestionInProgress) => {
 
 export const AttemptPage = () => {
   const { attemptId = '' } = useParams();
-  const { state, endedWhileAway, selection, select, submit, submitting, now, announcement } = useQuizAttempt(attemptId);
+  const userId = useSessionStore(state => state.userId);
+  const { state, isEndedWhileAway, selection, select, submit, submitting, now, announcement } = useQuizAttempt(
+    attemptId,
+    userId
+  );
   const question = state.status === 'in_progress' ? state : null;
   const timers = question ? timersFor(question) : [];
   const urgent = timers.find(timer => timer.deadlineAt === question?.deadlineAt);
@@ -74,7 +79,7 @@ export const AttemptPage = () => {
   }
 
   if (state.status === 'completed' || state.status === 'closed') {
-    return <Navigate to={`/attempts/${attemptId}/ended`} replace state={{ whileAway: endedWhileAway }} />;
+    return <Navigate to={`/attempts/${attemptId}/ended`} replace state={{ isEndedWhileAway }} />;
   }
 
   const handleSubmit = (event: SubmitEvent<HTMLFormElement>) => {
@@ -87,7 +92,7 @@ export const AttemptPage = () => {
       <AppShell.Header>
         <AttemptHeader
           quizTitle={question?.quizTitle ?? null}
-          confirmExit={timers.length > 0}
+          showExitConfirm={timers.length > 0}
           timers={timers.map(timer => (
             <TimerBadge
               key={timer.scope}
@@ -108,7 +113,7 @@ export const AttemptPage = () => {
             <Stack gap="sm" align="flex-start">
               <Title order={1}>Attempt not found</Title>
               <Text c="dimmed">This attempt doesn't exist or has been removed.</Text>
-              <Anchor component={Link} to="/quizzes" fw={600}>
+              <Anchor component={Link} to="/quizzes" fw={600} display="inline-block" lh="44px">
                 Back to quizzes
               </Anchor>
             </Stack>
@@ -149,6 +154,7 @@ export const AttemptPage = () => {
                   question={question.question}
                   value={selection}
                   onChange={select}
+                  disabled={submitting}
                 />
               ) : (
                 <Skeleton h={360} radius="lg" />

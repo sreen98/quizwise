@@ -9,10 +9,10 @@ interface QuizListData {
   countries: Country[];
   userName: string;
   userCountry: string;
-  failed: boolean;
+  hasFailed: boolean;
 }
 
-const EMPTY: QuizListData = { key: '', quizzes: [], countries: [], userName: '', userCountry: '', failed: false };
+const EMPTY: QuizListData = { key: '', quizzes: [], countries: [], userName: '', userCountry: '', hasFailed: false };
 
 export const useQuizList = (userId: string, country: string | null) => {
   const key = `${userId}:${country ?? 'own'}`;
@@ -44,12 +44,12 @@ export const useQuizList = (userId: string, country: string | null) => {
             countries,
             userName: user?.name ?? '',
             userCountry: user?.country ?? '',
-            failed: false
+            hasFailed: false
           });
         }
       })
       .catch(() => {
-        if (current) setData({ ...EMPTY, key, failed: true });
+        if (current) setData({ ...EMPTY, key, hasFailed: true });
       });
 
     return () => {

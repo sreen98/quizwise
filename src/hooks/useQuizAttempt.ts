@@ -6,17 +6,17 @@ import { useCountdown } from './useCountdown';
 type AttemptState = { status: 'loading' } | { status: 'missing' } | CurrentQuestion;
 
 interface Loaded {
-  attemptId: string;
+  key: string;
   state: AttemptState;
-  sawQuestion: boolean;
+  hasSeenQuestion: boolean;
 }
 
 const nextLoaded =
-  (attemptId: string, state: AttemptState) =>
+  (key: string, state: AttemptState) =>
   (previous: Loaded | null): Loaded => ({
-    attemptId,
+    key,
     state,
-    sawQuestion: state.status === 'in_progress' || (previous?.attemptId === attemptId && previous.sawQuestion)
+    hasSeenQuestion: state.status === 'in_progress' || (previous?.key === key && previous.hasSeenQuestion)
   });
 
 const limitFor = (question: QuestionInProgress) =>
@@ -24,7 +24,8 @@ const limitFor = (question: QuestionInProgress) =>
     ? question.perQuestionSeconds
     : question.timeLimitSeconds;
 
-export const useQuizAttempt = (attemptId: string) => {
+export const useQuizAttempt = (attemptId: string, userId: string) => {
+  const key = `${attemptId}:${userId}`;
   const [loaded, setLoaded] = useState<Loaded | null>(null);
   const [selection, setSelection] = useState<string[]>([]);
   const [submitting, setSubmitting] = useState(false);
@@ -32,37 +33,37 @@ export const useQuizAttempt = (attemptId: string) => {
   const submittingRef = useRef(false);
   const latestRequest = useRef(0);
 
-  const state: AttemptState = loaded?.attemptId === attemptId ? loaded.state : { status: 'loading' };
+  const state: AttemptState = loaded?.key === key ? loaded.state : { status: 'loading' };
   const question = state.status === 'in_progress' ? state : null;
-  const endedWhileAway = loaded?.attemptId === attemptId && !loaded.sawQuestion;
+  const isEndedWhileAway = loaded?.key === key && !loaded.hasSeenQuestion;
 
   useEffect(() => {
     const request = ++latestRequest.current;
 
     quizService
-      .getCurrentQuestion(attemptId)
+      .getCurrentQuestion(attemptId, userId)
       .then(current => {
         if (request !== latestRequest.current) return;
-        setLoaded(nextLoaded(attemptId, current));
+        setLoaded(nextLoaded(key, current));
         setSelection(current.status === 'in_progress' ? current.draftOptionIds : []);
       })
       .catch(() => {
-        if (request === latestRequest.current) setLoaded(nextLoaded(attemptId, { status: 'missing' }));
+        if (request === latestRequest.current) setLoaded(nextLoaded(key, { status: 'missing' }));
       });
-  }, [attemptId, reloadKey]);
+  }, [key, attemptId, userId, reloadKey]);
 
   const { now, remainingMs, announcement } = useCountdown({
     deadlineAt: question?.deadlineAt ?? null,
     limitSeconds: question ? limitFor(question) : null,
     onExpire: () => {
-      setReloadKey(key => key + 1);
+      setReloadKey(count => count + 1);
     }
   });
 
   const select = (optionIds: string[]) => {
-    if (!question) return;
+    if (!question || submittingRef.current) return;
     setSelection(optionIds);
-    void quizService.saveDraft(attemptId, question.question.id, optionIds).catch(() => undefined);
+    void quizService.saveDraft(attemptId, question.question.id, optionIds, userId).catch(() => undefined);
   };
 
   const submit = () => {
@@ -72,14 +73,14 @@ export const useQuizAttempt = (attemptId: string) => {
     const request = ++latestRequest.current;
 
     quizService
-      .submitAnswer(attemptId, question.question.id, selection)
+      .submitAnswer(attemptId, question.question.id, selection, userId)
       .then(current => {
         if (request !== latestRequest.current) return;
-        setLoaded(nextLoaded(attemptId, current));
+        setLoaded(nextLoaded(key, current));
         setSelection(current.status === 'in_progress' ? current.draftOptionIds : []);
       })
       .catch(() => {
-        setReloadKey(key => key + 1);
+        setReloadKey(count => count + 1);
       })
       .finally(() => {
         submittingRef.current = false;
@@ -87,5 +88,5 @@ export const useQuizAttempt = (attemptId: string) => {
       });
   };
 
-  return { state, endedWhileAway, selection, select, submit, submitting, now, remainingMs, announcement };
+  return { state, isEndedWhileAway, selection, select, submit, submitting, now, remainingMs, announcement };
 };

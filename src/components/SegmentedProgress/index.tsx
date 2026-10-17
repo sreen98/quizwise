@@ -16,7 +16,7 @@ export const SegmentedProgress = ({ total, answered }: SegmentedProgressProps) =
         <Box
           key={index}
           h={6}
-          bdrs="xl"
+          bdrs="lg"
           bg={index <= answered ? 'blue' : 'var(--mantine-color-default-border)'}
           opacity={index === answered ? 0.4 : 1}
         />

@@ -27,7 +27,7 @@ const progressBar = (quiz: QuizListItem) => {
         value={(answered / quiz.questionCount) * 100}
         color="orange"
         size={6}
-        radius="xl"
+        radius="lg"
         aria-label={`${String(answered)} of ${String(quiz.questionCount)} questions answered`}
       />
     );
@@ -39,7 +39,7 @@ const progressBar = (quiz: QuizListItem) => {
         value={percentage}
         color="blue"
         size={6}
-        radius="xl"
+        radius="lg"
         aria-label={`Best score ${String(Math.round(percentage))}%`}
       />
     );
@@ -128,7 +128,7 @@ const footer = (quiz: QuizListItem, countries: Country[]) => {
       {quiz.rank === null ? (
         <span />
       ) : (
-        <Anchor component={Link} to={`/leaderboard/${quiz.id}`} fz={14} fw={600}>
+        <Anchor component={Link} to={`/leaderboard/${quiz.id}`} fz={14} fw={600} display="inline-block" lh="44px">
           Rank #{quiz.rank} of {quiz.rankedCount}
         </Anchor>
       )}

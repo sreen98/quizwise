@@ -1,8 +1,17 @@
 import type { StoreApi } from 'zustand/vanilla';
 import { dataStore } from '../data/store';
 import type { Attempt, Quiz, QuizData, User } from '../types/models';
+import { catchUp, toPublicQuestion } from './attempts';
 import { rankBestAttempts } from './ranking';
-import type { Leaderboard, LeaderboardEntry, QuizDetails, QuizListItem } from './types';
+import { getDeadlines } from './timing';
+import type {
+  CurrentQuestion,
+  Leaderboard,
+  LeaderboardEntry,
+  QuizDetails,
+  QuizListItem,
+  StartedAttempt
+} from './types';
 
 const respond = <T>(compute: () => T): Promise<T> =>
   new Promise(resolve => {
@@ -51,11 +60,23 @@ const toLeaderboardEntry = (attempt: Attempt, index: number, users: User[]): Lea
   timeTakenSeconds: attempt.timeTakenSeconds ?? 0
 });
 
-export const createQuizService = (store: StoreApi<QuizData>) => {
+export const createQuizService = (store: StoreApi<QuizData>, now: () => number = Date.now) => {
   const findQuiz = (quizId: string) => {
     const quiz = store.getState().quizzes.find(item => item.id === quizId);
     if (!quiz) throw new Error('Quiz not found');
     return quiz;
+  };
+
+  const findAttempt = (attemptId: string) => {
+    const attempt = store.getState().attempts.find(item => item.id === attemptId);
+    if (!attempt) throw new Error('Attempt not found');
+    return attempt;
+  };
+
+  const saveAttempt = (attempt: Attempt) => {
+    store.setState(state => ({
+      attempts: state.attempts.map(item => (item.id === attempt.id ? attempt : item))
+    }));
   };
 
   return {
@@ -92,6 +113,65 @@ export const createQuizService = (store: StoreApi<QuizData>) => {
           entries: entries.slice(0, limit),
           currentUser: entries.find(entry => entry.userId === userId) ?? null,
           rankedCount: entries.length
+        };
+      }),
+
+    startOrResumeAttempt: (quizId: string, userId: string) =>
+      respond((): StartedAttempt => {
+        const quiz = findQuiz(quizId);
+        const { users, attempts } = store.getState();
+        if (!users.some(user => user.id === userId)) throw new Error('User not found');
+
+        const userAttempts = attempts.filter(attempt => attempt.quizId === quizId && attempt.userId === userId);
+        const open = userAttempts.find(attempt => attempt.status === 'in_progress');
+        if (open) return { attemptId: open.id, resumed: true };
+
+        if (!quiz.retakesAllowed && userAttempts.some(attempt => attempt.status === 'completed')) {
+          throw new Error('Retakes are not allowed');
+        }
+
+        const attempt: Attempt = {
+          id: crypto.randomUUID(),
+          quizId,
+          userId,
+          quizVersion: quiz.version,
+          status: 'in_progress',
+          endReason: null,
+          startedAt: new Date(now()).toISOString(),
+          currentQuestionIndex: 0,
+          answers: [],
+          draftOptionIds: [],
+          completedAt: null,
+          score: null,
+          totalQuestions: quiz.questions.length,
+          percentage: null,
+          timeTakenSeconds: null
+        };
+        store.setState(state => ({ attempts: [...state.attempts, attempt] }));
+        return { attemptId: attempt.id, resumed: false };
+      }),
+
+    getCurrentQuestion: (attemptId: string) =>
+      respond((): CurrentQuestion => {
+        const stored = findAttempt(attemptId);
+        const quiz = findQuiz(stored.quizId);
+        const attempt = catchUp(stored, quiz, now());
+        if (attempt !== stored) saveAttempt(attempt);
+
+        if (attempt.status !== 'in_progress') {
+          return { status: attempt.status, endReason: attempt.endReason };
+        }
+
+        const question = quiz.questions[attempt.currentQuestionIndex];
+        if (!question) throw new Error('Question not found');
+
+        return {
+          status: 'in_progress',
+          question: toPublicQuestion(question),
+          index: attempt.currentQuestionIndex,
+          total: quiz.questions.length,
+          ...getDeadlines(quiz, attempt),
+          draftOptionIds: attempt.draftOptionIds
         };
       }),
 

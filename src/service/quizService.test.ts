@@ -3,10 +3,14 @@ import { createDataStore } from '../data/store';
 import type { Attempt } from '../types/models';
 import { createQuizService } from './quizService';
 
+const NOW = Date.parse('2026-10-17T10:00:00Z');
+const later = (seconds: number) => NOW + seconds * 1000;
+
 const setup = () => {
   localStorage.clear();
   const store = createDataStore();
-  return { store, service: createQuizService(store) };
+  const clock = { now: NOW };
+  return { store, clock, service: createQuizService(store, () => clock.now) };
 };
 
 const ids = (items: { id: string }[]) => items.map(item => item.id);
@@ -177,5 +181,122 @@ describe('subscribe', () => {
     store.setState({ quizzes: [] });
 
     expect(calls).toBe(1);
+  });
+});
+
+describe('startOrResumeAttempt', () => {
+  it('starts a new attempt with no answers', async () => {
+    const { store, service } = setup();
+
+    const started = await service.startOrResumeAttempt('q1', 'u5');
+    const attempt = store.getState().attempts.find(item => item.id === started.attemptId);
+
+    expect(started.resumed).toBe(false);
+    expect(attempt).toMatchObject({
+      quizId: 'q1',
+      userId: 'u5',
+      quizVersion: 1,
+      status: 'in_progress',
+      startedAt: new Date(NOW).toISOString(),
+      currentQuestionIndex: 0,
+      answers: [],
+      totalQuestions: 6
+    });
+  });
+
+  it('resumes the attempt the user already has in progress', async () => {
+    expect(await setup().service.startOrResumeAttempt('q3', 'u1')).toEqual({ attemptId: 'a11', resumed: true });
+  });
+
+  it('refuses a second attempt when retakes are not allowed', async () => {
+    await expect(setup().service.startOrResumeAttempt('q2', 'u1')).rejects.toThrow('Retakes are not allowed');
+  });
+
+  it('allows a new attempt when retakes are allowed', async () => {
+    const started = await setup().service.startOrResumeAttempt('q1', 'u1');
+
+    expect(started.resumed).toBe(false);
+    expect(started.attemptId).not.toBe('a1');
+  });
+});
+
+describe('getCurrentQuestion', () => {
+  it('returns the first question without the correct answers', async () => {
+    const { service } = setup();
+    const { attemptId } = await service.startOrResumeAttempt('q1', 'u5');
+
+    const current = await service.getCurrentQuestion(attemptId);
+
+    expect(current).toMatchObject({
+      status: 'in_progress',
+      index: 0,
+      total: 6,
+      overallDeadlineAt: later(300),
+      questionDeadlineAt: null,
+      deadlineAt: later(300),
+      draftOptionIds: []
+    });
+    expect(current.status === 'in_progress' && current.question).not.toHaveProperty('correctOptionIds');
+  });
+
+  it('keeps the same deadline when the user comes back later', async () => {
+    const { clock, service } = setup();
+    const { attemptId } = await service.startOrResumeAttempt('q1', 'u5');
+
+    clock.now = later(100);
+
+    expect(await service.getCurrentQuestion(attemptId)).toMatchObject({ index: 0, deadlineAt: later(300) });
+  });
+
+  it('finishes a11 as a timeout because its time ran out while the user was away', async () => {
+    const { store, service } = setup();
+
+    expect(await service.getCurrentQuestion('a11')).toEqual({ status: 'completed', endReason: 'timeout' });
+
+    const a11 = store.getState().attempts.find(attempt => attempt.id === 'a11');
+    expect(a11).toMatchObject({
+      status: 'completed',
+      endReason: 'timeout',
+      completedAt: '2026-10-16T09:04:00.000Z',
+      score: 2,
+      percentage: 40,
+      timeTakenSeconds: 240
+    });
+    expect(a11?.answers).toHaveLength(3);
+    expect(a11?.answers[2]).toMatchObject({ questionId: 'q3-3', selectedOptionIds: [], isCorrect: false });
+  });
+
+  it('catches up on several missed per question deadlines and submits the saved draft', async () => {
+    const { store, clock, service } = setup();
+    const { attemptId } = await service.startOrResumeAttempt('q2', 'u5');
+    const firstQuestion = store.getState().quizzes.find(quiz => quiz.id === 'q2')?.questions[0];
+    store.setState(state => ({
+      attempts: state.attempts.map(attempt =>
+        attempt.id === attemptId ? { ...attempt, draftOptionIds: firstQuestion?.correctOptionIds ?? [] } : attempt
+      )
+    }));
+
+    clock.now = later(75);
+    const current = await service.getCurrentQuestion(attemptId);
+
+    expect(current).toMatchObject({ status: 'in_progress', index: 2, deadlineAt: later(90) });
+    const answers = store.getState().attempts.find(attempt => attempt.id === attemptId)?.answers;
+    expect(answers?.map(answer => [answer.isCorrect, answer.answeredAt])).toEqual([
+      [true, new Date(later(30)).toISOString()],
+      [false, new Date(later(60)).toISOString()]
+    ]);
+  });
+
+  it('finishes the attempt when the last question times out', async () => {
+    const { clock, service } = setup();
+    const { attemptId } = await service.startOrResumeAttempt('q2', 'u5');
+
+    clock.now = later(7 * 30 + 1);
+
+    expect(await service.getCurrentQuestion(attemptId)).toEqual({ status: 'completed', endReason: 'timeout' });
+  });
+
+  it('rejects an unknown attempt', async () => {
+    await expect(setup().service.getCurrentQuestion('nope')).rejects.toThrow('Attempt not found');
   });
 });

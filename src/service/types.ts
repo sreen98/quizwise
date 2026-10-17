@@ -1,3 +1,5 @@
+import type { AttemptEndReason, AttemptStatus, PublicQuestion } from '../types/models';
+
 export interface QuizDetails {
   id: string;
   title: string;
@@ -40,3 +42,26 @@ export interface Leaderboard {
   currentUser: LeaderboardEntry | null;
   rankedCount: number;
 }
+
+export interface StartedAttempt {
+  attemptId: string;
+  resumed: boolean;
+}
+
+export interface QuestionInProgress {
+  status: 'in_progress';
+  question: PublicQuestion;
+  index: number;
+  total: number;
+  overallDeadlineAt: number | null;
+  questionDeadlineAt: number | null;
+  deadlineAt: number | null;
+  draftOptionIds: string[];
+}
+
+export interface AttemptFinished {
+  status: Exclude<AttemptStatus, 'in_progress'>;
+  endReason: AttemptEndReason | null;
+}
+
+export type CurrentQuestion = QuestionInProgress | AttemptFinished;

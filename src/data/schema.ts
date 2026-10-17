@@ -1,5 +1,5 @@
 import { z } from 'zod';
-import type { QuizData } from '../types/models';
+import type { QuizData, QuizInput } from '../types/models';
 
 const id = z.string().min(1);
 const seconds = z.number().int().positive().nullable();
@@ -88,6 +88,14 @@ const quizDataSchema = z.object({
 });
 
 export const parseQuizData = (json: unknown): QuizData => quizDataSchema.parse(json);
+
+const quizInputSchema = quizSchema.omit({ id: true, version: true });
+
+export const parseQuizInput = (data: unknown): QuizInput => {
+  const result = quizInputSchema.safeParse(data);
+  if (!result.success) throw new Error(result.error.issues[0]?.message ?? 'Invalid quiz');
+  return result.data;
+};
 
 export const readQuizData = (json: unknown): QuizData | null => {
   const result = quizDataSchema.safeParse(json);

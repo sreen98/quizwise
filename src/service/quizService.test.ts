@@ -1,6 +1,6 @@
 import { beforeEach, describe, expect, it } from 'vitest';
 import { createDataStore } from '../data/store';
-import type { Attempt } from '../types/models';
+import type { Attempt, QuizInput } from '../types/models';
 import { createQuizService } from './quizService';
 
 const NOW = Date.parse('2026-10-17T10:00:00Z');
@@ -498,5 +498,107 @@ describe('quiz edited or deleted during an attempt', () => {
     editQuiz(store, 'q1');
 
     await expect(service.completeAttempt(attemptId)).rejects.toThrow('Attempt was closed');
+  });
+});
+
+const newQuiz = (correctOptionIds = ['paris']): QuizInput => ({
+  title: 'Capitals',
+  description: 'European capitals',
+  countries: ['GB'],
+  timeLimitSeconds: 120,
+  perQuestionSeconds: null,
+  retakesAllowed: true,
+  questions: [
+    {
+      id: 'capital-1',
+      text: 'Capital of France?',
+      type: 'single',
+      options: [
+        { id: 'paris', text: 'Paris' },
+        { id: 'rome', text: 'Rome' }
+      ],
+      correctOptionIds
+    }
+  ]
+});
+
+describe('createQuiz', () => {
+  it('saves a new quiz with its own id and version 1', async () => {
+    const { service } = setup();
+
+    const created = await service.createQuiz(newQuiz());
+    const listed = await service.getQuizzes('u3');
+
+    expect(created).toMatchObject({ title: 'Capitals', version: 1 });
+    expect(created.id).toEqual(expect.any(String));
+    expect(listed.map(quiz => quiz.id)).toContain(created.id);
+  });
+
+  it('rejects an invalid quiz with the validation message', async () => {
+    await expect(setup().service.createQuiz(newQuiz(['paris', 'rome']))).rejects.toThrow(
+      'A single choice question needs exactly one correct option'
+    );
+  });
+});
+
+describe('updateQuiz', () => {
+  it('saves the changes, keeps the id and increases the version', async () => {
+    const { service } = setup();
+    const created = await service.createQuiz(newQuiz());
+
+    const updated = await service.updateQuiz(created.id, { ...newQuiz(), title: 'World capitals' });
+
+    expect(updated).toMatchObject({ id: created.id, title: 'World capitals', version: 2 });
+    expect(await service.getQuiz(created.id)).toMatchObject({ title: 'World capitals' });
+  });
+
+  it('closes an attempt that is in progress on the updated quiz', async () => {
+    const { service, attemptId } = await startQ1();
+    const q1 = await service.getQuizForEdit('q1');
+
+    await service.updateQuiz('q1', { ...q1, title: 'JavaScript Basics, revised' });
+
+    expect(await service.getCurrentQuestion(attemptId)).toEqual({ status: 'closed', endReason: 'quiz_changed' });
+  });
+
+  it('rejects an unknown quiz', async () => {
+    await expect(setup().service.updateQuiz('q99', newQuiz())).rejects.toThrow('Quiz not found');
+  });
+});
+
+describe('deleteQuiz', () => {
+  it('removes the quiz and its completed attempts', async () => {
+    const { store, service } = setup();
+
+    await service.deleteQuiz('q1');
+
+    expect(store.getState().quizzes.map(quiz => quiz.id)).not.toContain('q1');
+    expect(store.getState().attempts.filter(attempt => attempt.quizId === 'q1')).toEqual([]);
+    await expect(service.getLeaderboard('q1', 10, 'u1')).rejects.toThrow('Quiz not found');
+  });
+
+  it('keeps an in progress attempt so it closes as deleted', async () => {
+    const { store, service } = setup();
+
+    await service.deleteQuiz('q3');
+
+    expect(store.getState().attempts.map(attempt => attempt.id)).toContain('a11');
+    expect(await service.getCurrentQuestion('a11')).toEqual({ status: 'closed', endReason: 'quiz_deleted' });
+  });
+
+  it('rejects an unknown quiz', async () => {
+    await expect(setup().service.deleteQuiz('q99')).rejects.toThrow('Quiz not found');
+  });
+});
+
+describe('getQuizForEdit', () => {
+  it('includes the correct answers for the admin editor', async () => {
+    const quiz = await setup().service.getQuizForEdit('q1');
+
+    expect(quiz.questions[0]).toHaveProperty('correctOptionIds', ['q1-1-o3']);
+  });
+
+  it('rejects an unknown quiz', async () => {
+    await expect(setup().service.getQuizForEdit('q99')).rejects.toThrow('Quiz not found');
   });
 });

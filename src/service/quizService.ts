@@ -1,6 +1,7 @@
 import type { StoreApi } from 'zustand/vanilla';
 import { dataStore } from '../data/store';
-import type { Attempt, Quiz, QuizData, User } from '../types/models';
+import { parseQuizInput } from '../data/schema';
+import type { Attempt, Quiz, QuizData, QuizInput, User } from '../types/models';
 import { finishAttempt, recordAnswer, settleAttempt, toPublicQuestion } from './attempts';
 import { rankBestAttempts } from './ranking';
 import { getDeadlines } from './timing';
@@ -232,6 +233,32 @@ export const createQuizService = (store: StoreApi<QuizData>, now: () => number =
         const attempt = loaded.status === 'in_progress' ? finishAttempt(loaded, now(), 'submitted') : loaded;
         if (attempt !== loaded) saveAttempt(attempt);
         return toResult(attempt);
+      }),
+
+    getQuizForEdit: (quizId: string) => respond(() => findQuiz(quizId)),
+
+    createQuiz: (data: QuizInput) =>
+      respond((): Quiz => {
+        const quiz: Quiz = { ...parseQuizInput(data), id: crypto.randomUUID(), version: 1 };
+        store.setState(state => ({ quizzes: [...state.quizzes, quiz] }));
+        return quiz;
+      }),
+
+    updateQuiz: (quizId: string, data: QuizInput) =>
+      respond((): Quiz => {
+        const existing = findQuiz(quizId);
+        const quiz: Quiz = { ...parseQuizInput(data), id: existing.id, version: existing.version + 1 };
+        store.setState(state => ({ quizzes: state.quizzes.map(item => (item.id === quizId ? quiz : item)) }));
+        return quiz;
+      }),
+
+    deleteQuiz: (quizId: string) =>
+      respond(() => {
+        findQuiz(quizId);
+        store.setState(state => ({
+          quizzes: state.quizzes.filter(quiz => quiz.id !== quizId),
+          attempts: state.attempts.filter(attempt => attempt.quizId !== quizId || attempt.status === 'in_progress')
+        }));
       }),
 
     subscribe: (listener: () => void) => store.subscribe(listener)

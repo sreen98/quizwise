@@ -42,6 +42,8 @@ export interface Quiz {
   questions: Question[];
 }
 
+export type QuizInput = Omit<Quiz, 'id' | 'version'>;
+
 export interface Answer {
   questionId: string;
   selectedOptionIds: string[];

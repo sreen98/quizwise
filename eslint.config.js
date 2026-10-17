@@ -31,6 +31,22 @@ export default defineConfig([
     }
   },
   {
+    files: ['src/app/**', 'src/pages/**', 'src/components/**', 'src/hooks/**'],
+    rules: {
+      'no-restricted-imports': [
+        'error',
+        {
+          patterns: [
+            {
+              group: ['**/data/store', '**/data/migrate'],
+              message: 'Read and change data through quizService, not the data store.'
+            }
+          ]
+        }
+      ]
+    }
+  },
+  {
     files: ['src/test/**', '**/*.test.{ts,tsx}'],
     rules: {
       'react-refresh/only-export-components': 'off'

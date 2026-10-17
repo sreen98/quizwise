@@ -22,6 +22,7 @@ import { IconArrowLeft } from '@tabler/icons-react';
 import { useState } from 'react';
 import { Link } from 'react-router';
 import { quizInputSchema } from '../../data/schema';
+import { useUnsavedChangesPrompt } from '../../hooks/useUnsavedChangesPrompt';
 import type { QuizInput } from '../../types/models';
 import { QuestionBuilder } from '../QuestionBuilder';
 import classes from './QuizForm.module.css';
@@ -104,6 +105,7 @@ export const QuizForm = ({ initialValues, countries, isNew, onSubmit }: QuizForm
     initialValues,
     validate: schemaResolver(quizInputSchema, { sync: true })
   });
+  useUnsavedChangesPrompt(form.isDirty() && !saving);
 
   const handleSubmit = async (values: QuizInput) => {
     setSaving(true);

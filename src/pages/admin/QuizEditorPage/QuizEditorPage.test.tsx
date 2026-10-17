@@ -1,7 +1,7 @@
 import { notifications } from '@mantine/notifications';
 import { screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { beforeEach, describe, expect, it } from 'vitest';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { quizService } from '../../../service/quizService';
 import { useSessionStore } from '../../../session/sessionStore';
 import { renderRoute } from '../../../test/renderWithProviders';
@@ -178,6 +178,98 @@ describe('QuizEditorPage', () => {
 
     expect(screen.getByRole('heading', { name: 'Questions (5)' })).toBeInTheDocument();
     expect(screen.queryByText('Which of these are noble gases?')).not.toBeInTheDocument();
+  });
+
+  it('moves a question with the keyboard using its drag handle', async () => {
+    const user = userEvent.setup();
+    renderRoute('/admin/quizzes/q5/edit');
+    const handle = await screen.findByRole('button', { name: 'Reorder question 1' });
+    const rows = () => [...document.querySelectorAll('section[aria-labelledby="questions-title"] ol > li')];
+    vi.spyOn(HTMLElement.prototype, 'getBoundingClientRect').mockImplementation(function (this: HTMLElement) {
+      const row = rows().findIndex(item => item === this || item.contains(this));
+      const top = Math.max(row, 0) * 70;
+      return { x: 0, y: top, top, left: 0, width: 600, height: 60, right: 600, bottom: top + 60, toJSON: () => ({}) };
+    });
+
+    handle.focus();
+    await user.keyboard(' ');
+    expect(await screen.findByText('Picked up question 1.')).toBeInTheDocument();
+    await user.keyboard('{ArrowDown}');
+    expect(await screen.findByText('Question 1 is over position 2.')).toBeInTheDocument();
+    await user.keyboard('{ArrowUp}');
+    expect(await screen.findByText('Question 1 is over position 1.')).toBeInTheDocument();
+    await user.keyboard('{ArrowDown}');
+    expect(await screen.findByText('Question 1 is over position 2.')).toBeInTheDocument();
+    await user.keyboard(' ');
+    expect(await screen.findByText('Question 1 dropped at position 2.')).toBeInTheDocument();
+
+    await waitFor(() => {
+      expect(screen.getByRole('button', { name: 'Edit question 2' })).toHaveTextContent('What is the chemical symbol');
+    });
+    expect(screen.getByRole('button', { name: 'Edit question 1' })).toHaveTextContent(
+      'Which of these are noble gases?'
+    );
+    vi.restoreAllMocks();
+  });
+
+  it('leaves without asking when nothing has changed', async () => {
+    const user = userEvent.setup();
+    const { router } = renderRoute('/admin/quizzes/q5/edit');
+
+    await titleInput();
+    await user.click(screen.getByRole('link', { name: 'Cancel' }));
+
+    await waitFor(() => {
+      expect(router.state.location.pathname).toBe('/admin');
+    });
+    expect(screen.queryByRole('dialog', { name: 'Leave without saving?' })).not.toBeInTheDocument();
+  });
+
+  it('asks before leaving with unsaved changes and stays when the admin keeps editing', async () => {
+    const user = userEvent.setup();
+    const { router } = renderRoute('/admin/quizzes/q5/edit');
+
+    await user.type(await titleInput(), ' Quiz');
+    await user.click(screen.getByRole('link', { name: 'Cancel' }));
+    await user.click(await screen.findByRole('button', { name: 'Keep editing' }));
+
+    await waitFor(() => {
+      expect(screen.queryByRole('dialog', { name: 'Leave without saving?' })).not.toBeInTheDocument();
+    });
+    expect(router.state.location.pathname).toBe('/admin/quizzes/q5/edit');
+    expect(screen.getByRole('textbox', { name: /Title/ })).toHaveValue('General Science Quiz');
+
+    await user.click(screen.getByRole('link', { name: 'Cancel' }));
+    expect(await screen.findByRole('dialog', { name: 'Leave without saving?' })).toBeInTheDocument();
+  });
+
+  it('leaves and drops the changes when the admin confirms', async () => {
+    const user = userEvent.setup();
+    const { router } = renderRoute('/admin/quizzes/q5/edit');
+
+    await user.type(await titleInput(), ' Quiz');
+    await user.click(screen.getByRole('link', { name: 'Back to Manage quizzes' }));
+    await user.click(await screen.findByRole('button', { name: 'Leave' }));
+
+    await waitFor(() => {
+      expect(router.state.location.pathname).toBe('/admin');
+    });
+    await expect(quizService.getQuizForEdit('q5')).resolves.toMatchObject({ title: 'General Science' });
+  });
+
+  it('warns the browser before unloading only while there are unsaved changes', async () => {
+    const user = userEvent.setup();
+    renderRoute('/admin/quizzes/q5/edit');
+    const unload = () => {
+      const event = new Event('beforeunload', { cancelable: true });
+      window.dispatchEvent(event);
+      return event.defaultPrevented;
+    };
+
+    await titleInput();
+    expect(unload()).toBe(false);
+    await user.type(await titleInput(), ' Quiz');
+    expect(unload()).toBe(true);
   });
 
   it('says when the quiz to edit does not exist', async () => {

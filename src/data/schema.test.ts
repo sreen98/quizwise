@@ -92,6 +92,29 @@ describe('quizSchema', () => {
     expect(messagesFor(withQuestion({ type: 'multiple', correctOptionIds: ['a', 'b'] }))).toEqual([]);
   });
 
+  it('rejects two options with the same id', () => {
+    const quiz = withQuestion({
+      options: [
+        { id: 'a', text: 'Paris' },
+        { id: 'a', text: 'Rome' }
+      ]
+    });
+
+    expect(messagesFor(quiz)).toContain('Each option needs its own id');
+  });
+
+  it('rejects a correct option listed twice', () => {
+    expect(messagesFor(withQuestion({ type: 'multiple', correctOptionIds: ['a', 'a'] }))).toContain(
+      'A correct option is listed twice'
+    );
+  });
+
+  it('rejects two questions with the same id', () => {
+    const quiz = { ...validQuiz, questions: [validQuiz.questions[0], validQuiz.questions[0]] };
+
+    expect(messagesFor(quiz)).toContain('Each question needs its own id');
+  });
+
   it('rejects a correct answer that is not one of the options', () => {
     expect(messagesFor(withQuestion({ correctOptionIds: ['z'] }))).toContain(
       'A correct answer points to a missing option'

@@ -701,3 +701,30 @@ describe('simulated delay', () => {
     await assertion;
   });
 });
+
+describe('returned data', () => {
+  it('cannot change the stored quiz when the editor copy is changed', async () => {
+    const { store, service } = setup();
+
+    const quiz = await service.getQuizForEdit('q1');
+    quiz.title = 'Changed without saving';
+    quiz.questions.pop();
+
+    const stored = store.getState().quizzes.find(item => item.id === 'q1');
+    expect(stored?.title).toBe('JavaScript Basics');
+    expect(stored?.questions).toHaveLength(6);
+  });
+
+  it('cannot change stored users or a saved draft through the returned values', async () => {
+    const { store, service, attemptId, wrong } = await startQ1();
+    await service.saveDraft(attemptId, 'q1-1', wrong(0));
+
+    const users = await service.getUsers();
+    users.pop();
+    const current = await service.getCurrentQuestion(attemptId);
+    if (current.status === 'in_progress') current.draftOptionIds.push('q1-1-o4');
+
+    expect(store.getState().users).toHaveLength(5);
+    expect(store.getState().attempts.find(item => item.id === attemptId)?.draftOptionIds).toEqual(wrong(0));
+  });
+});

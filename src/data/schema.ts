@@ -5,6 +5,8 @@ const id = z.string().min(1);
 const seconds = z.number().int().positive().nullable();
 const timestamp = z.iso.datetime();
 
+const hasDuplicates = (values: string[]) => new Set(values).size !== values.length;
+
 const optionSchema = z.object({
   id,
   text: z.string().trim().min(1, 'Enter the option text')
@@ -22,6 +24,12 @@ const questionSchema = z
     const optionIds = new Set(question.options.map(option => option.id));
     const correctCount = question.correctOptionIds.length;
 
+    if (optionIds.size !== question.options.length) {
+      ctx.addIssue({ code: 'custom', path: ['options'], message: 'Each option needs its own id' });
+    }
+    if (hasDuplicates(question.correctOptionIds)) {
+      ctx.addIssue({ code: 'custom', path: ['correctOptionIds'], message: 'A correct option is listed twice' });
+    }
     if (question.correctOptionIds.some(optionId => !optionIds.has(optionId))) {
       ctx.addIssue({
         code: 'custom',
@@ -41,7 +49,7 @@ const questionSchema = z
     }
   });
 
-export const quizSchema = z.object({
+const quizFields = z.object({
   id,
   title: z.string().trim().min(1, 'Enter a title'),
   description: z.string().trim(),
@@ -52,6 +60,14 @@ export const quizSchema = z.object({
   version: z.number().int().positive().default(1),
   questions: z.array(questionSchema).min(1, 'Add at least one question')
 });
+
+const checkQuestionIds = (quiz: { questions: { id: string }[] }, ctx: z.RefinementCtx) => {
+  if (hasDuplicates(quiz.questions.map(question => question.id))) {
+    ctx.addIssue({ code: 'custom', path: ['questions'], message: 'Each question needs its own id' });
+  }
+};
+
+export const quizSchema = quizFields.superRefine(checkQuestionIds);
 
 const answerSchema = z.object({
   questionId: id,
@@ -89,7 +105,7 @@ const quizDataSchema = z.object({
 
 export const parseQuizData = (json: unknown): QuizData => quizDataSchema.parse(json);
 
-const quizInputSchema = quizSchema.omit({ id: true, version: true });
+const quizInputSchema = quizFields.omit({ id: true, version: true }).superRefine(checkQuestionIds);
 
 export const parseQuizInput = (data: unknown): QuizInput => {
   const result = quizInputSchema.safeParse(data);

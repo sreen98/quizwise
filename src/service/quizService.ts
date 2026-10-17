@@ -106,7 +106,7 @@ export const createQuizService = (
   { now = Date.now, delay = () => 0 }: ServiceOptions = {}
 ) => {
   const respond = async <T>(compute: () => T): Promise<T> => {
-    const result = compute();
+    const result = structuredClone(compute());
     const milliseconds = delay();
     if (milliseconds > 0) await wait(milliseconds);
     return result;

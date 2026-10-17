@@ -9,7 +9,7 @@ export const AppLayout = () => {
         <Header />
       </AppShell.Header>
       <AppShell.Main>
-        <Box px={{ base: 16, sm: 24 }} pt={{ base: 24, sm: 40 }} pb={64}>
+        <Box px={{ base: 16, sm: 24 }} pt={{ base: 16, sm: 24 }} pb={64}>
           <Outlet />
         </Box>
       </AppShell.Main>

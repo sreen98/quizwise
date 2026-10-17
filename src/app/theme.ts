@@ -1,4 +1,4 @@
-import { Button, createTheme, Input, Modal, Switch, type CSSVariablesResolver } from '@mantine/core';
+import { Badge, Button, createTheme, Input, Modal, Switch, type CSSVariablesResolver } from '@mantine/core';
 
 const TOUCH_TARGET = '44px';
 
@@ -61,7 +61,11 @@ export const theme = createTheme({
     Modal: Modal.extend({ defaultProps: { centered: true } }),
     Button: Button.extend({ vars: () => ({ root: { '--button-height': TOUCH_TARGET } }) }),
     Input: Input.extend({ vars: () => ({ wrapper: { '--input-height': TOUCH_TARGET } }) }),
-    Switch: Switch.extend({ styles: { body: { minHeight: TOUCH_TARGET, alignItems: 'center' } } })
+    Switch: Switch.extend({ styles: { body: { minHeight: TOUCH_TARGET, alignItems: 'center' } } }),
+    Badge: Badge.extend({
+      defaultProps: { variant: 'light', radius: 'xs', size: 'lg' },
+      styles: { root: { textTransform: 'none', fontWeight: 600 } }
+    })
   }
 });
 

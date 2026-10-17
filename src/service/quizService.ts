@@ -7,6 +7,7 @@ import { simulatedDelay } from './latency';
 import { rankBestAttempts } from './ranking';
 import { getDeadlines } from './timing';
 import type {
+  AdminQuizItem,
   AttemptResult,
   AttemptResultView,
   CurrentQuestion,
@@ -346,6 +347,16 @@ export const createQuizService = (
     resetData: () =>
       respond(() => {
         resetDataStore(store);
+      }),
+
+    getAdminQuizzes: () =>
+      respond((): AdminQuizItem[] => {
+        const { quizzes, attempts } = store.getState();
+        const attemptCounts = new Map<string, number>();
+        for (const attempt of attempts) {
+          attemptCounts.set(attempt.quizId, (attemptCounts.get(attempt.quizId) ?? 0) + 1);
+        }
+        return quizzes.map(quiz => ({ ...toDetails(quiz), attemptCount: attemptCounts.get(quiz.id) ?? 0 }));
       }),
 
     getQuizForEdit: (quizId: string) => respond(() => findQuiz(quizId)),

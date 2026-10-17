@@ -802,6 +802,21 @@ describe('deleteQuiz', () => {
   });
 });
 
+describe('getAdminQuizzes', () => {
+  it('lists every quiz in every country with its number of attempts', async () => {
+    const quizzes = await setup().service.getAdminQuizzes();
+
+    expect(quizzes.map(quiz => [quiz.id, quiz.attemptCount])).toEqual([
+      ['q1', 4],
+      ['q2', 2],
+      ['q3', 3],
+      ['q4', 1],
+      ['q5', 1]
+    ]);
+    expect(quizzes[0]).not.toHaveProperty('questions');
+  });
+});
+
 describe('getQuizForEdit', () => {
   it('includes the correct answers for the admin editor', async () => {
     const quiz = await setup().service.getQuizForEdit('q1');

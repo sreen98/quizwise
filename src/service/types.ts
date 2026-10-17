@@ -12,6 +12,10 @@ export interface QuizDetails {
   retakesAllowed: boolean;
 }
 
+export interface AdminQuizItem extends QuizDetails {
+  attemptCount: number;
+}
+
 export interface InProgressSummary {
   attemptId: string;
   answeredCount: number;

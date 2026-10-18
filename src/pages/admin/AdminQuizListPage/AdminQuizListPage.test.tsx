@@ -53,7 +53,9 @@ describe('AdminQuizListPage', () => {
     ]);
     const science = within(screen.getByRole('table')).getAllByRole('row')[1];
     expect(science).toHaveTextContent('6:00 + 45 s / q');
-    expect(science).toHaveTextContent('AEGB');
+    expect(
+      within(science as HTMLElement).getByRole('img', { name: 'Available in United Arab Emirates, United Kingdom' })
+    ).toBeInTheDocument();
     expect(screen.getAllByRole('link', { name: 'Edit General Science' })[0]).toHaveAttribute(
       'href',
       '/admin/quizzes/q5/edit'
@@ -94,6 +96,18 @@ describe('AdminQuizListPage', () => {
     await user.click(await screen.findByRole('option', { name: 'Most attempts' }));
 
     expect(rowTitles().slice(0, 3)).toEqual(['JavaScript Basics', 'World Geography', 'React Fundamentals']);
+  });
+
+  it('sorts by the fewest attempts, then by title', async () => {
+    const user = userEvent.setup();
+    const { router } = renderRoute('/admin');
+    await waitForRows();
+
+    await user.click(screen.getByRole('combobox', { name: 'Sort by' }));
+    await user.click(await screen.findByRole('option', { name: 'Fewest attempts' }));
+
+    expect(rowTitles().slice(0, 3)).toEqual(['General Science', 'Kerala Culture and History', 'React Fundamentals']);
+    expect(router.state.location.search).toBe('?sort=attempts_asc');
   });
 
   it('shows ten quizzes per page', async () => {

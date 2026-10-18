@@ -13,7 +13,7 @@ import type { AdminQuizItem } from '../../../service/types';
 
 const PAGE_SIZE = 10;
 
-type SortKey = 'title_asc' | 'title_desc' | 'questions' | 'attempts';
+type SortKey = 'title_asc' | 'title_desc' | 'questions' | 'questions_asc' | 'attempts' | 'attempts_asc';
 
 const sortOptions: Record<SortKey, { label: string; compare: (a: AdminQuizItem, b: AdminQuizItem) => number }> = {
   title_asc: { label: 'Title, A to Z', compare: (a, b) => a.title.localeCompare(b.title) },
@@ -22,9 +22,17 @@ const sortOptions: Record<SortKey, { label: string; compare: (a: AdminQuizItem, 
     label: 'Most questions',
     compare: (a, b) => b.questionCount - a.questionCount || a.title.localeCompare(b.title)
   },
+  questions_asc: {
+    label: 'Fewest questions',
+    compare: (a, b) => a.questionCount - b.questionCount || a.title.localeCompare(b.title)
+  },
   attempts: {
     label: 'Most attempts',
     compare: (a, b) => b.attemptCount - a.attemptCount || a.title.localeCompare(b.title)
+  },
+  attempts_asc: {
+    label: 'Fewest attempts',
+    compare: (a, b) => a.attemptCount - b.attemptCount || a.title.localeCompare(b.title)
   }
 };
 
@@ -64,7 +72,7 @@ const confirmDelete = (quiz: AdminQuizItem, deleteQuiz: DeleteQuiz) => {
 };
 
 export const AdminQuizListPage = () => {
-  const { quizzes, loading, hasFailed, deleteQuiz, exportQuiz, importQuiz } = useAdminQuizzes();
+  const { quizzes, countries, loading, hasFailed, deleteQuiz, exportQuiz, importQuiz } = useAdminQuizzes();
   const [searchParams, setSearchParams] = useSearchParams();
   const urlSearch = searchParams.get('q') ?? '';
   const { search, setSearch, debouncedSearch, query } = useDebouncedSearch(urlSearch);
@@ -187,6 +195,7 @@ export const AdminQuizListPage = () => {
             {!loading && shown.length > 0 && (
               <AdminQuizList
                 quizzes={shown}
+                countries={countries}
                 onExport={quiz => {
                   exportQuiz(quiz).catch(() => {
                     notifications.show({

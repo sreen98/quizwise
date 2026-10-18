@@ -21,6 +21,8 @@ const rankChip = (rank: number, isMe: boolean) => (
   </Flex>
 );
 
+const NUMBER_COLUMNS = ['Score', 'Time'];
+
 const flag = (entry: LeaderboardEntry) => (
   <CountryFlags codes={[entry.country]} countries={[{ code: entry.country, name: entry.countryName }]} />
 );
@@ -43,7 +45,15 @@ export const StandingsList = ({ quizTitle, entries, userId }: StandingsListProps
             <Table.Thead>
               <Table.Tr>
                 {['Rank', 'Player', 'Country', 'Score', 'Accuracy', 'Time', 'Completed'].map(label => (
-                  <Table.Th key={label} fz={12} fw={700} tt="uppercase" lts="0.06em" c="dimmed">
+                  <Table.Th
+                    key={label}
+                    ta={NUMBER_COLUMNS.includes(label) ? 'right' : undefined}
+                    fz={12}
+                    fw={700}
+                    tt="uppercase"
+                    lts="0.06em"
+                    c="dimmed"
+                  >
                     {label}
                   </Table.Th>
                 ))}
@@ -69,7 +79,7 @@ export const StandingsList = ({ quizTitle, entries, userId }: StandingsListProps
                       </Group>
                     </Table.Td>
                     <Table.Td>{flag(entry)}</Table.Td>
-                    <Table.Td fw={700} ff="monospace">
+                    <Table.Td fw={700} ff="monospace" ta="right">
                       {formatScore(entry.score, entry.totalQuestions)}
                     </Table.Td>
                     <Table.Td>
@@ -78,7 +88,9 @@ export const StandingsList = ({ quizTitle, entries, userId }: StandingsListProps
                         <Text inherit>{entry.percentage}%</Text>
                       </Group>
                     </Table.Td>
-                    <Table.Td ff="monospace">{formatClock(entry.timeTakenSeconds)}</Table.Td>
+                    <Table.Td ff="monospace" ta="right">
+                      {formatClock(entry.timeTakenSeconds)}
+                    </Table.Td>
                     <Table.Td c="dimmed">{entry.completedAt ? formatDateTime(entry.completedAt) : ''}</Table.Td>
                   </Table.Tr>
                 );

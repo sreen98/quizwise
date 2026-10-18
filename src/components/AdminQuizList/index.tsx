@@ -1,7 +1,8 @@
-import { ActionIcon, Badge, Box, Divider, Group, Stack, Table, Text, VisuallyHidden } from '@mantine/core';
+import { ActionIcon, Box, Divider, Group, Stack, Table, Text, VisuallyHidden } from '@mantine/core';
 import { IconDownload, IconPencil, IconTrash } from '@tabler/icons-react';
 import { Link } from 'react-router';
 import { formatCount, formatTimerShort } from '../../format';
+import { CountryFlags } from '../CountryFlags';
 import { TruncatedText } from '../TruncatedText';
 import type { AdminQuizItem } from '../../service/types';
 import type { AdminQuizListProps } from './types';
@@ -10,22 +11,16 @@ const timerText = ({ timeLimitSeconds, perQuestionSeconds }: AdminQuizItem) =>
   formatTimerShort(timeLimitSeconds, perQuestionSeconds) ?? 'None';
 
 const columns = [
-  { label: 'Title', width: undefined },
-  { label: 'Questions', width: 110 },
-  { label: 'Timer', width: 160 },
-  { label: 'Retakes', width: 90 },
-  { label: 'Countries', width: 150 },
-  { label: 'Attempts', width: 100 }
+  { label: 'Title', width: undefined, isNumber: false },
+  { label: 'Questions', width: 110, isNumber: true },
+  { label: 'Timer', width: 160, isNumber: false },
+  { label: 'Retakes', width: 90, isNumber: false },
+  { label: 'Countries', width: 150, isNumber: false },
+  { label: 'Attempts', width: 100, isNumber: true }
 ];
 
-const countryBadges = (quiz: AdminQuizItem) => (
-  <Group gap={4}>
-    {quiz.countries.map(code => (
-      <Badge key={code} variant="default" size="md">
-        {code}
-      </Badge>
-    ))}
-  </Group>
+const countryFlags = (quiz: AdminQuizItem, { countries }: AdminQuizListProps) => (
+  <CountryFlags codes={quiz.countries} countries={countries} />
 );
 
 const actions = (quiz: AdminQuizItem, { onExport, onDelete }: AdminQuizListProps) => (
@@ -74,8 +69,17 @@ const quizTable = (props: AdminQuizListProps) => (
         </Table.Caption>
         <Table.Thead>
           <Table.Tr>
-            {columns.map(({ label, width }) => (
-              <Table.Th key={label} w={width} fz={12} fw={700} tt="uppercase" lts="0.06em" c="dimmed">
+            {columns.map(({ label, width, isNumber }) => (
+              <Table.Th
+                key={label}
+                w={width}
+                ta={isNumber ? 'right' : undefined}
+                fz={12}
+                fw={700}
+                tt="uppercase"
+                lts="0.06em"
+                c="dimmed"
+              >
                 {label}
               </Table.Th>
             ))}
@@ -95,15 +99,15 @@ const quizTable = (props: AdminQuizListProps) => (
                   {quiz.description}
                 </TruncatedText>
               </Table.Td>
-              <Table.Td>{quiz.questionCount}</Table.Td>
+              <Table.Td ta="right">{quiz.questionCount}</Table.Td>
               <Table.Td>
                 <TruncatedText ff="monospace" fz={14}>
                   {timerText(quiz)}
                 </TruncatedText>
               </Table.Td>
               <Table.Td>{quiz.retakesAllowed ? 'Yes' : 'No'}</Table.Td>
-              <Table.Td>{countryBadges(quiz)}</Table.Td>
-              <Table.Td>{quiz.attemptCount}</Table.Td>
+              <Table.Td>{countryFlags(quiz, props)}</Table.Td>
+              <Table.Td ta="right">{quiz.attemptCount}</Table.Td>
               <Table.Td>{actions(quiz, props)}</Table.Td>
             </Table.Tr>
           ))}
@@ -133,18 +137,18 @@ const quizCards = (props: AdminQuizListProps) => (
             <Text component="span" ff="monospace" inherit>
               {timerText(quiz)}
             </Text>
-            <span>{quiz.retakesAllowed ? 'Retakes allowed' : 'One attempt'}</span>
+            <span>{quiz.retakesAllowed ? 'Unlimited attempts' : 'Only once'}</span>
             <span>{formatCount(quiz.attemptCount, 'attempt')}</span>
           </Group>
-          <Box mt={8}>{countryBadges(quiz)}</Box>
+          <Box mt={8}>{countryFlags(quiz, props)}</Box>
         </Box>
       </Box>
     ))}
   </Stack>
 );
 
-export const AdminQuizList = ({ quizzes, onExport, onDelete }: AdminQuizListProps) => {
-  const props = { quizzes, onExport, onDelete };
+export const AdminQuizList = ({ quizzes, countries, onExport, onDelete }: AdminQuizListProps) => {
+  const props = { quizzes, countries, onExport, onDelete };
 
   return (
     <>

@@ -164,7 +164,7 @@ export const QuizStartPage = () => {
                 'Attempts',
                 <Skeleton visible={!quiz}>
                   <Text fz={20} fw={700}>
-                    {quiz && !quiz.retakesAllowed ? 'One only' : 'Unlimited'}
+                    {quiz && !quiz.retakesAllowed ? 'Only once' : 'Unlimited'}
                   </Text>
                 </Skeleton>
               )}

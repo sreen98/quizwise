@@ -1,12 +1,13 @@
 import { Box, Divider, Drawer, Flex, SimpleGrid, Stack, Text, UnstyledButton } from '@mantine/core';
 import { useDisclosure } from '@mantine/hooks';
 import { IconListCheck, IconSettings, IconTrophy, IconUserCircle } from '@tabler/icons-react';
-import type { ReactNode } from 'react';
+import { useRef, type ReactNode } from 'react';
 import { NavLink } from 'react-router';
 import { useCurrentUser } from '../../hooks/useCurrentUser';
 import { useUserOptions } from '../../hooks/useUserOptions';
 import { ResetDataButton } from '../ResetDataButton';
 import { SlowNetworkSwitch } from '../SlowNetworkSwitch';
+import { TestDataButton } from '../TestDataButton';
 import { UserSelect } from '../UserSelect';
 import classes from './BottomNav.module.css';
 
@@ -32,6 +33,12 @@ export const BottomNav = () => {
   const userOptions = useUserOptions();
   const { isAdmin } = useCurrentUser();
   const shownTabs = tabs.filter(tab => isAdmin || !tab.isAdminOnly);
+  const accountRef = useRef<HTMLButtonElement>(null);
+
+  const handleDialogOpen = () => {
+    closeAccount();
+    accountRef.current?.focus();
+  };
 
   return (
     <>
@@ -42,18 +49,26 @@ export const BottomNav = () => {
               {tabContent(tab.icon, tab.label)}
             </NavLink>
           ))}
-          <UnstyledButton className={classes.tab} aria-expanded={accountOpened} onClick={openAccount}>
+          <UnstyledButton ref={accountRef} className={classes.tab} aria-expanded={accountOpened} onClick={openAccount}>
             {tabContent(<IconUserCircle size={22} aria-hidden />, 'Account')}
           </UnstyledButton>
         </SimpleGrid>
       </Box>
 
-      <Drawer opened={accountOpened} onClose={closeAccount} title="Account" position="bottom" size={280} radius="lg">
+      <Drawer
+        opened={accountOpened}
+        onClose={closeAccount}
+        title="Account"
+        position="bottom"
+        size={import.meta.env.DEV ? 330 : 280}
+        radius="lg"
+      >
         <Stack gap="sm" pb="md">
           <UserSelect userOptions={userOptions} onDone={closeAccount} />
           <Divider my={4} />
           <SlowNetworkSwitch />
-          <ResetDataButton onDialogOpen={closeAccount} />
+          <ResetDataButton onDialogOpen={handleDialogOpen} />
+          {import.meta.env.DEV && <TestDataButton onDialogOpen={handleDialogOpen} />}
         </Stack>
       </Drawer>
     </>

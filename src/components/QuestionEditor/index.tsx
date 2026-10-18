@@ -101,7 +101,12 @@ export const QuestionEditor = ({ form, question, index, total, onClose, handle }
 
       <Stack gap={18} px={{ base: 14, sm: 20 }} pt={8} pb={{ base: 14, sm: 20 }}>
         <Group gap={16} align="flex-start" wrap="wrap">
-          <TextInput label="Question text" flex="1 1 260px" {...form.getInputProps(`${path}.text`)} />
+          <TextInput
+            id={`${question.id}-text`}
+            label="Question text"
+            flex="1 1 260px"
+            {...form.getInputProps(`${path}.text`)}
+          />
           <Fieldset legend="Answer type" variant="unstyled" p={0} w={{ base: '100%', sm: 'auto' }}>
             <SegmentedControl
               fullWidth

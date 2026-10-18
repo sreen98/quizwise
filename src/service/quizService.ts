@@ -369,6 +369,14 @@ export const createQuizService = (
         resetDataStore(store);
       }),
 
+    loadTestData: async () => {
+      if (!import.meta.env.DEV) return;
+      const { addTestData } = await import('../data/testData');
+      resetDataStore(store);
+      store.setState(state => addTestData(state, now()), true);
+      await respond(() => undefined);
+    },
+
     getAdminQuizzes: () =>
       respond((): AdminQuizItem[] => {
         const { quizzes, attempts } = store.getState();

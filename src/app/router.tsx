@@ -2,6 +2,7 @@ import { Navigate, type RouteObject } from 'react-router';
 import { AdminOnly } from '../components/AdminOnly';
 import { AppLayout } from '../components/AppLayout';
 import { RouteError } from '../components/RouteError';
+import { RootLayout } from '../components/RootLayout';
 import { AttemptEndedPage } from '../pages/AttemptEndedPage';
 import { AttemptPage } from '../pages/AttemptPage';
 import { LeaderboardPage } from '../pages/LeaderboardPage';
@@ -13,26 +14,31 @@ import { AdminQuizListPage, QuizEditorPage } from './adminPages';
 
 export const routes: RouteObject[] = [
   {
-    path: '/',
-    Component: AppLayout,
-    ErrorBoundary: RouteError,
+    Component: RootLayout,
     children: [
-      { index: true, element: <Navigate to="/quizzes" replace /> },
-      { path: 'quizzes', Component: QuizListPage },
-      { path: 'quizzes/:quizId', Component: QuizStartPage },
-      { path: 'attempts/:attemptId/ended', Component: AttemptEndedPage },
-      { path: 'attempts/:attemptId/results', Component: ResultsPage },
-      { path: 'leaderboard/:quizId?', Component: LeaderboardPage },
       {
-        Component: AdminOnly,
+        path: '/',
+        Component: AppLayout,
+        ErrorBoundary: RouteError,
         children: [
-          { path: 'admin', Component: AdminQuizListPage },
-          { path: 'admin/quizzes/new', Component: QuizEditorPage },
-          { path: 'admin/quizzes/:quizId/edit', Component: QuizEditorPage }
+          { index: true, element: <Navigate to="/quizzes" replace /> },
+          { path: 'quizzes', Component: QuizListPage },
+          { path: 'quizzes/:quizId', Component: QuizStartPage },
+          { path: 'attempts/:attemptId/ended', Component: AttemptEndedPage },
+          { path: 'attempts/:attemptId/results', Component: ResultsPage },
+          { path: 'leaderboard/:quizId?', Component: LeaderboardPage },
+          {
+            Component: AdminOnly,
+            children: [
+              { path: 'admin', Component: AdminQuizListPage },
+              { path: 'admin/quizzes/new', Component: QuizEditorPage },
+              { path: 'admin/quizzes/:quizId/edit', Component: QuizEditorPage }
+            ]
+          },
+          { path: '*', Component: NotFoundPage }
         ]
       },
-      { path: '*', Component: NotFoundPage }
+      { path: '/attempts/:attemptId', Component: AttemptPage, ErrorBoundary: RouteError }
     ]
-  },
-  { path: '/attempts/:attemptId', Component: AttemptPage, ErrorBoundary: RouteError }
+  }
 ];

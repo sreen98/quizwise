@@ -839,6 +839,19 @@ describe('getQuizForEdit', () => {
   });
 });
 
+describe('loadTestData', () => {
+  it('replaces the data with the seed plus test quizzes, users and attempts', async () => {
+    const { service } = setup();
+    await service.deleteQuiz('q1');
+
+    await service.loadTestData();
+
+    expect(await service.getAdminQuizzes()).toHaveLength(50);
+    expect(await service.getUsers()).toHaveLength(50);
+    expect((await service.getLeaderboard('q1', 100, 'u1')).entries.length).toBeGreaterThan(10);
+  });
+});
+
 describe('exportQuiz', () => {
   it('returns the quiz with its answers but without its id or version', async () => {
     const exported = await setup().service.exportQuiz('q1');

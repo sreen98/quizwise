@@ -3,15 +3,22 @@ import {
   Badge,
   Button,
   Checkbox,
+  CheckboxIndicator,
   createTheme,
+  Drawer,
   Input,
   Modal,
+  MultiSelect,
+  Notification,
   Pagination,
   Radio,
+  RadioIndicator,
+  Select,
   Switch,
   ThemeIcon,
   type CSSVariablesResolver
 } from '@mantine/core';
+import classes from './theme.module.css';
 
 const TOUCH_TARGET = '44px';
 const FILLED_INK = 'var(--filled-ink)';
@@ -74,7 +81,9 @@ export const theme = createTheme({
   defaultRadius: 'md',
   respectReducedMotion: true,
   components: {
-    Modal: Modal.extend({ defaultProps: { centered: true } }),
+    Modal: Modal.extend({ defaultProps: { centered: true, closeButtonProps: { 'aria-label': 'Close' } } }),
+    Drawer: Drawer.extend({ defaultProps: { closeButtonProps: { 'aria-label': 'Close' } } }),
+    Notification: Notification.extend({ defaultProps: { closeButtonProps: { 'aria-label': 'Dismiss notification' } } }),
     Button: Button.extend({
       vars: (_theme, { variant }) => ({
         root: { '--button-height': TOUCH_TARGET, '--button-color': isFilled(variant) ? FILLED_INK : undefined }
@@ -83,13 +92,28 @@ export const theme = createTheme({
     ThemeIcon: ThemeIcon.extend({
       vars: (_theme, { variant }) => ({ root: { '--ti-color': isFilled(variant) ? FILLED_INK : undefined } })
     }),
-    Checkbox: Checkbox.extend({ vars: () => ({ root: { '--checkbox-icon-color': FILLED_INK } }) }),
-    Radio: Radio.extend({ vars: () => ({ root: { '--radio-icon-color': FILLED_INK } }) }),
-    Pagination: Pagination.extend({ vars: () => ({ root: { '--pagination-active-color': FILLED_INK } }) }),
+    Checkbox: Checkbox.extend({
+      classNames: { input: classes.checkbox },
+      vars: () => ({ root: { '--checkbox-icon-color': FILLED_INK } })
+    }),
+    CheckboxIndicator: CheckboxIndicator.extend({ classNames: { indicator: classes.checkboxIndicator } }),
+    Radio: Radio.extend({
+      classNames: { radio: classes.radio },
+      vars: () => ({ root: { '--radio-icon-color': FILLED_INK } })
+    }),
+    RadioIndicator: RadioIndicator.extend({ classNames: { indicator: classes.radioIndicator } }),
+    Pagination: Pagination.extend({
+      vars: () => ({ root: { '--pagination-active-color': FILLED_INK, '--pagination-control-size': TOUCH_TARGET } })
+    }),
     Avatar: Avatar.extend({
       vars: (_theme, { variant }) => ({ root: { '--avatar-color': variant === 'filled' ? FILLED_INK : undefined } })
     }),
-    Input: Input.extend({ vars: () => ({ wrapper: { '--input-height': TOUCH_TARGET } }) }),
+    Input: Input.extend({
+      classNames: { input: classes.input },
+      vars: () => ({ wrapper: { '--input-height': TOUCH_TARGET } })
+    }),
+    Select: Select.extend({ defaultProps: { checkIconPosition: 'right' } }),
+    MultiSelect: MultiSelect.extend({ defaultProps: { checkIconPosition: 'right' } }),
     Switch: Switch.extend({ styles: { body: { minHeight: TOUCH_TARGET, alignItems: 'center' } } }),
     Badge: Badge.extend({
       defaultProps: { variant: 'light', radius: 'xs', size: 'lg' },
@@ -111,6 +135,7 @@ export const cssVariablesResolver: CSSVariablesResolver = () => ({
     '--mantine-color-error': '#A64B07',
     '--skeleton': '#E8E3DA',
     '--filled-ink': '#FFFDFA',
+    '--control-border': '#8C8579',
     '--mantine-color-body': '#FFFDFA',
     '--mantine-color-text': '#181B21',
     '--mantine-color-dimmed': '#545964',
@@ -126,6 +151,7 @@ export const cssVariablesResolver: CSSVariablesResolver = () => ({
     '--mantine-color-error': '#F6A963',
     '--skeleton': '#223047',
     '--filled-ink': '#0B111C',
+    '--control-border': '#66748C',
     '--mantine-color-blue-light': '#1B2947',
     '--mantine-color-blue-light-color': '#86A8FF',
     '--mantine-color-orange-light': '#3A2614',

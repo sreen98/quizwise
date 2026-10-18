@@ -1,9 +1,10 @@
 import { notifications } from '@mantine/notifications';
 import { screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
 import { quizService } from '../../../service/quizService';
 import { useSessionStore } from '../../../session/sessionStore';
+import { exampleQuiz } from '../../../components/ImportQuizButton/data';
 import { renderRoute } from '../../../test/renderWithProviders';
 
 const rowTitles = () =>
@@ -16,6 +17,11 @@ const waitForRows = async () => {
   await screen.findByRole('table');
 };
 
+const importInput = async (user: ReturnType<typeof userEvent.setup>) => {
+  await user.click(screen.getByRole('button', { name: 'Import JSON' }));
+  return screen.findByLabelText('Quiz file to import');
+};
+
 const firstButton = (name: string) => {
   const [button] = screen.getAllByRole('button', { name });
   if (!button) throw new Error(`No button named ${name}`);
@@ -23,6 +29,10 @@ const firstButton = (name: string) => {
 };
 
 describe('AdminQuizListPage', () => {
+  beforeAll(async () => {
+    await import('.');
+  });
+
   beforeEach(async () => {
     notifications.clean();
     useSessionStore.setState({ userId: 'u5', country: null, slowNetwork: false });
@@ -57,8 +67,10 @@ describe('AdminQuizListPage', () => {
 
     await user.type(screen.getByRole('textbox', { name: 'Search quizzes' }), 'hooks');
 
+    await waitFor(() => {
+      expect(router.state.location.search).toBe('?q=hooks');
+    });
     expect(rowTitles()).toEqual(['React Fundamentals']);
-    expect(router.state.location.search).toBe('?q=hooks');
   });
 
   it('offers to clear a search that matches nothing', async () => {
@@ -68,7 +80,9 @@ describe('AdminQuizListPage', () => {
     expect(await screen.findByText('No quizzes match "astronomy".')).toBeInTheDocument();
     await user.click(screen.getByRole('button', { name: 'Clear search' }));
 
-    expect(rowTitles()).toHaveLength(5);
+    await waitFor(() => {
+      expect(rowTitles()).toHaveLength(5);
+    });
   });
 
   it('sorts by the number of attempts', async () => {
@@ -174,7 +188,7 @@ describe('AdminQuizListPage', () => {
     const file = new File([JSON.stringify({ ...exported, title: 'Imported basics' })], 'quiz.json', {
       type: 'application/json'
     });
-    await user.upload(screen.getByLabelText('Quiz file to import'), file);
+    await user.upload(await importInput(user), file);
 
     expect(await screen.findByText('Imported basics imported')).toBeInTheDocument();
     await waitFor(() => {
@@ -188,7 +202,7 @@ describe('AdminQuizListPage', () => {
 
     await waitForRows();
     const file = new File([JSON.stringify({ title: '', questions: [] })], 'quiz.json', { type: 'application/json' });
-    await user.upload(screen.getByLabelText('Quiz file to import'), file);
+    await user.upload(await importInput(user), file);
 
     const dialog = await screen.findByRole('dialog', { name: "Couldn't import this file" });
     expect(within(dialog).getByText('Title: Enter a title')).toBeInTheDocument();
@@ -202,9 +216,27 @@ describe('AdminQuizListPage', () => {
     renderRoute('/admin');
 
     await waitForRows();
-    await user.upload(screen.getByLabelText('Quiz file to import'), new File(['not json'], 'quiz.json'));
+    await user.upload(await importInput(user), new File(['not json'], 'quiz.json'));
 
     const dialog = await screen.findByRole('dialog', { name: "Couldn't import this file" });
     expect(within(dialog).getByText("This file isn't valid JSON.")).toBeInTheDocument();
+  });
+
+  it('shows the expected format with an example that imports as it is', async () => {
+    const user = userEvent.setup();
+    renderRoute('/admin');
+
+    await waitForRows();
+    const input = await importInput(user);
+    const dialog = screen.getByRole('dialog', { name: 'Import a quiz' });
+    expect(within(dialog).getByText('Example file')).toBeInTheDocument();
+    expect(within(dialog).getByText(/"title": "Space Basics"/)).toBeInTheDocument();
+    await user.upload(
+      input,
+      new File([JSON.stringify(exampleQuiz)], 'space-basics.json', { type: 'application/json' })
+    );
+
+    expect(await screen.findByText('Space Basics imported')).toBeInTheDocument();
+    expect(screen.queryByRole('dialog', { name: 'Import a quiz' })).not.toBeInTheDocument();
   });
 });

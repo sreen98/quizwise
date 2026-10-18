@@ -1,0 +1,19 @@
+.input:not([data-error], :focus, :focus-within) {
+  --input-bd: var(--control-border);
+}
+
+.checkbox:not(:checked, :disabled, [data-error], [data-indeterminate]) {
+  border-color: var(--control-border);
+}
+
+.checkboxIndicator:not([data-checked], [data-disabled], [data-indeterminate]) {
+  border-color: var(--control-border);
+}
+
+.radio:not(:checked, :disabled, [data-error]) {
+  border-color: var(--control-border);
+}
+
+.radioIndicator:not([data-checked], [data-disabled]) {
+  border-color: var(--control-border);
+}

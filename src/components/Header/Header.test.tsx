@@ -110,6 +110,20 @@ describe('Header user controls', () => {
     });
   });
 
+  it('names the close button of the reset dialog and returns focus to Settings when it closes', async () => {
+    const user = userEvent.setup();
+    renderRoute('/quizzes');
+
+    await openResetDialog();
+    const dialog = await screen.findByRole('dialog', { name: 'Reset all data?' });
+    expect(within(dialog).getByRole('button', { name: 'Close' })).toBeInTheDocument();
+    await user.keyboard('{Escape}');
+
+    await waitFor(() => {
+      expect(screen.getByRole('button', { name: 'Settings' })).toHaveFocus();
+    });
+  });
+
   it('changes nothing when the reset is cancelled', async () => {
     const user = userEvent.setup();
     await quizService.deleteQuiz('q1');

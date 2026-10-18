@@ -1,6 +1,5 @@
 import {
   Anchor,
-  Badge,
   Box,
   Button,
   Flex,
@@ -14,11 +13,12 @@ import {
   TextInput,
   Title
 } from '@mantine/core';
-import { useState } from 'react';
 import { Link, Navigate, useNavigate, useParams, useSearchParams } from 'react-router';
 import { PodiumCard } from '../../components/PodiumCard';
 import { RankBanner } from '../../components/RankBanner';
+import { PaginatedList } from '../../components/PaginatedList';
 import { StandingsList } from '../../components/StandingsList';
+import { useDebouncedSearch } from '../../hooks/useDebouncedSearch';
 import { useLeaderboard } from '../../hooks/useLeaderboard';
 import type { Leaderboard, LeaderboardEntry } from '../../service/types';
 import { useSessionStore } from '../../session/sessionStore';
@@ -27,25 +27,32 @@ import classes from './LeaderboardPage.module.css';
 const topOptions = [
   { value: '3', label: 'Top 3' },
   { value: '10', label: 'Top 10' },
-  { value: '25', label: 'Top 25' }
+  { value: '25', label: 'Top 25' },
+  { value: 'all', label: 'All' }
 ];
+
+const PAGE_SIZE = 10;
 
 const PODIUM_SIZE = 3;
 
-const matchesSearch = (entry: LeaderboardEntry, search: string) => {
-  const query = search.trim().toLowerCase();
-  return !query || `${entry.userName} ${entry.countryName}`.toLowerCase().includes(query);
-};
+const matchesSearch = (entry: LeaderboardEntry, query: string) =>
+  !query || `${entry.userName} ${entry.countryName}`.toLowerCase().includes(query);
 
-const board = (
-  leaderboard: Leaderboard,
-  quizId: string,
-  userId: string,
-  search: string,
-  onSearchChange: (value: string) => void
-) => {
+interface BoardOptions {
+  quizId: string;
+  userId: string;
+  search: string;
+  query: string;
+  debouncedSearch: string;
+  onSearchChange: (value: string) => void;
+  page: number;
+  onPageChange: (page: number) => void;
+}
+
+const board = (leaderboard: Leaderboard, options: BoardOptions) => {
+  const { quizId, userId, search, query, debouncedSearch, onSearchChange, onPageChange } = options;
   const podium = leaderboard.entries.slice(0, PODIUM_SIZE);
-  const standings = leaderboard.entries.filter(entry => matchesSearch(entry, search));
+  const standings = leaderboard.entries.filter(entry => matchesSearch(entry, query));
 
   return (
     <Stack gap={28}>
@@ -70,14 +77,9 @@ const board = (
           align={{ base: 'stretch', sm: 'center' }}
           gap={12}
         >
-          <Group gap={10}>
-            <Title order={2} fz={20}>
-              Standings
-            </Title>
-            <Badge variant="default">
-              Showing {standings.length} of {leaderboard.rankedCount}
-            </Badge>
-          </Group>
+          <Title order={2} fz={20}>
+            Standings
+          </Title>
           <TextInput
             aria-label="Search players"
             placeholder="Search player or country"
@@ -89,9 +91,18 @@ const board = (
           />
         </Flex>
         {standings.length === 0 ? (
-          <Text c="dimmed">No players match "{search.trim()}".</Text>
+          <Text c="dimmed">No players match "{debouncedSearch.trim()}".</Text>
         ) : (
-          <StandingsList quizTitle={leaderboard.quizTitle} entries={standings} userId={userId} />
+          <PaginatedList
+            items={standings}
+            page={options.page}
+            pageSize={PAGE_SIZE}
+            itemName="player"
+            itemsName="players"
+            onPageChange={onPageChange}
+          >
+            {shown => <StandingsList quizTitle={leaderboard.quizTitle} entries={shown} userId={userId} />}
+          </PaginatedList>
         )}
       </Stack>
     </Stack>
@@ -103,15 +114,23 @@ export const LeaderboardPage = () => {
   const [searchParams, setSearchParams] = useSearchParams();
   const navigate = useNavigate();
   const userId = useSessionStore(state => state.userId);
-  const [search, setSearch] = useState('');
+  const { search, setSearch, debouncedSearch, query } = useDebouncedSearch();
   const top = topOptions.some(option => option.value === searchParams.get('top')) ? searchParams.get('top') : '10';
-  const { quizzes, leaderboard, loading } = useLeaderboard(quizId, Number(top), userId);
+  const limit = top === 'all' ? Number.POSITIVE_INFINITY : Number(top);
+  const { quizzes, leaderboard, loading } = useLeaderboard(quizId, limit, userId);
 
   const [firstQuiz] = quizzes;
   if (!quizId && firstQuiz) return <Navigate to={`/leaderboard/${firstQuiz.id}`} replace />;
 
   const handleQuizChange = (value: string | null) => {
-    if (value) void navigate({ pathname: `/leaderboard/${value}`, search: searchParams.toString() });
+    if (value) void navigate({ pathname: `/leaderboard/${value}`, search: top === '10' ? '' : `?top=${String(top)}` });
+  };
+
+  const changePage = (value: number) => {
+    const next = new URLSearchParams(searchParams);
+    if (value === 1) next.delete('page');
+    else next.set('page', String(value));
+    setSearchParams(next, { replace: true });
   };
 
   const handleTopChange = (value: string | null) => {
@@ -191,7 +210,22 @@ export const LeaderboardPage = () => {
         </Paper>
       )}
 
-      {!loading && leaderboard && leaderboard.rankedCount > 0 && board(leaderboard, quizId, userId, search, setSearch)}
+      {!loading &&
+        leaderboard &&
+        leaderboard.rankedCount > 0 &&
+        board(leaderboard, {
+          quizId,
+          userId,
+          search,
+          query,
+          debouncedSearch,
+          onSearchChange: value => {
+            setSearch(value);
+            changePage(1);
+          },
+          page: Number(searchParams.get('page')),
+          onPageChange: changePage
+        })}
     </Stack>
   );
 };

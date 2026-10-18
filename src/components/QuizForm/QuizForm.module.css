@@ -1,3 +1,7 @@
 .toolbar {
   z-index: 3;
 }
+
+.questions {
+  overflow: visible;
+}

@@ -14,6 +14,11 @@
   &[aria-expanded='true'] {
     color: var(--mantine-primary-color-filled);
   }
+
+  &:focus-visible {
+    outline: 2px solid var(--mantine-primary-color-filled);
+    outline-offset: -2px;
+  }
 }
 
 .icon {

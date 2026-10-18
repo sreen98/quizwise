@@ -10,12 +10,13 @@ import {
   type UniqueIdentifier
 } from '@dnd-kit/core';
 import { SortableContext, sortableKeyboardCoordinates, verticalListSortingStrategy } from '@dnd-kit/sortable';
-import { Badge, Button, Group, Stack, Text, Title, UnstyledButton } from '@mantine/core';
+import { Badge, Box, Button, Group, Stack, Text, Title, UnstyledButton } from '@mantine/core';
 import { IconChevronDown } from '@tabler/icons-react';
-import { useRef, useState, type ReactNode } from 'react';
+import { useEffect, useRef, useState, type ReactNode } from 'react';
 import type { Question } from '../../types/models';
 import { QuestionEditor } from '../QuestionEditor';
 import { SortableQuestion } from '../SortableQuestion';
+import classes from './QuestionBuilder.module.css';
 import type { QuestionBuilderProps } from './types';
 
 const newQuestion = (): Question => ({
@@ -39,11 +40,20 @@ const screenReaderInstructions = {
 export const QuestionBuilder = ({ form }: QuestionBuilderProps) => {
   const [openIds, setOpenIds] = useState<string[]>([]);
   const lastOverId = useRef<UniqueIdentifier | null>(null);
+  const pendingFocusId = useRef<string | null>(null);
   const { questions } = form.values;
   const sensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 6 } }),
     useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates })
   );
+
+  useEffect(() => {
+    if (!pendingFocusId.current) return;
+    const input = document.getElementById(`${pendingFocusId.current}-text`);
+    pendingFocusId.current = null;
+    input?.scrollIntoView({ block: 'center' });
+    input?.focus({ preventScroll: true });
+  }, [questions.length]);
 
   const positionOf = (id: UniqueIdentifier) => questions.findIndex(question => question.id === id) + 1;
 
@@ -75,6 +85,7 @@ export const QuestionBuilder = ({ form }: QuestionBuilderProps) => {
     const question = newQuestion();
     form.insertListItem('questions', question);
     setOpenIds(ids => [...ids, question.id]);
+    pendingFocusId.current = question.id;
   };
 
   const handleDragEnd = ({ active, over }: DragEndEvent) => {
@@ -125,7 +136,7 @@ export const QuestionBuilder = ({ form }: QuestionBuilderProps) => {
         </Title>
         {questions.length > 1 && (
           <Text c="dimmed" fz={13}>
-            Drag the handle or use the arrows to reorder
+            Drag the handle to reorder
           </Text>
         )}
       </Group>
@@ -166,9 +177,18 @@ export const QuestionBuilder = ({ form }: QuestionBuilderProps) => {
           {errorText(form.errors.questions)}
         </Text>
       )}
-      <Button variant="default" mt={14} onClick={addQuestion}>
-        Add question
-      </Button>
+      <Box
+        pos="sticky"
+        bottom={{ base: 64, sm: 0 }}
+        bg="var(--mantine-color-body)"
+        pt={14}
+        pb={{ base: 12, sm: 16 }}
+        className={classes.addBar}
+      >
+        <Button variant="default" onClick={addQuestion}>
+          Add question
+        </Button>
+      </Box>
     </>
   );
 };

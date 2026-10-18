@@ -58,7 +58,7 @@ describe('LeaderboardPage', () => {
 
     expectStandings(['Fatima Al Mansoori', 'Diya Nair', 'Aarav Menon', 'Oliver Smith']);
     expect(tableRows()[2]).toHaveAttribute('aria-current', 'true');
-    expect(screen.getByText('Showing 4 of 4')).toBeInTheDocument();
+    expect(screen.getByText('Showing 4 players')).toBeInTheDocument();
   });
 
   it('shows the current user rank, how to move up and a retake button', async () => {
@@ -79,13 +79,13 @@ describe('LeaderboardPage', () => {
 
     await user.type(screen.getByRole('textbox', { name: 'Search players' }), 'india');
 
+    expect(await screen.findByText('Showing 2 players')).toBeInTheDocument();
     expectStandings(['Diya Nair', 'Aarav Menon']);
-    expect(screen.getByText('Showing 2 of 4')).toBeInTheDocument();
 
     await user.clear(screen.getByRole('textbox', { name: 'Search players' }));
     await user.type(screen.getByRole('textbox', { name: 'Search players' }), 'nobody');
 
-    expect(screen.getByText('No players match "nobody".')).toBeInTheDocument();
+    expect(await screen.findByText('No players match "nobody".')).toBeInTheDocument();
   });
 
   it('limits the list to the top players and still shows the rank of a user below them', async () => {
@@ -138,5 +138,19 @@ describe('LeaderboardPage', () => {
     renderRoute('/leaderboard/q99');
 
     expect(await screen.findByText('Quiz not found')).toBeInTheDocument();
+  });
+
+  it('shows every player with All and pages the standings ten at a time', async () => {
+    const user = userEvent.setup();
+    await quizService.loadTestData();
+    const ranked = (await quizService.getLeaderboard('q1', Number.POSITIVE_INFINITY, 'u1')).rankedCount;
+    const { router } = renderRoute('/leaderboard/q1?top=all');
+
+    expect(await screen.findByText(`Showing 1 to 10 of ${String(ranked)} players`)).toBeInTheDocument();
+    expect(tableRows()).toHaveLength(10);
+    await user.click(screen.getByRole('button', { name: 'Page 2' }));
+
+    expect(await screen.findByText(`Showing 11 to 20 of ${String(ranked)} players`)).toBeInTheDocument();
+    expect(router.state.location.search).toBe('?top=all&page=2');
   });
 });

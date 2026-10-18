@@ -21,7 +21,7 @@ describe('QuizStartPage', () => {
     expect(await screen.findByRole('heading', { level: 1, name: 'Kerala Culture and History' })).toBeInTheDocument();
     expect(screen.getByText('Available in India')).toBeInTheDocument();
     expect(screen.getByText('3:00')).toBeInTheDocument();
-    expect(screen.getByText('One only')).toBeInTheDocument();
+    expect(screen.getByText('Only once')).toBeInTheDocument();
     expect(screen.getByText('Single and multiple choice')).toBeInTheDocument();
     expect(screen.getByText(/You have 3 min\. The timer starts when you press Start/)).toBeInTheDocument();
     expect(screen.getByText('This quiz can only be taken once.')).toBeInTheDocument();

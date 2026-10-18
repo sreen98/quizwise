@@ -1,24 +1,14 @@
-import {
-  Box,
-  Button,
-  Flex,
-  Group,
-  Pagination,
-  Paper,
-  Select,
-  Skeleton,
-  Stack,
-  Text,
-  TextInput,
-  Title
-} from '@mantine/core';
+import { Box, Button, Flex, Group, Paper, Select, Skeleton, Stack, Text, TextInput, Title } from '@mantine/core';
 import { modals } from '@mantine/modals';
 import { notifications } from '@mantine/notifications';
+import { useEffect } from 'react';
 import { Link, useSearchParams } from 'react-router';
 import { AdminQuizList } from '../../../components/AdminQuizList';
 import { ImportQuizButton } from '../../../components/ImportQuizButton';
+import { PaginatedList } from '../../../components/PaginatedList';
 import { formatCount } from '../../../format';
 import { useAdminQuizzes } from '../../../hooks/useAdminQuizzes';
+import { useDebouncedSearch } from '../../../hooks/useDebouncedSearch';
 import type { AdminQuizItem } from '../../../service/types';
 
 const PAGE_SIZE = 10;
@@ -40,10 +30,8 @@ const sortOptions: Record<SortKey, { label: string; compare: (a: AdminQuizItem, 
 
 const isSortKey = (value: string | null): value is SortKey => value !== null && value in sortOptions;
 
-const matchesSearch = (quiz: AdminQuizItem, search: string) => {
-  const query = search.trim().toLowerCase();
-  return !query || `${quiz.title} ${quiz.description}`.toLowerCase().includes(query);
-};
+const matchesSearch = (quiz: AdminQuizItem, query: string) =>
+  !query || `${quiz.title} ${quiz.description}`.toLowerCase().includes(query);
 
 type DeleteQuiz = (quizId: string) => Promise<void>;
 
@@ -78,14 +66,12 @@ const confirmDelete = (quiz: AdminQuizItem, deleteQuiz: DeleteQuiz) => {
 export const AdminQuizListPage = () => {
   const { quizzes, loading, hasFailed, deleteQuiz, exportQuiz, importQuiz } = useAdminQuizzes();
   const [searchParams, setSearchParams] = useSearchParams();
-  const search = searchParams.get('q') ?? '';
+  const urlSearch = searchParams.get('q') ?? '';
+  const { search, setSearch, debouncedSearch, query } = useDebouncedSearch(urlSearch);
   const sortParam = searchParams.get('sort');
   const sort: SortKey = isSortKey(sortParam) ? sortParam : 'title_asc';
 
-  const matching = quizzes.filter(quiz => matchesSearch(quiz, search)).sort(sortOptions[sort].compare);
-  const pageCount = Math.max(1, Math.ceil(matching.length / PAGE_SIZE));
-  const page = Math.min(Math.max(1, Number(searchParams.get('page')) || 1), pageCount);
-  const shown = matching.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
+  const matching = quizzes.filter(quiz => matchesSearch(quiz, query)).sort(sortOptions[sort].compare);
   const attemptTotal = quizzes.reduce((total, quiz) => total + quiz.attemptCount, 0);
 
   const updateParams = (changes: Record<string, string>) => {
@@ -96,6 +82,15 @@ export const AdminQuizListPage = () => {
     }
     setSearchParams(next, { replace: true });
   };
+
+  useEffect(() => {
+    if (debouncedSearch === urlSearch) return;
+    const next = new URLSearchParams(searchParams);
+    if (debouncedSearch) next.set('q', debouncedSearch);
+    else next.delete('q');
+    next.delete('page');
+    setSearchParams(next, { replace: true });
+  }, [debouncedSearch, urlSearch, searchParams, setSearchParams]);
 
   return (
     <Stack gap={24}>
@@ -118,96 +113,96 @@ export const AdminQuizListPage = () => {
         </Group>
       </Flex>
 
-      <Paper withBorder radius="lg">
-        <Flex direction={{ base: 'column', sm: 'row' }} gap={12} p={16}>
-          <TextInput
-            aria-label="Search quizzes"
-            placeholder="Search by title or description"
-            value={search}
-            onChange={event => {
-              updateParams({ q: event.currentTarget.value, page: '' });
-            }}
-            flex={1}
-          />
-          <Select
-            aria-label="Sort by"
-            data={Object.entries(sortOptions).map(([value, option]) => ({ value, label: option.label }))}
-            value={sort}
-            onChange={value => {
-              updateParams({ sort: value === 'title_asc' ? '' : (value ?? ''), page: '' });
-            }}
-            allowDeselect={false}
-            w={{ base: '100%', sm: 220 }}
-          />
-        </Flex>
+      <PaginatedList
+        items={loading ? [] : matching}
+        page={Number(searchParams.get('page'))}
+        pageSize={PAGE_SIZE}
+        itemName="quiz"
+        itemsName="quizzes"
+        onPageChange={value => {
+          updateParams({ page: value === 1 ? '' : String(value) });
+        }}
+      >
+        {shown => (
+          <Paper withBorder radius="lg">
+            <Flex direction={{ base: 'column', sm: 'row' }} gap={12} p={16}>
+              <TextInput
+                aria-label="Search quizzes"
+                placeholder="Search by title or description"
+                value={search}
+                onChange={event => {
+                  setSearch(event.currentTarget.value);
+                }}
+                flex={1}
+              />
+              <Select
+                aria-label="Sort by"
+                data={Object.entries(sortOptions).map(([value, option]) => ({ value, label: option.label }))}
+                value={sort}
+                onChange={value => {
+                  updateParams({ sort: value === 'title_asc' ? '' : (value ?? ''), page: '' });
+                }}
+                allowDeselect={false}
+                w={{ base: '100%', sm: 220 }}
+              />
+            </Flex>
 
-        {loading && (
-          <Stack gap={8} p={16} pt={0}>
-            {[1, 2, 3].map(index => (
-              <Skeleton key={index} h={56} />
-            ))}
-          </Stack>
+            {loading && (
+              <Stack gap={8} p={16} pt={0}>
+                {[1, 2, 3].map(index => (
+                  <Skeleton key={index} h={56} />
+                ))}
+              </Stack>
+            )}
+
+            {!loading && hasFailed && (
+              <Text c="dimmed" p={16} pt={0}>
+                The quizzes could not be loaded. Try reloading the page.
+              </Text>
+            )}
+
+            {!loading && !hasFailed && quizzes.length === 0 && (
+              <Stack align="flex-start" gap={12} p={16} pt={0}>
+                <Text c="dimmed">There are no quizzes yet.</Text>
+                <Button component={Link} to="/admin/quizzes/new">
+                  New quiz
+                </Button>
+              </Stack>
+            )}
+
+            {!loading && quizzes.length > 0 && matching.length === 0 && (
+              <Stack align="flex-start" gap={12} p={16} pt={0}>
+                <Text c="dimmed">No quizzes match "{debouncedSearch.trim()}".</Text>
+                <Button
+                  variant="default"
+                  onClick={() => {
+                    setSearch('');
+                  }}
+                >
+                  Clear search
+                </Button>
+              </Stack>
+            )}
+
+            {!loading && shown.length > 0 && (
+              <AdminQuizList
+                quizzes={shown}
+                onExport={quiz => {
+                  exportQuiz(quiz).catch(() => {
+                    notifications.show({
+                      color: 'orange',
+                      message: `Couldn't export ${quiz.title}. It may have been deleted.`
+                    });
+                  });
+                }}
+                onDelete={quiz => {
+                  confirmDelete(quiz, deleteQuiz);
+                }}
+              />
+            )}
+          </Paper>
         )}
-
-        {!loading && hasFailed && (
-          <Text c="dimmed" p={16} pt={0}>
-            The quizzes could not be loaded. Try reloading the page.
-          </Text>
-        )}
-
-        {!loading && !hasFailed && quizzes.length === 0 && (
-          <Stack align="flex-start" gap={12} p={16} pt={0}>
-            <Text c="dimmed">There are no quizzes yet.</Text>
-            <Button component={Link} to="/admin/quizzes/new">
-              New quiz
-            </Button>
-          </Stack>
-        )}
-
-        {!loading && quizzes.length > 0 && matching.length === 0 && (
-          <Stack align="flex-start" gap={12} p={16} pt={0}>
-            <Text c="dimmed">No quizzes match "{search.trim()}".</Text>
-            <Button
-              variant="default"
-              onClick={() => {
-                updateParams({ q: '', page: '' });
-              }}
-            >
-              Clear search
-            </Button>
-          </Stack>
-        )}
-
-        {!loading && shown.length > 0 && (
-          <AdminQuizList
-            quizzes={shown}
-            onExport={quiz => {
-              exportQuiz(quiz).catch(() => {
-                notifications.show({
-                  color: 'orange',
-                  message: `Couldn't export ${quiz.title}. It may have been deleted.`
-                });
-              });
-            }}
-            onDelete={quiz => {
-              confirmDelete(quiz, deleteQuiz);
-            }}
-          />
-        )}
-      </Paper>
-
-      {pageCount > 1 && (
-        <Pagination
-          total={pageCount}
-          value={page}
-          onChange={value => {
-            updateParams({ page: value === 1 ? '' : String(value) });
-          }}
-          getControlProps={control => ({ 'aria-label': `${control} page` })}
-          getItemProps={pageNumber => ({ 'aria-label': `Page ${String(pageNumber)}` })}
-          size="lg"
-        />
-      )}
+      </PaginatedList>
     </Stack>
   );
 };

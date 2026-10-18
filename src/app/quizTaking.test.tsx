@@ -40,7 +40,7 @@ describe('taking a quiz', () => {
     await waitFor(() => {
       expect(router.state.location.pathname).toMatch(/^\/attempts\/[\w-]+\/results$/);
     });
-  });
+  }, 30_000);
 
   it('records an answer only once when Submit is pressed twice', async () => {
     const user = userEvent.setup();

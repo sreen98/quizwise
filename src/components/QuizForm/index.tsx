@@ -8,7 +8,6 @@ import {
   Fieldset,
   Flex,
   Group,
-  MultiSelect,
   NumberInput,
   Stack,
   Switch,
@@ -24,6 +23,7 @@ import { Link } from 'react-router';
 import { quizInputSchema } from '../../data/schema';
 import { useUnsavedChangesPrompt } from '../../hooks/useUnsavedChangesPrompt';
 import type { QuizInput } from '../../types/models';
+import { ChipMultiSelect } from '../ChipMultiSelect';
 import { QuestionBuilder } from '../QuestionBuilder';
 import classes from './QuizForm.module.css';
 import type { QuizFormProps } from './types';
@@ -195,13 +195,13 @@ export const QuizForm = ({ initialValues, countries, isNew, onSubmit }: QuizForm
               labelPosition="left"
               {...form.getInputProps('retakesAllowed', { type: 'checkbox' })}
             />
-            <MultiSelect
+            <ChipMultiSelect
               label="Available in"
               placeholder="Search countries"
               data={countries.map(country => ({ value: country.code, label: country.name }))}
-              searchable
               nothingFoundMessage="No countries found"
               {...form.getInputProps('countries')}
+              value={form.values.countries}
             />
           </Stack>
         </Card>
@@ -209,6 +209,7 @@ export const QuizForm = ({ initialValues, countries, isNew, onSubmit }: QuizForm
         <Card
           component="section"
           aria-labelledby="questions-title"
+          className={classes.questions}
           withBorder
           radius="lg"
           p={{ base: 16, sm: 24 }}

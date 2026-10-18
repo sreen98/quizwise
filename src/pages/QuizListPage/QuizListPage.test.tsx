@@ -1,6 +1,6 @@
 import { screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { beforeEach, describe, expect, it } from 'vitest';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { quizService } from '../../service/quizService';
 import { DEFAULT_USER_ID, useSessionStore } from '../../session/sessionStore';
 import { renderRoute } from '../../test/renderWithProviders';
@@ -99,7 +99,7 @@ describe('QuizListPage', () => {
     renderRoute('/quizzes');
     const react = await card('React Fundamentals');
 
-    expect(react.getByText('One attempt')).toBeInTheDocument();
+    expect(react.getByText('Only once')).toBeInTheDocument();
     expect(react.getByText('30 s')).toBeInTheDocument();
     expect(react.getByText('for each question')).toBeInTheDocument();
     expect(react.getByRole('link', { name: 'View result' })).toHaveAttribute('href', '/attempts/a5/results');
@@ -147,5 +147,63 @@ describe('QuizListPage', () => {
     await waitFor(() => {
       expect(screen.queryByRole('heading', { level: 2, name: 'Kerala Culture and History' })).not.toBeInTheDocument();
     });
+  });
+
+  it('searches the quizzes by title or description', async () => {
+    const user = userEvent.setup();
+    renderRoute('/quizzes');
+    await screen.findByText('Showing 4 quizzes');
+
+    await user.type(screen.getByRole('textbox', { name: 'Search' }), 'hooks');
+    await waitFor(() => {
+      expect(cardTitles()).toEqual(['React Fundamentals']);
+    });
+
+    await user.clear(screen.getByRole('textbox', { name: 'Search' }));
+    await user.type(screen.getByRole('textbox', { name: 'Search' }), 'astronomy');
+    expect(await screen.findByText('No quizzes match "astronomy".')).toBeInTheDocument();
+    await user.click(screen.getByRole('button', { name: 'Clear search' }));
+    expect(await screen.findByText('Showing 4 quizzes')).toBeInTheDocument();
+  });
+
+  it('loads more quizzes as the list scrolls on a phone instead of showing pages', async () => {
+    const user = userEvent.setup();
+    const matchMedia = vi.spyOn(window, 'matchMedia').mockImplementation(query => ({
+      matches: false,
+      media: query,
+      onchange: null,
+      addListener: vi.fn(),
+      removeListener: vi.fn(),
+      addEventListener: vi.fn(),
+      removeEventListener: vi.fn(),
+      dispatchEvent: vi.fn()
+    }));
+    await quizService.loadTestData();
+    const total = (await quizService.getQuizzes(DEFAULT_USER_ID)).length;
+    renderRoute('/quizzes');
+
+    expect(await screen.findByText(`Showing 12 of ${String(total)} quizzes`)).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'Page 2' })).not.toBeInTheDocument();
+    await user.click(screen.getByRole('button', { name: 'Show more' }));
+
+    expect(await screen.findByText(`Showing 24 of ${String(total)} quizzes`)).toBeInTheDocument();
+    expect(cardTitles()).toHaveLength(24);
+    matchMedia.mockRestore();
+  });
+
+  it('shows twelve quizzes per page and starts again at page 1 when the status changes', async () => {
+    const user = userEvent.setup();
+    await quizService.loadTestData();
+    const total = (await quizService.getQuizzes(DEFAULT_USER_ID)).length;
+    const { router } = renderRoute('/quizzes');
+
+    expect(await screen.findByText(`Showing 1 to 12 of ${String(total)} quizzes`)).toBeInTheDocument();
+    expect(cardTitles()).toHaveLength(12);
+    await user.click(screen.getByRole('button', { name: 'Page 2' }));
+    expect(await screen.findByText(`Showing 13 to 24 of ${String(total)} quizzes`)).toBeInTheDocument();
+
+    await user.click(screen.getByRole('combobox', { name: 'Status' }));
+    await user.click(await screen.findByRole('option', { name: /^Completed/ }));
+    expect(router.state.location.search).toBe('');
   });
 });

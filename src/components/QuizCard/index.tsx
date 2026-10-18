@@ -1,4 +1,17 @@
-import { Anchor, Badge, Box, Button, Card, Divider, Group, Progress, Stack, Text, Title } from '@mantine/core';
+import {
+  Anchor,
+  Badge,
+  Box,
+  Button,
+  Card,
+  Divider,
+  Group,
+  Progress,
+  SimpleGrid,
+  Stack,
+  Text,
+  Title
+} from '@mantine/core';
 import type { ReactNode } from 'react';
 import { Link } from 'react-router';
 import { formatDateTime, formatTimeLimits } from '../../format';
@@ -56,8 +69,8 @@ const availability = (quiz: QuizListItem, countries: Country[]) => {
   return `Available in ${String(quiz.countries.length)} countries`;
 };
 
-const detail = (label: string, value: ReactNode, grow = false) => (
-  <Box key={label} flex={grow ? 1 : undefined} miw={0}>
+const detail = (label: string, value: ReactNode) => (
+  <Box key={label} miw={0}>
     <Text component="dt" fz={12} fw={600} c="dimmed" mb={2}>
       {label}
     </Text>
@@ -95,6 +108,12 @@ const score = (quiz: QuizListItem) =>
       Not taken
     </Text>
   );
+
+const attempts = (quiz: QuizListItem) => (
+  <Text fz={15} fw={600}>
+    {quiz.retakesAllowed ? 'Unlimited' : 'Only once'}
+  </Text>
+);
 
 const footer = (quiz: QuizListItem, countries: Country[]) => {
   if (quiz.inProgress) {
@@ -149,10 +168,7 @@ export const QuizCard = ({ quiz, countries }: QuizCardProps) => {
   return (
     <Card component="article" withBorder radius="lg" p={{ base: 20, sm: 24 }} h="100%" className={classes.card}>
       <Stack gap={18} h="100%">
-        <Group justify="space-between" gap={8}>
-          {statusBadge(quiz)}
-          <Badge variant="default">{quiz.retakesAllowed ? 'Retakes allowed' : 'One attempt'}</Badge>
-        </Group>
+        <Group gap={8}>{statusBadge(quiz)}</Group>
 
         <Box>
           <Title order={2} fz={20} mb={6}>
@@ -163,11 +179,12 @@ export const QuizCard = ({ quiz, countries }: QuizCardProps) => {
           </Text>
         </Box>
 
-        <Group component="dl" gap={24} wrap="nowrap" align="flex-start" m={0}>
+        <SimpleGrid component="dl" cols={2} spacing={24} verticalSpacing={14} m={0}>
           {detail('Questions', number(String(quiz.questionCount)))}
-          {detail('Time limit', timeLimits(quiz), true)}
+          {detail('Time limit', timeLimits(quiz))}
+          {detail('Attempts', attempts(quiz))}
           {detail(quiz.retakesAllowed ? 'Best score' : 'Score', score(quiz))}
-        </Group>
+        </SimpleGrid>
 
         <Stack mt="auto" gap={18}>
           {progressBar(quiz)}

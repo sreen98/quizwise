@@ -1,7 +1,7 @@
 import { notifications } from '@mantine/notifications';
 import { screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
 import { quizService } from '../../../service/quizService';
 import { useSessionStore } from '../../../session/sessionStore';
 import { renderRoute } from '../../../test/renderWithProviders';
@@ -14,6 +14,10 @@ const toggleCountry = async (user: ReturnType<typeof userEvent.setup>, name: str
 };
 
 describe('QuizEditorPage', () => {
+  beforeAll(async () => {
+    await import('.');
+  });
+
   beforeEach(async () => {
     notifications.clean();
     useSessionStore.setState({ userId: 'u5', country: null, slowNetwork: false });
@@ -30,9 +34,9 @@ describe('QuizEditorPage', () => {
     expect(screen.getByRole('checkbox', { name: 'Each question' })).toBeChecked();
     expect(screen.getByRole('textbox', { name: 'Seconds for each question' })).toHaveValue('45');
     expect(screen.getByRole('switch', { name: 'Allow retakes' })).toBeChecked();
-    const countries = screen.getByRole('combobox', { name: 'Available in' }).parentElement;
-    expect(countries).toHaveTextContent('United Arab EmiratesUnited Kingdom');
-    expect(countries).not.toHaveTextContent('India');
+    expect(screen.getByRole('button', { name: 'Remove United Arab Emirates' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Remove United Kingdom' })).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'Remove India' })).not.toBeInTheDocument();
     expect(screen.getByRole('heading', { name: 'Questions (6)' })).toBeInTheDocument();
   });
 
@@ -321,6 +325,21 @@ describe('QuizEditorPage', () => {
 
     await waitFor(() => {
       expect(screen.getByRole('textbox', { name: /Title/ })).toHaveFocus();
+    });
+  });
+
+  it('adds a question and moves the cursor into it', async () => {
+    const user = userEvent.setup();
+    renderRoute('/admin/quizzes/q5/edit');
+
+    await titleInput();
+    const [topButton] = screen.getAllByRole('button', { name: 'Add question' });
+    if (!topButton) throw new Error('No Add question button');
+    await user.click(topButton);
+
+    expect(screen.getByRole('heading', { name: 'Questions (7)' })).toBeInTheDocument();
+    await waitFor(() => {
+      expect(screen.getByRole('textbox', { name: 'Question text' })).toHaveFocus();
     });
   });
 

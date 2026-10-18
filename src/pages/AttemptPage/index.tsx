@@ -1,21 +1,11 @@
-import {
-  Anchor,
-  AppShell,
-  Box,
-  Button,
-  Group,
-  Paper,
-  Skeleton,
-  Stack,
-  Text,
-  Title,
-  VisuallyHidden
-} from '@mantine/core';
+import { AppShell, Box, Button, Group, Paper, Skeleton, Text, VisuallyHidden } from '@mantine/core';
 import { useHotkeys } from '@mantine/hooks';
+import { IconFileOff } from '@tabler/icons-react';
 import type { SubmitEvent } from 'react';
 import { Link, Navigate, useParams } from 'react-router';
 import { AttemptHeader } from '../../components/AttemptHeader';
 import { KeyboardHint } from '../../components/KeyboardHint';
+import { MessageCard } from '../../components/MessageCard';
 import { QuestionView } from '../../components/QuestionView';
 import { SegmentedProgress } from '../../components/SegmentedProgress';
 import { TimerBadge } from '../../components/TimerBadge';
@@ -113,20 +103,23 @@ export const AttemptPage = () => {
         />
       </AppShell.Header>
       <AppShell.Main>
-        {state.status === 'missing' && <title>Attempt not found - Quizwise</title>}
         {question && <title>{`${question.quizTitle} - Quizwise`}</title>}
         <VisuallyHidden aria-live="assertive">
           {announcement && `${announcement}. Your selection will be submitted automatically when time runs out.`}
         </VisuallyHidden>
         <Box maw={1000} mx="auto" px={{ base: 16, sm: 24 }} pt={{ base: 20, sm: 36 }} pb={{ base: 112, sm: 48 }}>
           {state.status === 'missing' ? (
-            <Stack gap="sm" align="flex-start">
-              <Title order={1}>Attempt not found</Title>
-              <Text c="dimmed">This attempt doesn't exist or has been removed.</Text>
-              <Anchor component={Link} to="/quizzes" fw={600} display="inline-block" lh="44px">
-                Back to quizzes
-              </Anchor>
-            </Stack>
+            <MessageCard
+              icon={<IconFileOff size={38} />}
+              title="Attempt not found"
+              actions={
+                <Button component={Link} to="/quizzes" size="md">
+                  Back to quizzes
+                </Button>
+              }
+            >
+              This attempt doesn't exist or has been removed.
+            </MessageCard>
           ) : (
             <form aria-busy={!question} onSubmit={handleSubmit}>
               {showWarning && (

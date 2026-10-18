@@ -9,15 +9,15 @@ import {
   SimpleGrid,
   Skeleton,
   Spoiler,
-  Stack,
   Text,
   Title
 } from '@mantine/core';
-import { IconArrowLeft } from '@tabler/icons-react';
+import { IconArrowLeft, IconFileOff } from '@tabler/icons-react';
 import type { ReactNode } from 'react';
 import { Link, Navigate, useParams } from 'react-router';
 import { CountryFlags } from '../../components/CountryFlags';
 import { KeyboardHint } from '../../components/KeyboardHint';
+import { MessageCard } from '../../components/MessageCard';
 import { formatClock, formatSeconds } from '../../format';
 import { useQuizStart } from '../../hooks/useQuizStart';
 import type { QuizListItem } from '../../service/types';
@@ -98,14 +98,17 @@ export const QuizStartPage = () => {
 
   if (state.status === 'missing') {
     return (
-      <Stack gap="sm" align="flex-start">
-        <title>Quiz not found - Quizwise</title>
-        <Title order={1}>Quiz not found</Title>
-        <Text c="dimmed">This quiz doesn't exist or has been removed.</Text>
-        <Anchor component={Link} to="/quizzes" fw={600} display="inline-block" lh="44px">
-          Back to quizzes
-        </Anchor>
-      </Stack>
+      <MessageCard
+        icon={<IconFileOff size={38} />}
+        title="Quiz not found"
+        actions={
+          <Button component={Link} to="/quizzes" size="md">
+            Back to quizzes
+          </Button>
+        }
+      >
+        This quiz doesn't exist or has been removed.
+      </MessageCard>
     );
   }
 

@@ -1,7 +1,8 @@
-import { Anchor, Box, Button, Card, Group, SimpleGrid, Skeleton, Stack, Text, ThemeIcon, Title } from '@mantine/core';
-import { IconHourglassEmpty, IconRefresh, IconTrashX } from '@tabler/icons-react';
+import { Box, Button, SimpleGrid, Skeleton, Stack, Text } from '@mantine/core';
+import { IconFileOff, IconHourglassEmpty, IconRefresh, IconTrashX } from '@tabler/icons-react';
 import type { ReactNode } from 'react';
 import { Link, Navigate, useLocation, useParams } from 'react-router';
+import { MessageCard } from '../../components/MessageCard';
 import { formatClock, formatDateTime, formatScore, formatSeconds } from '../../format';
 import { useEndedAttempt } from '../../hooks/useEndedAttempt';
 import { useSessionStore } from '../../session/sessionStore';
@@ -20,52 +21,44 @@ const limitSentence = ({ timeLimitSeconds, perQuestionSeconds }: EndedAttempt) =
 const isPresentState = (state: unknown) =>
   typeof state === 'object' && state !== null && 'isEndedWhileAway' in state && state.isEndedWhileAway === false;
 
-const focusOnMount = (heading: HTMLHeadingElement | null) => {
-  heading?.focus();
-};
-
 const stat = (label: string, value: ReactNode) => (
   <Box key={label} className={classes.stat} pt={14}>
     <Text component="dt" fz={13} c="dimmed" fw={600} mb={4}>
       {label}
     </Text>
-    <Box component="dd" m={0} fz={{ base: 16, sm: 18 }} fw={700}>
+    <Box component="dd" m={0} c="bright" fz={{ base: 16, sm: 18 }} fw={700}>
       {value}
     </Box>
   </Box>
 );
 
-const message = (icon: ReactNode, color: string, title: string, body: ReactNode, primaryAction?: ReactNode) => (
-  <Stack gap={16}>
-    <Card
-      component="section"
-      aria-labelledby="ended-title"
-      withBorder
-      radius="lg"
-      px={{ base: 22, sm: 32 }}
-      py={{ base: 32, sm: 48 }}
-    >
-      <title>{`${title} - Quizwise`}</title>
-      <ThemeIcon variant="light" color={color} size={64} radius="xl" display="flex" mx="auto" mb={18} aria-hidden>
-        {icon}
-      </ThemeIcon>
-      <Title ref={focusOnMount} id="ended-title" tabIndex={-1} order={1} fz={{ base: 24, sm: 28 }} lh={1.25} mb={10}>
-        {title}
-      </Title>
-      {body}
-    </Card>
-    <Group justify="space-between" gap={10}>
-      <Button component={Link} to="/quizzes" variant="default">
-        Back to quizzes
-      </Button>
-      {primaryAction}
-    </Group>
-  </Stack>
+const message = (
+  icon: ReactNode,
+  color: 'blue' | 'orange',
+  title: string,
+  body: ReactNode,
+  primaryAction?: ReactNode
+) => (
+  <MessageCard
+    icon={icon}
+    color={color}
+    title={title}
+    actions={
+      <>
+        {primaryAction}
+        <Button component={Link} to="/quizzes" variant="default" size="md">
+          Back to quizzes
+        </Button>
+      </>
+    }
+  >
+    {body}
+  </MessageCard>
 );
 
 const timeoutMessage = (attempt: EndedAttempt, isEndedWhileAway: boolean) =>
   message(
-    <IconHourglassEmpty size={34} />,
+    <IconHourglassEmpty size={38} />,
     'orange',
     isEndedWhileAway ? 'Time ran out while you were away' : 'Time ran out',
     <>
@@ -97,7 +90,7 @@ const changedMessage = (attempt: EndedAttempt) => {
     attempt.bestResult && `${String(attempt.bestResult.score)} / ${String(attempt.bestResult.totalQuestions)}`;
 
   return message(
-    <IconRefresh size={34} />,
+    <IconRefresh size={38} />,
     'blue',
     'This quiz was updated',
     <Stack gap={14}>
@@ -121,7 +114,7 @@ const changedMessage = (attempt: EndedAttempt) => {
 };
 
 const deletedMessage = message(
-  <IconTrashX size={34} />,
+  <IconTrashX size={38} />,
   'orange',
   'This quiz is no longer available',
   <Text c="dimmed" fz={15} lh={1.55}>
@@ -139,33 +132,31 @@ export const AttemptEndedPage = () => {
 
   if (state.status === 'missing') {
     return (
-      <Stack gap="sm" align="flex-start">
-        <title>Attempt not found - Quizwise</title>
-        <Title order={1}>Attempt not found</Title>
-        <Text c="dimmed">This attempt doesn't exist or has been removed.</Text>
-        <Anchor component={Link} to="/quizzes" fw={600} display="inline-block" lh="44px">
-          Back to quizzes
-        </Anchor>
-      </Stack>
+      <MessageCard
+        icon={<IconFileOff size={38} />}
+        title="Attempt not found"
+        actions={
+          <Button component={Link} to="/quizzes" size="md">
+            Back to quizzes
+          </Button>
+        }
+      >
+        This attempt doesn't exist or has been removed.
+      </MessageCard>
     );
   }
 
   if (state.status === 'loading') {
     return (
-      <Box maw={520} mx="auto">
+      <Box maw={640} mx="auto">
         <Skeleton h={260} radius="lg" />
       </Box>
     );
   }
 
   const { attempt } = state;
-  if (attempt.endReason === 'submitted') return <Navigate to={`/attempts/${attempt.attemptId}/results`} replace />;
-
-  return (
-    <Box maw={520} mx="auto">
-      {attempt.endReason === 'timeout' && timeoutMessage(attempt, isEndedWhileAway)}
-      {attempt.endReason === 'quiz_changed' && changedMessage(attempt)}
-      {attempt.endReason === 'quiz_deleted' && deletedMessage}
-    </Box>
-  );
+  if (attempt.endReason === 'timeout') return timeoutMessage(attempt, isEndedWhileAway);
+  if (attempt.endReason === 'quiz_changed') return changedMessage(attempt);
+  if (attempt.endReason === 'quiz_deleted') return deletedMessage;
+  return <Navigate to={`/attempts/${attempt.attemptId}/results`} replace />;
 };

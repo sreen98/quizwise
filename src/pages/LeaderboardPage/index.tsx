@@ -1,5 +1,4 @@
 import {
-  Anchor,
   Box,
   Button,
   Flex,
@@ -13,7 +12,9 @@ import {
   TextInput,
   Title
 } from '@mantine/core';
+import { IconFileOff } from '@tabler/icons-react';
 import { Link, Navigate, useNavigate, useParams, useSearchParams } from 'react-router';
+import { MessageCard } from '../../components/MessageCard';
 import { PodiumCard } from '../../components/PodiumCard';
 import { RankBanner } from '../../components/RankBanner';
 import { SearchableSelect } from '../../components/SearchableSelect';
@@ -121,6 +122,22 @@ export const LeaderboardPage = () => {
   const [firstQuiz] = quizzes;
   if (!quizId && firstQuiz) return <Navigate to={`/leaderboard/${firstQuiz.id}`} replace />;
 
+  if (!loading && !leaderboard) {
+    return (
+      <MessageCard
+        icon={<IconFileOff size={38} />}
+        title="Quiz not found"
+        actions={
+          <Button component={Link} to="/leaderboard" size="md">
+            Show another leaderboard
+          </Button>
+        }
+      >
+        This quiz doesn't exist or has been removed.
+      </MessageCard>
+    );
+  }
+
   const handleQuizChange = (value: string | null) => {
     if (value) void navigate({ pathname: `/leaderboard/${value}`, search: top === '10' ? '' : `?top=${String(top)}` });
   };
@@ -180,16 +197,6 @@ export const LeaderboardPage = () => {
               <Skeleton key={index} h={250} radius="lg" />
             ))}
           </SimpleGrid>
-        </Stack>
-      )}
-
-      {!loading && !leaderboard && (
-        <Stack gap="sm" align="flex-start">
-          <Text fw={700}>Quiz not found</Text>
-          <Text c="dimmed">This quiz doesn't exist or has been removed.</Text>
-          <Anchor component={Link} to="/leaderboard" fw={600} display="inline-block" lh="44px">
-            Show another leaderboard
-          </Anchor>
         </Stack>
       )}
 

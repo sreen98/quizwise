@@ -140,7 +140,8 @@ describe('LeaderboardPage', () => {
   it('says when a quiz does not exist', async () => {
     renderRoute('/leaderboard/q99');
 
-    expect(await screen.findByText('Quiz not found')).toBeInTheDocument();
+    expect(await screen.findByRole('heading', { level: 1, name: 'Quiz not found' })).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: 'Show another leaderboard' })).toHaveAttribute('href', '/leaderboard');
   });
 
   it('shows every player with All and pages the standings ten at a time', async () => {

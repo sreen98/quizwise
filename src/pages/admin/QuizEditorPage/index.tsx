@@ -1,6 +1,8 @@
-import { Anchor, Stack, Text, Title } from '@mantine/core';
+import { Button } from '@mantine/core';
 import { notifications } from '@mantine/notifications';
+import { IconFileOff } from '@tabler/icons-react';
 import { Link, useNavigate, useParams } from 'react-router';
+import { MessageCard } from '../../../components/MessageCard';
 import { QuizForm } from '../../../components/QuizForm';
 import { QuizFormSkeleton } from '../../../components/QuizFormSkeleton';
 import { useQuizEditor } from '../../../hooks/useQuizEditor';
@@ -13,14 +15,17 @@ export const QuizEditorPage = () => {
 
   if (state.status === 'missing') {
     return (
-      <Stack gap="sm" align="flex-start">
-        <title>Quiz not found - Quizwise</title>
-        <Title order={1}>Quiz not found</Title>
-        <Text c="dimmed">This quiz doesn't exist or has been removed.</Text>
-        <Anchor component={Link} to="/admin" fw={600} display="inline-block" lh="44px">
-          Back to Manage quizzes
-        </Anchor>
-      </Stack>
+      <MessageCard
+        icon={<IconFileOff size={38} />}
+        title="Quiz not found"
+        actions={
+          <Button component={Link} to="/admin" size="md">
+            Back to Manage quizzes
+          </Button>
+        }
+      >
+        This quiz doesn't exist or has been removed.
+      </MessageCard>
     );
   }
 

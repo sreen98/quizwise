@@ -2,6 +2,7 @@ import {
   Anchor,
   Badge,
   Box,
+  Button,
   Card,
   Divider,
   Flex,
@@ -14,9 +15,10 @@ import {
   Text,
   Title
 } from '@mantine/core';
-import { IconArrowLeft, IconArrowRight } from '@tabler/icons-react';
+import { IconArrowLeft, IconArrowRight, IconFileOff } from '@tabler/icons-react';
 import type { ReactNode } from 'react';
 import { Link, Navigate, useParams } from 'react-router';
+import { MessageCard } from '../../components/MessageCard';
 import { formatClock } from '../../format';
 import { useAttemptResult } from '../../hooks/useAttemptResult';
 import { useSessionStore } from '../../session/sessionStore';
@@ -194,14 +196,17 @@ export const ResultsPage = () => {
 
   if (state.status === 'missing') {
     return (
-      <Stack gap="sm" align="flex-start">
-        <title>Result not found - Quizwise</title>
-        <Title order={1}>Result not found</Title>
-        <Text c="dimmed">This result doesn't exist or its quiz has been removed.</Text>
-        <Anchor component={Link} to="/quizzes" fw={600} display="inline-block" lh="44px">
-          Back to quizzes
-        </Anchor>
-      </Stack>
+      <MessageCard
+        icon={<IconFileOff size={38} />}
+        title="Result not found"
+        actions={
+          <Button component={Link} to="/quizzes" size="md">
+            Back to quizzes
+          </Button>
+        }
+      >
+        This result doesn't exist or its quiz has been removed.
+      </MessageCard>
     );
   }
 

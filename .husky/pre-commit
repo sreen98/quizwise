@@ -1,0 +1,5 @@
+files=$(git diff --cached --name-only --diff-filter=ACMR)
+if [ -n "$files" ]; then
+  npx prettier --check --ignore-unknown $files
+fi
+npm run lint

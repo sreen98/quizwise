@@ -83,7 +83,10 @@ export const theme = createTheme({
   components: {
     Modal: Modal.extend({ defaultProps: { centered: true, closeButtonProps: { 'aria-label': 'Close' } } }),
     Drawer: Drawer.extend({ defaultProps: { closeButtonProps: { 'aria-label': 'Close' } } }),
-    Notification: Notification.extend({ defaultProps: { closeButtonProps: { 'aria-label': 'Dismiss notification' } } }),
+    Notification: Notification.extend({
+      classNames: { description: classes.notificationText },
+      defaultProps: { closeButtonProps: { 'aria-label': 'Dismiss notification' } }
+    }),
     Button: Button.extend({
       classNames: { loader: classes.buttonLoader },
       vars: (_theme, { variant }) => ({

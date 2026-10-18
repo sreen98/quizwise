@@ -39,11 +39,11 @@ export const QuizEditorPage = () => {
     } catch {
       notifications.show({
         color: 'orange',
-        message: `Couldn't save ${values.title}. The quiz may have been deleted.`
+        message: "Couldn't save the quiz. It may have been deleted."
       });
       return;
     }
-    notifications.show({ message: quizId ? `${values.title} saved` : `${values.title} created` });
+    notifications.show({ message: quizId ? 'Quiz saved' : 'Quiz created' });
     await navigate('/admin');
   };
 

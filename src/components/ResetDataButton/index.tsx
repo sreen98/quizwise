@@ -14,7 +14,7 @@ export const ResetDataButton = ({ onDialogOpen }: ResetDataButtonProps) => {
       children: (
         <Text size="sm">This restores the original quizzes and attempts and removes everything you changed.</Text>
       ),
-      labels: { confirm: 'Reset data', cancel: 'Cancel' },
+      labels: { confirm: 'Yes', cancel: 'Cancel' },
       confirmProps: { color: 'orange' },
       onConfirm: () => {
         void resetData().then(() => {

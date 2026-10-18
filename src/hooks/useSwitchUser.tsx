@@ -27,7 +27,7 @@ export const useSwitchUser = (onDone?: () => void) => {
     modals.openConfirmModal({
       title: 'Switch user without saving?',
       children: <Text size="sm">Your changes to this quiz will be lost.</Text>,
-      labels: { confirm: 'Switch user', cancel: 'Keep editing' },
+      labels: { confirm: 'Yes', cancel: 'Cancel' },
       confirmProps: { color: 'orange' },
       onConfirm: () => {
         switchUser(value);

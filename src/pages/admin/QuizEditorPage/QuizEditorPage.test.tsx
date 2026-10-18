@@ -1,5 +1,5 @@
 import { notifications } from '@mantine/notifications';
-import { screen, waitFor } from '@testing-library/react';
+import { screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
 import { quizService } from '../../../service/quizService';
@@ -73,7 +73,7 @@ describe('QuizEditorPage', () => {
     await waitFor(() => {
       expect(router.state.location.pathname).toBe('/admin');
     });
-    expect(await screen.findByText('General Science Quiz saved')).toBeInTheDocument();
+    expect(await screen.findByText('Quiz saved')).toBeInTheDocument();
     await expect(quizService.getQuizForEdit('q5')).resolves.toMatchObject({
       title: 'General Science Quiz',
       timeLimitSeconds: 360,
@@ -244,8 +244,17 @@ describe('QuizEditorPage', () => {
 
     await user.click(screen.getByRole('button', { name: 'Edit question 2' }));
     await user.click(screen.getByRole('button', { name: 'Delete question 2' }));
+    await user.click(
+      within(await screen.findByRole('dialog', { name: 'Delete question?' })).getByRole('button', { name: 'Cancel' })
+    );
+    expect(screen.getByRole('heading', { name: 'Questions (6)' })).toBeInTheDocument();
 
-    expect(screen.getByRole('heading', { name: 'Questions (5)' })).toBeInTheDocument();
+    await user.click(screen.getByRole('button', { name: 'Delete question 2' }));
+    await user.click(
+      within(await screen.findByRole('dialog', { name: 'Delete question?' })).getByRole('button', { name: 'Yes' })
+    );
+
+    expect(await screen.findByRole('heading', { name: 'Questions (5)' })).toBeInTheDocument();
     expect(screen.queryByText('Which of these are noble gases?')).not.toBeInTheDocument();
   });
 
@@ -300,7 +309,7 @@ describe('QuizEditorPage', () => {
 
     await user.type(await titleInput(), ' Quiz');
     await user.click(screen.getByRole('link', { name: 'Cancel' }));
-    await user.click(await screen.findByRole('button', { name: 'Keep editing' }));
+    await user.click(await screen.findByRole('button', { name: 'Cancel' }));
 
     await waitFor(() => {
       expect(screen.queryByRole('dialog', { name: 'Leave without saving?' })).not.toBeInTheDocument();
@@ -318,7 +327,7 @@ describe('QuizEditorPage', () => {
 
     await user.type(await titleInput(), ' Quiz');
     await user.click(screen.getByRole('link', { name: 'Back to Manage quizzes' }));
-    await user.click(await screen.findByRole('button', { name: 'Leave' }));
+    await user.click(await screen.findByRole('button', { name: 'Yes' }));
 
     await waitFor(() => {
       expect(router.state.location.pathname).toBe('/admin');
@@ -348,7 +357,7 @@ describe('QuizEditorPage', () => {
     await user.type(await titleInput(), ' Quiz');
     await user.click(screen.getByRole('button', { name: /^Viewing as/ }));
     await user.click(await screen.findByRole('option', { name: 'Aarav Menon' }));
-    await user.click(await screen.findByRole('button', { name: 'Keep editing' }));
+    await user.click(await screen.findByRole('button', { name: 'Cancel' }));
 
     expect(useSessionStore.getState().userId).toBe('u5');
     expect(screen.getByRole('textbox', { name: /Title/ })).toHaveValue('General Science Quiz');
@@ -361,7 +370,7 @@ describe('QuizEditorPage', () => {
     await user.type(await titleInput(), ' Quiz');
     await user.click(screen.getByRole('button', { name: /^Viewing as/ }));
     await user.click(await screen.findByRole('option', { name: 'Aarav Menon' }));
-    await user.click(await screen.findByRole('button', { name: 'Switch user' }));
+    await user.click(await screen.findByRole('button', { name: 'Yes' }));
 
     expect(await screen.findByRole('heading', { name: "You don't have access to this page" })).toBeInTheDocument();
     expect(useSessionStore.getState()).toMatchObject({ userId: 'u1', hasUnsavedChanges: false });
@@ -375,9 +384,7 @@ describe('QuizEditorPage', () => {
     await quizService.deleteQuiz('q5');
     await user.click(screen.getByRole('button', { name: 'Save quiz' }));
 
-    expect(
-      await screen.findByText("Couldn't save General Science Quiz. The quiz may have been deleted.")
-    ).toBeInTheDocument();
+    expect(await screen.findByText("Couldn't save the quiz. It may have been deleted.")).toBeInTheDocument();
     expect(router.state.location.pathname).toBe('/admin/quizzes/q5/edit');
   });
 

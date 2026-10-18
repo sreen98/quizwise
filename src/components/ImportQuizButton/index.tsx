@@ -39,7 +39,7 @@ export const ImportQuizButton = ({ onImport }: ImportQuizButtonProps) => {
     setImporting(true);
     try {
       const result = await onImport(await file.text());
-      if (result.isImported) notifications.show({ message: `${result.title} imported` });
+      if (result.isImported) notifications.show({ message: 'Quiz imported' });
       else showProblems(result.problems);
     } catch {
       showProblems(["This file couldn't be read."]);

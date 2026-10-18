@@ -17,7 +17,7 @@ export const TestDataButton = ({ onDialogOpen }: TestDataButtonProps) => {
           lists. Reset data brings back the original data.
         </Text>
       ),
-      labels: { confirm: 'Load test data', cancel: 'Cancel' },
+      labels: { confirm: 'Yes', cancel: 'Cancel' },
       onConfirm: () => {
         void loadTestData().then(() => {
           notifications.show({ message: 'Test data loaded' });

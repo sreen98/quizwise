@@ -24,7 +24,7 @@ export const AttemptHeader = ({ quizTitle, timers, showExitConfirm }: AttemptHea
       modalId: LEAVE_MODAL_ID,
       title: 'Leave the quiz?',
       children: <Text size="sm">Your answers are saved, but the timer keeps running while you're away.</Text>,
-      labels: { confirm: 'Save and exit', cancel: 'Keep going' },
+      labels: { confirm: 'Yes', cancel: 'Cancel' },
       onConfirm: () => {
         void navigate('/quizzes');
       }

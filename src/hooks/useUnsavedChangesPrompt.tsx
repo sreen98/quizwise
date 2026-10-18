@@ -17,7 +17,7 @@ export const useUnsavedChangesPrompt = (hasChanges: boolean) => {
       modalId: LEAVE_MODAL_ID,
       title: 'Leave without saving?',
       children: <Text size="sm">Your changes to this quiz will be lost.</Text>,
-      labels: { confirm: 'Leave', cancel: 'Keep editing' },
+      labels: { confirm: 'Yes', cancel: 'Cancel' },
       confirmProps: { color: 'orange' },
       onConfirm: () => {
         isLeaving = true;

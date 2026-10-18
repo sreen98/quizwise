@@ -139,7 +139,7 @@ describe('AttemptPage', () => {
 
     await user.click(await findExitLink());
     const dialog = await screen.findByRole('dialog', { name: 'Leave the quiz?' });
-    await user.click(within(dialog).getByRole('button', { name: 'Keep going' }));
+    await user.click(within(dialog).getByRole('button', { name: 'Cancel' }));
 
     await waitFor(() => {
       expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
@@ -153,7 +153,7 @@ describe('AttemptPage', () => {
 
     await user.click(await findExitLink());
     const dialog = await screen.findByRole('dialog', { name: 'Leave the quiz?' });
-    await user.click(within(dialog).getByRole('button', { name: 'Save and exit' }));
+    await user.click(within(dialog).getByRole('button', { name: 'Yes' }));
 
     await waitFor(() => {
       expect(router.state.location.pathname).toBe('/quizzes');
@@ -167,7 +167,7 @@ describe('AttemptPage', () => {
     await user.click(await screen.findByRole('radio', { name: 'const' }));
     await user.click(await findExitLink());
     const dialog = await screen.findByRole('dialog', { name: 'Leave the quiz?' });
-    within(dialog).getByRole('button', { name: 'Keep going' }).focus();
+    within(dialog).getByRole('button', { name: 'Cancel' }).focus();
     await user.keyboard('{Enter}');
 
     await waitFor(() => {

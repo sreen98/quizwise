@@ -169,15 +169,16 @@ describe('AdminQuizListPage', () => {
     await waitForRows();
 
     await user.click(firstButton('Delete JavaScript Basics'));
-    const dialog = await screen.findByRole('dialog', { name: 'Delete JavaScript Basics?' });
+    const dialog = await screen.findByRole('dialog', { name: 'Delete quiz?' });
+    expect(dialog).toHaveTextContent('JavaScript Basics');
     expect(dialog).toHaveTextContent('Its 4 attempts and its leaderboard are deleted too.');
-    await user.click(within(dialog).getByRole('button', { name: 'Delete quiz' }));
+    await user.click(within(dialog).getByRole('button', { name: 'Yes' }));
 
     await waitFor(() => {
       expect(rowTitles()).not.toContain('JavaScript Basics');
     });
     expect(screen.getByText('4 quizzes · 7 attempts recorded')).toBeInTheDocument();
-    expect(await screen.findByText('JavaScript Basics deleted')).toBeInTheDocument();
+    expect(await screen.findByText('Quiz deleted')).toBeInTheDocument();
   });
 
   it('says so when the quiz was already deleted before the delete is confirmed', async () => {
@@ -186,13 +187,11 @@ describe('AdminQuizListPage', () => {
     await waitForRows();
 
     await user.click(firstButton('Delete JavaScript Basics'));
-    const dialog = await screen.findByRole('dialog', { name: 'Delete JavaScript Basics?' });
+    const dialog = await screen.findByRole('dialog', { name: 'Delete quiz?' });
     await quizService.deleteQuiz('q1');
-    await user.click(within(dialog).getByRole('button', { name: 'Delete quiz' }));
+    await user.click(within(dialog).getByRole('button', { name: 'Yes' }));
 
-    expect(
-      await screen.findByText("Couldn't delete JavaScript Basics. It may already have been deleted.")
-    ).toBeInTheDocument();
+    expect(await screen.findByText("Couldn't delete the quiz. It may already have been deleted.")).toBeInTheDocument();
   });
 
   it('keeps the quiz when the delete is cancelled', async () => {
@@ -201,7 +200,7 @@ describe('AdminQuizListPage', () => {
     await waitForRows();
 
     await user.click(firstButton('Delete JavaScript Basics'));
-    const dialog = await screen.findByRole('dialog', { name: 'Delete JavaScript Basics?' });
+    const dialog = await screen.findByRole('dialog', { name: 'Delete quiz?' });
     await user.click(within(dialog).getByRole('button', { name: 'Cancel' }));
 
     await expect(quizService.getQuiz('q1')).resolves.toMatchObject({ id: 'q1' });
@@ -242,7 +241,7 @@ describe('AdminQuizListPage', () => {
     });
     await user.upload(await importInput(user), file);
 
-    expect(await screen.findByText('Imported basics imported')).toBeInTheDocument();
+    expect(await screen.findByText('Quiz imported')).toBeInTheDocument();
     await waitFor(() => {
       expect(rowTitles()).toContain('Imported basics');
     });
@@ -288,7 +287,7 @@ describe('AdminQuizListPage', () => {
       new File([JSON.stringify(exampleQuiz)], 'space-basics.json', { type: 'application/json' })
     );
 
-    expect(await screen.findByText('Space Basics imported')).toBeInTheDocument();
+    expect(await screen.findByText('Quiz imported')).toBeInTheDocument();
     expect(screen.queryByRole('dialog', { name: 'Import a quiz' })).not.toBeInTheDocument();
   });
 });

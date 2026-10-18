@@ -70,7 +70,7 @@ describe('Header user controls', () => {
 
     await openResetDialog();
     const dialog = await screen.findByRole('dialog', { name: 'Reset all data?' });
-    await user.click(within(dialog).getByRole('button', { name: 'Reset data' }));
+    await user.click(within(dialog).getByRole('button', { name: 'Yes' }));
 
     expect(router.state.location.pathname).toBe('/quizzes');
     expect(useSessionStore.getState().countryFilter).toBeNull();
@@ -93,7 +93,7 @@ describe('Header user controls', () => {
 
     await openResetDialog();
     const dialog = await screen.findByRole('dialog', { name: 'Reset all data?' });
-    await user.click(within(dialog).getByRole('button', { name: 'Reset data' }));
+    await user.click(within(dialog).getByRole('button', { name: 'Yes' }));
 
     expect(await screen.findByText('Data reset')).toBeInTheDocument();
     await expect(quizService.getQuiz('q1')).resolves.toMatchObject({ id: 'q1' });
@@ -121,7 +121,7 @@ describe('Header user controls', () => {
 
     await openResetDialog();
     const dialog = await screen.findByRole('dialog', { name: 'Reset all data?' });
-    await user.click(within(dialog).getByRole('button', { name: 'Reset data' }));
+    await user.click(within(dialog).getByRole('button', { name: 'Yes' }));
 
     await waitFor(() => {
       expect(useSessionStore.getState().userId).toBe(DEFAULT_USER_ID);

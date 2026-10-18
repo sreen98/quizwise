@@ -13,6 +13,7 @@ import {
   Tooltip,
   UnstyledButton
 } from '@mantine/core';
+import { modals } from '@mantine/modals';
 import { IconChevronUp, IconPlus, IconTrash, IconX } from '@tabler/icons-react';
 import { formatCount } from '../../format';
 import type { QuestionType } from '../../types/models';
@@ -39,6 +40,23 @@ export const QuestionEditor = ({ form, question, index, onClose, handle }: Quest
     );
   };
 
+  const deleteQuestion = () => {
+    const hasContent = question.text.trim() !== '' || question.options.some(option => option.text.trim() !== '');
+    if (!hasContent) {
+      form.removeListItem('questions', index);
+      return;
+    }
+    modals.openConfirmModal({
+      title: 'Delete question?',
+      children: <Text size="sm">Its text, options and correct answers will be removed.</Text>,
+      labels: { confirm: 'Yes', cancel: 'Cancel' },
+      confirmProps: { color: 'orange' },
+      onConfirm: () => {
+        form.removeListItem('questions', index);
+      }
+    });
+  };
+
   const removeOption = (optionIndex: number, optionId: string) => {
     form.removeListItem(`${path}.options`, optionIndex);
     form.setFieldValue(
@@ -62,9 +80,7 @@ export const QuestionEditor = ({ form, question, index, onClose, handle }: Quest
           color="gray"
           size={44}
           aria-label={`Delete question ${number}`}
-          onClick={() => {
-            form.removeListItem('questions', index);
-          }}
+          onClick={deleteQuestion}
         >
           <IconTrash size={18} aria-hidden />
         </ActionIcon>

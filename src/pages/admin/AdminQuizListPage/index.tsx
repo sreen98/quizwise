@@ -63,26 +63,31 @@ type DeleteQuiz = (quizId: string) => Promise<void>;
 
 const confirmDelete = (quiz: AdminQuizItem, deleteQuiz: DeleteQuiz) => {
   modals.openConfirmModal({
-    title: `Delete ${quiz.title}?`,
+    title: 'Delete quiz?',
     children: (
-      <Text size="sm">
-        {quiz.attemptCount > 0
-          ? `Its ${formatCount(quiz.attemptCount, 'attempt')} and its leaderboard are deleted too.`
-          : 'It has no attempts yet.'}{' '}
-        Anyone taking it now will see that it's no longer available.
-      </Text>
+      <Stack gap={6}>
+        <Text size="sm" fw={700} truncate="end">
+          {quiz.title}
+        </Text>
+        <Text size="sm">
+          {quiz.attemptCount > 0
+            ? `Its ${formatCount(quiz.attemptCount, 'attempt')} and its leaderboard are deleted too.`
+            : 'It has no attempts yet.'}{' '}
+          Anyone taking it now will see that it's no longer available.
+        </Text>
+      </Stack>
     ),
-    labels: { confirm: 'Delete quiz', cancel: 'Cancel' },
+    labels: { confirm: 'Yes', cancel: 'Cancel' },
     confirmProps: { color: 'orange' },
     onConfirm: () => {
       deleteQuiz(quiz.id)
         .then(() => {
-          notifications.show({ message: `${quiz.title} deleted` });
+          notifications.show({ message: 'Quiz deleted' });
         })
         .catch(() => {
           notifications.show({
             color: 'orange',
-            message: `Couldn't delete ${quiz.title}. It may already have been deleted.`
+            message: "Couldn't delete the quiz. It may already have been deleted."
           });
         });
     }
@@ -266,7 +271,7 @@ export const AdminQuizListPage = () => {
                     exportQuiz(quiz).catch(() => {
                       notifications.show({
                         color: 'orange',
-                        message: `Couldn't export ${quiz.title}. It may have been deleted.`
+                        message: "Couldn't export the quiz. It may have been deleted."
                       });
                     });
                   }}

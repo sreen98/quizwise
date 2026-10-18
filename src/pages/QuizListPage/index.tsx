@@ -13,6 +13,7 @@ import {
 } from '@mantine/core';
 import { useState } from 'react';
 import { useSearchParams } from 'react-router';
+import { CountryFilter } from '../../components/CountryFilter';
 import { EmptyQuizList } from '../../components/EmptyQuizList';
 import { PaginatedList } from '../../components/PaginatedList';
 import { QuizCard } from '../../components/QuizCard';
@@ -23,7 +24,6 @@ import { useQuizList } from '../../hooks/useQuizList';
 import type { QuizListItem } from '../../service/types';
 import { useSessionStore } from '../../session/sessionStore';
 
-const ALL_COUNTRIES = 'all';
 const PAGE_SIZE = 12;
 
 type StatusFilter = 'all' | 'not_started' | 'in_progress' | 'completed';
@@ -44,9 +44,9 @@ const isStatusFilter = (value: string): value is StatusFilter => value in status
 
 export const QuizListPage = () => {
   const userId = useSessionStore(state => state.userId);
-  const country = useSessionStore(state => state.country);
-  const setCountry = useSessionStore(state => state.setCountry);
-  const { quizzes, countries, userName, userCountry, loading, hasFailed } = useQuizList(userId, country);
+  const countryFilter = useSessionStore(state => state.countryFilter);
+  const setCountryFilter = useSessionStore(state => state.setCountryFilter);
+  const { quizzes, countries, userName, userCountry, loading, hasFailed } = useQuizList(userId, countryFilter);
   const [status, setStatus] = useState<StatusFilter>('all');
   const [searchParams, setSearchParams] = useSearchParams();
   const { search, setSearch, debouncedSearch, query } = useDebouncedSearch();
@@ -58,15 +58,11 @@ export const QuizListPage = () => {
     setSearchParams(next, { replace: true });
   };
 
-  const selectedCountry = country ?? userCountry;
-  const countryName =
-    selectedCountry === ALL_COUNTRIES
-      ? 'all countries'
-      : (countries.find(item => item.code === selectedCountry)?.name ?? selectedCountry);
-  const countryOptions = [
-    ...countries.map(item => ({ value: item.code, label: item.name })),
-    { value: ALL_COUNTRIES, label: 'All countries' }
-  ];
+  const selectedCountries = countryFilter ?? [userCountry];
+  const countryNames = countries
+    .filter(country => selectedCountries.includes(country.code))
+    .map(country => country.name)
+    .join(', ');
   const activeFilter = statusFilters[status];
   const statusQuizzes = quizzes.filter(activeFilter.matches);
   const matchingQuizzes = statusQuizzes.filter(
@@ -117,21 +113,16 @@ export const QuizListPage = () => {
             miw={0}
             w={{ sm: 200 }}
           />
-          <Select
-            label="Country"
-            data={countryOptions}
-            value={countries.length > 0 ? selectedCountry : null}
-            onChange={value => {
-              if (value) {
-                setCountry(value);
+          <Box w={{ sm: 240 }}>
+            <CountryFilter
+              countries={countries}
+              value={selectedCountries}
+              onChange={value => {
+                setCountryFilter(value);
                 changePage(1);
-              }
-            }}
-            allowDeselect={false}
-            flex={1}
-            miw={0}
-            w={{ sm: 220 }}
-          />
+              }}
+            />
+          </Box>
         </Flex>
       </Flex>
 
@@ -151,9 +142,9 @@ export const QuizListPage = () => {
 
         {!loading && !hasFailed && quizzes.length === 0 && (
           <EmptyQuizList
-            countryName={countryName}
+            countryName={countryNames || 'all countries'}
             onShowAll={() => {
-              setCountry(ALL_COUNTRIES);
+              setCountryFilter([]);
             }}
           />
         )}

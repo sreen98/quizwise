@@ -24,7 +24,7 @@ const chooseUser = async (label: string) => {
 describe('Header user controls', () => {
   beforeEach(async () => {
     notifications.clean();
-    useSessionStore.setState({ userId: DEFAULT_USER_ID, country: null, slowNetwork: false });
+    useSessionStore.setState({ userId: DEFAULT_USER_ID, countryFilter: null, slowNetwork: false });
     await quizService.resetData();
   });
 
@@ -65,7 +65,7 @@ describe('Header user controls', () => {
 
   it('leaves a results page and clears the country filter after a reset', async () => {
     const user = userEvent.setup();
-    useSessionStore.setState({ country: 'GB' });
+    useSessionStore.setState({ countryFilter: ['GB'] });
     const { router } = renderRoute('/attempts/a1/results');
 
     await openResetDialog();
@@ -73,7 +73,7 @@ describe('Header user controls', () => {
     await user.click(within(dialog).getByRole('button', { name: 'Reset data' }));
 
     expect(router.state.location.pathname).toBe('/quizzes');
-    expect(useSessionStore.getState().country).toBeNull();
+    expect(useSessionStore.getState().countryFilter).toBeNull();
   });
 
   it('switches back to the default user when the saved user no longer exists', async () => {

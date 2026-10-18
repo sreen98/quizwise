@@ -6,7 +6,7 @@ import { useSessionStore } from '../../session/sessionStore';
 import { renderRoute } from '../../test/renderWithProviders';
 
 const asUser = (userId: string) => {
-  useSessionStore.setState({ userId, country: null, slowNetwork: false });
+  useSessionStore.setState({ userId, countryFilter: null, slowNetwork: false });
 };
 
 const noAccess = () => screen.findByRole('heading', { name: "You don't have access to this page" });

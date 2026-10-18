@@ -180,16 +180,16 @@ export const createQuizService = (
   };
 
   return {
-    getQuizzes: (userId: string, country?: string) =>
+    getQuizzes: (userId: string, countries?: string[]) =>
       respond(() => {
         const { users, quizzes, attempts } = store.getState();
         const user = users.find(item => item.id === userId);
         if (!user) throw new Error('User not found');
 
-        const countryCode = country ?? user.country;
+        const codes = countries ?? [user.country];
 
         return quizzes
-          .filter(quiz => countryCode === 'all' || quiz.countries.includes(countryCode))
+          .filter(quiz => codes.length === 0 || quiz.countries.some(code => codes.includes(code)))
           .map(quiz =>
             toListItem(
               quiz,

@@ -3,12 +3,12 @@ import { useSessionStore } from '../session/sessionStore';
 import { useLeaveAttemptPages } from './useLeaveAttemptPages';
 
 export const useResetData = () => {
-  const setCountry = useSessionStore(state => state.setCountry);
+  const setCountryFilter = useSessionStore(state => state.setCountryFilter);
   const leaveAttemptPages = useLeaveAttemptPages();
 
   return async () => {
     leaveAttemptPages();
-    setCountry(null);
+    setCountryFilter(null);
     await quizService.resetData();
   };
 };

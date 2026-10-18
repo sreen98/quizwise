@@ -9,7 +9,7 @@ const accountTab = () => screen.getByRole('button', { name: 'Account' });
 
 describe('BottomNav', () => {
   beforeEach(async () => {
-    useSessionStore.setState({ userId: DEFAULT_USER_ID, country: null, slowNetwork: false });
+    useSessionStore.setState({ userId: DEFAULT_USER_ID, countryFilter: null, slowNetwork: false });
     await quizService.resetData();
   });
 

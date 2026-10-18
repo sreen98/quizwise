@@ -20,7 +20,7 @@ const firstOption = () => {
 
 describe('taking a quiz', () => {
   beforeEach(async () => {
-    useSessionStore.setState({ userId: 'u5', country: null, slowNetwork: false });
+    useSessionStore.setState({ userId: 'u5', countryFilter: null, slowNetwork: false });
     await quizService.resetData();
   });
 

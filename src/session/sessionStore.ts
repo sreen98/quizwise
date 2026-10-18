@@ -4,11 +4,11 @@ import * as latency from '../service/latency';
 
 interface SessionState {
   userId: string;
-  country: string | null;
+  countryFilter: string[] | null;
   slowNetwork: boolean;
   hasUnsavedChanges: boolean;
   setUserId: (userId: string) => void;
-  setCountry: (country: string | null) => void;
+  setCountryFilter: (countryFilter: string[] | null) => void;
   setSlowNetwork: (enabled: boolean) => void;
   setHasUnsavedChanges: (hasUnsavedChanges: boolean) => void;
 }
@@ -19,14 +19,14 @@ export const useSessionStore = create<SessionState>()(
   persist(
     set => ({
       userId: DEFAULT_USER_ID,
-      country: null,
+      countryFilter: null,
       slowNetwork: true,
       hasUnsavedChanges: false,
       setUserId: userId => {
-        set({ userId, country: null });
+        set({ userId, countryFilter: null });
       },
-      setCountry: country => {
-        set({ country });
+      setCountryFilter: countryFilter => {
+        set({ countryFilter });
       },
       setSlowNetwork: slowNetwork => {
         set({ slowNetwork });
@@ -38,7 +38,7 @@ export const useSessionStore = create<SessionState>()(
     {
       name: 'quizwise:session',
       storage: createJSONStorage(() => localStorage),
-      partialize: ({ userId, country, slowNetwork }) => ({ userId, country, slowNetwork })
+      partialize: ({ userId, countryFilter, slowNetwork }) => ({ userId, countryFilter, slowNetwork })
     }
   )
 );

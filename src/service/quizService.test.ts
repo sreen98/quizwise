@@ -33,11 +33,16 @@ describe('getQuizzes', () => {
   });
 
   it('shows every quiz for all countries', async () => {
-    expect(ids(await context.service.getQuizzes('u2', 'all'))).toEqual(['q1', 'q2', 'q3', 'q4', 'q5']);
+    expect(ids(await context.service.getQuizzes('u2', []))).toEqual(['q1', 'q2', 'q3', 'q4', 'q5']);
   });
 
   it('filters by a chosen country', async () => {
-    expect(ids(await context.service.getQuizzes('u1', 'GB'))).toEqual(['q1', 'q2', 'q3', 'q5']);
+    expect(ids(await context.service.getQuizzes('u1', ['GB']))).toEqual(['q1', 'q2', 'q3', 'q5']);
+  });
+
+  it('shows the quizzes available in any of several chosen countries', async () => {
+    expect(ids(await context.service.getQuizzes('u1', ['AE']))).toEqual(['q1', 'q3', 'q5']);
+    expect(ids(await context.service.getQuizzes('u1', ['AE', 'IN']))).toEqual(['q1', 'q2', 'q3', 'q4', 'q5']);
   });
 
   it('marks a completed quiz with the best score', async () => {

@@ -20,11 +20,15 @@ const choose = async (label: string, name: string) => {
   await user.click(await screen.findByRole('option', { name }));
 };
 
-const chooseCountry = (name: string) => choose('Country', name);
+const toggleCountries = async (...names: string[]) => {
+  const user = userEvent.setup();
+  await user.click(screen.getByRole('button', { name: /^Country/ }));
+  for (const name of names) await user.click(await screen.findByRole('option', { name }));
+};
 
 describe('QuizListPage', () => {
   beforeEach(async () => {
-    useSessionStore.setState({ userId: DEFAULT_USER_ID, country: null, slowNetwork: false });
+    useSessionStore.setState({ userId: DEFAULT_USER_ID, countryFilter: null, slowNetwork: false });
     await quizService.resetData();
   });
 
@@ -33,7 +37,7 @@ describe('QuizListPage', () => {
 
     expect(screen.getByRole('status')).toHaveTextContent('Loading quizzes');
     await waitFor(() => {
-      expect(screen.getByRole('combobox', { name: 'Country' })).toHaveValue('India');
+      expect(screen.getByRole('button', { name: 'Country: India' })).toBeInTheDocument();
     });
     expect(screen.getByRole('combobox', { name: 'Status' })).toHaveValue('All (4)');
     expect(cardTitles()).toEqual([
@@ -120,18 +124,30 @@ describe('QuizListPage', () => {
     renderRoute('/quizzes');
     await card('JavaScript Basics');
 
-    await chooseCountry('United Kingdom');
+    await toggleCountries('India', 'United Kingdom');
 
     await waitFor(() => {
       expect(cardTitles()).toEqual(['JavaScript Basics', 'React Fundamentals', 'World Geography', 'General Science']);
     });
-    expect(useSessionStore.getState().country).toBe('GB');
+    expect(useSessionStore.getState().countryFilter).toEqual(['GB']);
+  });
+
+  it('shows the quizzes for any of several countries', async () => {
+    renderRoute('/quizzes');
+    await card('JavaScript Basics');
+
+    await toggleCountries('United Arab Emirates');
+
+    await waitFor(() => {
+      expect(cardTitles()).toHaveLength(5);
+    });
+    expect(screen.getByRole('button', { name: 'Country: 2 countries' })).toBeInTheDocument();
   });
 
   it('shows an empty state and can switch to all countries', async () => {
     const user = userEvent.setup();
     for (const quizId of ['q1', 'q2', 'q3', 'q5']) await quizService.deleteQuiz(quizId);
-    useSessionStore.setState({ country: 'GB' });
+    useSessionStore.setState({ countryFilter: ['GB'] });
     renderRoute('/quizzes');
 
     expect(await screen.findByRole('heading', { name: 'No quizzes here yet' })).toBeInTheDocument();

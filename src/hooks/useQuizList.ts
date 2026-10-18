@@ -14,8 +14,8 @@ interface QuizListData {
 
 const EMPTY: QuizListData = { key: '', quizzes: [], countries: [], userName: '', userCountry: '', hasFailed: false };
 
-export const useQuizList = (userId: string, country: string | null) => {
-  const key = `${userId}:${country ?? 'own'}`;
+export const useQuizList = (userId: string, countryFilter: string[] | null) => {
+  const key = `${userId}:${countryFilter?.join(',') ?? 'own'}`;
   const [data, setData] = useState(EMPTY);
   const [changes, setChanges] = useState(0);
 
@@ -31,7 +31,7 @@ export const useQuizList = (userId: string, country: string | null) => {
     let current = true;
 
     Promise.all([
-      quizService.getQuizzes(userId, country ?? undefined),
+      quizService.getQuizzes(userId, countryFilter ?? undefined),
       quizService.getCountries(),
       quizService.getUsers()
     ])
@@ -55,7 +55,7 @@ export const useQuizList = (userId: string, country: string | null) => {
     return () => {
       current = false;
     };
-  }, [key, userId, country, changes]);
+  }, [key, userId, countryFilter, changes]);
 
   return { ...data, loading: data.key !== key };
 };

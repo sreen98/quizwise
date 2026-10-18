@@ -17,7 +17,7 @@ describe('routes', () => {
   });
 
   it('opens a deep link with its route params', async () => {
-    useSessionStore.setState({ userId: 'u5', country: null, slowNetwork: false });
+    useSessionStore.setState({ userId: 'u5', countryFilter: null, slowNetwork: false });
     renderRoute('/admin/quizzes/q2/edit');
 
     expect(await screen.findByRole('heading', { level: 1, name: 'Edit quiz' })).toBeInTheDocument();
@@ -43,7 +43,7 @@ describe('routes', () => {
 
   it('moves focus to the new page heading after following a link', async () => {
     const user = userEvent.setup();
-    useSessionStore.setState({ userId: 'u1', country: null, slowNetwork: false });
+    useSessionStore.setState({ userId: 'u1', countryFilter: null, slowNetwork: false });
     renderRoute('/quizzes');
 
     await screen.findByRole('heading', { level: 1, name: 'Your quizzes' });
@@ -57,7 +57,7 @@ describe('routes', () => {
   it('starts a new page at the top instead of keeping the scroll position', async () => {
     const user = userEvent.setup();
     const scrollTo = vi.spyOn(window, 'scrollTo').mockImplementation(() => undefined);
-    useSessionStore.setState({ userId: 'u5', country: null, slowNetwork: false });
+    useSessionStore.setState({ userId: 'u5', countryFilter: null, slowNetwork: false });
     renderRoute('/admin');
 
     await user.click(within(await screen.findByRole('table')).getByRole('link', { name: 'Edit General Science' }));
@@ -69,7 +69,7 @@ describe('routes', () => {
 
   it('keeps focus on a control inside the page when the path changes', async () => {
     const user = userEvent.setup();
-    useSessionStore.setState({ userId: 'u1', country: null, slowNetwork: false });
+    useSessionStore.setState({ userId: 'u1', countryFilter: null, slowNetwork: false });
     const { router } = renderRoute('/leaderboard/q1');
 
     const quizSelect = await screen.findByRole('combobox', { name: 'Quiz' });

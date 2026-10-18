@@ -4,6 +4,7 @@ import { notifications } from '@mantine/notifications';
 import { useEffect } from 'react';
 import { Link, useSearchParams } from 'react-router';
 import { AdminQuizList } from '../../../components/AdminQuizList';
+import { CountryFilter } from '../../../components/CountryFilter';
 import { ImportQuizButton } from '../../../components/ImportQuizButton';
 import { PaginatedList } from '../../../components/PaginatedList';
 import { formatCount } from '../../../format';
@@ -38,8 +39,21 @@ const sortOptions: Record<SortKey, { label: string; compare: (a: AdminQuizItem, 
 
 const isSortKey = (value: string | null): value is SortKey => value !== null && value in sortOptions;
 
+type RetakesFilter = 'all' | 'allowed' | 'not_allowed';
+
+const retakesOptions: Record<RetakesFilter, { label: string; matches: (quiz: AdminQuizItem) => boolean }> = {
+  all: { label: 'All', matches: () => true },
+  allowed: { label: 'Allowed', matches: quiz => quiz.retakesAllowed },
+  not_allowed: { label: 'Not allowed', matches: quiz => !quiz.retakesAllowed }
+};
+
+const isRetakesFilter = (value: string | null): value is RetakesFilter => value !== null && value in retakesOptions;
+
 const matchesSearch = (quiz: AdminQuizItem, query: string) =>
   !query || `${quiz.title} ${quiz.description}`.toLowerCase().includes(query);
+
+const matchesCountries = (quiz: AdminQuizItem, codes: string[]) =>
+  codes.length === 0 || quiz.countries.some(code => codes.includes(code));
 
 type DeleteQuiz = (quizId: string) => Promise<void>;
 
@@ -79,7 +93,16 @@ export const AdminQuizListPage = () => {
   const sortParam = searchParams.get('sort');
   const sort: SortKey = isSortKey(sortParam) ? sortParam : 'title_asc';
 
-  const matching = quizzes.filter(quiz => matchesSearch(quiz, query)).sort(sortOptions[sort].compare);
+  const selectedCountries = searchParams.get('countries')?.split(',') ?? [];
+  const retakesParam = searchParams.get('retakes');
+  const retakes: RetakesFilter = isRetakesFilter(retakesParam) ? retakesParam : 'all';
+
+  const matching = quizzes
+    .filter(
+      quiz =>
+        matchesSearch(quiz, query) && matchesCountries(quiz, selectedCountries) && retakesOptions[retakes].matches(quiz)
+    )
+    .sort(sortOptions[sort].compare);
   const attemptTotal = quizzes.reduce((total, quiz) => total + quiz.attemptCount, 0);
 
   const updateParams = (changes: Record<string, string>) => {
@@ -135,16 +158,35 @@ export const AdminQuizListPage = () => {
           <Paper withBorder radius="lg">
             <Flex direction={{ base: 'column', sm: 'row' }} gap={12} p={16}>
               <TextInput
-                aria-label="Search quizzes"
-                placeholder="Search by title or description"
+                label="Search"
+                placeholder="Title or description"
                 value={search}
                 onChange={event => {
                   setSearch(event.currentTarget.value);
                 }}
                 flex={1}
               />
+              <Box w={{ base: '100%', sm: 220 }}>
+                <CountryFilter
+                  countries={countries}
+                  value={selectedCountries}
+                  onChange={value => {
+                    updateParams({ countries: value.join(','), page: '' });
+                  }}
+                />
+              </Box>
               <Select
-                aria-label="Sort by"
+                label="Retakes"
+                data={Object.entries(retakesOptions).map(([value, option]) => ({ value, label: option.label }))}
+                value={retakes}
+                onChange={value => {
+                  updateParams({ retakes: value === 'all' ? '' : (value ?? ''), page: '' });
+                }}
+                allowDeselect={false}
+                w={{ base: '100%', sm: 150 }}
+              />
+              <Select
+                label="Sort by"
                 data={Object.entries(sortOptions).map(([value, option]) => ({ value, label: option.label }))}
                 value={sort}
                 onChange={value => {
@@ -180,14 +222,19 @@ export const AdminQuizListPage = () => {
 
             {!loading && quizzes.length > 0 && matching.length === 0 && (
               <Stack align="flex-start" gap={12} p={16} pt={0}>
-                <Text c="dimmed">No quizzes match "{debouncedSearch.trim()}".</Text>
+                <Text c="dimmed">
+                  {debouncedSearch.trim()
+                    ? `No quizzes match "${debouncedSearch.trim()}".`
+                    : 'No quizzes match these filters.'}
+                </Text>
                 <Button
                   variant="default"
                   onClick={() => {
                     setSearch('');
+                    updateParams({ countries: '', retakes: '', page: '' });
                   }}
                 >
-                  Clear search
+                  Clear filters
                 </Button>
               </Stack>
             )}

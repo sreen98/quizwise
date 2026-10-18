@@ -27,7 +27,7 @@ export const useLeaderboard = (quizId: string, limit: number, userId: string) =>
     let current = true;
 
     Promise.all([
-      quizService.getQuizzes(userId, 'all'),
+      quizService.getQuizzes(userId, []),
       quizId ? quizService.getLeaderboard(quizId, limit, userId).catch(() => null) : null
     ])
       .then(([quizzes, leaderboard]) => {

@@ -35,7 +35,7 @@ describe('AdminQuizListPage', () => {
 
   beforeEach(async () => {
     notifications.clean();
-    useSessionStore.setState({ userId: 'u5', country: null, slowNetwork: false });
+    useSessionStore.setState({ userId: 'u5', countryFilter: null, slowNetwork: false });
     await quizService.resetData();
   });
 
@@ -69,7 +69,7 @@ describe('AdminQuizListPage', () => {
     const { router } = renderRoute('/admin');
     await waitForRows();
 
-    await user.type(screen.getByRole('textbox', { name: 'Search quizzes' }), 'hooks');
+    await user.type(screen.getByRole('textbox', { name: 'Search' }), 'hooks');
 
     await waitFor(() => {
       expect(router.state.location.search).toBe('?q=hooks');
@@ -82,7 +82,43 @@ describe('AdminQuizListPage', () => {
     renderRoute('/admin?q=astronomy');
 
     expect(await screen.findByText('No quizzes match "astronomy".')).toBeInTheDocument();
-    await user.click(screen.getByRole('button', { name: 'Clear search' }));
+    await user.click(screen.getByRole('button', { name: 'Clear filters' }));
+
+    await waitFor(() => {
+      expect(rowTitles()).toHaveLength(5);
+    });
+  });
+
+  it('filters by country and keeps the countries in the URL', async () => {
+    const user = userEvent.setup();
+    const { router } = renderRoute('/admin');
+    await waitForRows();
+
+    await user.click(screen.getByRole('button', { name: 'Country: All countries' }));
+    await user.click(await screen.findByRole('option', { name: 'United Arab Emirates' }));
+
+    expect(rowTitles()).toEqual(['General Science', 'JavaScript Basics', 'World Geography']);
+    expect(router.state.location.search).toBe('?countries=AE');
+  });
+
+  it('filters by whether retakes are allowed', async () => {
+    const user = userEvent.setup();
+    const { router } = renderRoute('/admin');
+    await waitForRows();
+
+    await user.click(screen.getByRole('combobox', { name: 'Retakes' }));
+    await user.click(await screen.findByRole('option', { name: 'Not allowed' }));
+
+    expect(rowTitles()).toEqual(['Kerala Culture and History', 'React Fundamentals']);
+    expect(router.state.location.search).toBe('?retakes=not_allowed');
+  });
+
+  it('offers to clear filters that match nothing', async () => {
+    const user = userEvent.setup();
+    renderRoute('/admin?countries=AE&retakes=not_allowed');
+
+    expect(await screen.findByText('No quizzes match these filters.')).toBeInTheDocument();
+    await user.click(screen.getByRole('button', { name: 'Clear filters' }));
 
     await waitFor(() => {
       expect(rowTitles()).toHaveLength(5);

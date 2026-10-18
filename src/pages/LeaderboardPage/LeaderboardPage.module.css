@@ -1,5 +1,0 @@
-.podium {
-  @mixin larger-than $mantine-breakpoint-sm {
-    align-items: end;
-  }
-}

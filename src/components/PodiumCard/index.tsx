@@ -1,5 +1,6 @@
-import { Avatar, Badge, Box, Group, Paper, SimpleGrid, Stack, Text } from '@mantine/core';
-import { formatClock, formatDateTime, formatScore } from '../../format';
+import { Avatar, Badge, Box, Flex, Group, Paper, SimpleGrid, Stack, Text } from '@mantine/core';
+import { formatClock, formatDate, formatScore } from '../../format';
+import { Flag } from '../Flag';
 import classes from './PodiumCard.module.css';
 import type { PodiumCardProps } from './types';
 
@@ -7,72 +8,74 @@ const places = ['1st', '2nd', '3rd'];
 
 export const PodiumCard = ({ entry, isMe }: PodiumCardProps) => {
   const isFirst = entry.rank === 1;
+  const stats = [
+    { label: 'Accuracy', value: `${String(entry.percentage)}%` },
+    { label: 'Time', value: formatClock(entry.timeTakenSeconds) },
+    { label: 'Completed', value: entry.completedAt ? formatDate(entry.completedAt) : '' }
+  ];
 
   return (
     <Paper
       component="li"
-      className={classes.place}
-      data-place={entry.rank}
       display="block"
       radius="lg"
-      withBorder={!isFirst}
-      bd={isFirst ? '2px solid var(--mantine-primary-color-filled)' : undefined}
+      withBorder
       bg={isMe ? 'var(--accent-soft)' : undefined}
-      px={{ base: 18, sm: 22 }}
-      py={{ base: 18, sm: isFirst ? 30 : 22 }}
       aria-current={isMe || undefined}
     >
-      <Group justify="space-between" align="flex-start" wrap="nowrap" mb={14}>
-        <Stack gap={4} align="center">
-          <Avatar
-            aria-hidden
-            name={entry.userName}
-            color="blue"
-            variant={isFirst ? 'filled' : 'light'}
-            size={isFirst ? 60 : 48}
-          />
-          <Badge size="sm" variant={isFirst ? 'filled' : 'light'}>
+      <Stack align="center" gap={0} px={{ base: 16, sm: 20 }} pt={{ base: 22, sm: 28 }} pb={{ base: 18, sm: 22 }}>
+        <Box pos="relative">
+          <Avatar aria-hidden name={entry.userName} color="blue" variant="light" size={72} />
+          <Flex
+            pos="absolute"
+            right={-6}
+            bottom={-2}
+            w={32}
+            h={32}
+            align="center"
+            justify="center"
+            bdrs="50%"
+            fz={11}
+            fw={700}
+            bg={isFirst ? 'blue' : 'var(--mantine-color-blue-light)'}
+            c={isFirst ? 'var(--filled-ink)' : 'var(--mantine-color-blue-light-color)'}
+            bd="2px solid var(--surface)"
+          >
             {places[entry.rank - 1]}
-          </Badge>
-        </Stack>
-        <Group gap={6} justify="flex-end">
+          </Flex>
+        </Box>
+        <Group gap={8} wrap="nowrap" justify="center" mt={14} maw="100%">
+          <Text fw={700} fz={18} truncate>
+            {entry.userName}
+          </Text>
           {isMe && (
             <Badge variant="filled" size="xs">
               You
             </Badge>
           )}
-          <Badge variant="default">{entry.countryName}</Badge>
         </Group>
-      </Group>
-      <Text fw={700} fz={isFirst ? 22 : 18} truncate>
-        {entry.userName}
-      </Text>
-      <Paper bg="var(--surface-2)" radius="md" p={14} mt={14}>
-        <SimpleGrid cols={2} spacing={12}>
-          <Box>
+        <Group gap={6} wrap="nowrap" mt={4}>
+          <Flag code={entry.country} />
+          <Text fz={14} c="dimmed">
+            {entry.countryName}
+          </Text>
+        </Group>
+        <Badge variant="light" size="xl" radius="xl" tt="none" fz={15} mt={16}>
+          {formatScore(entry.score, entry.totalQuestions)} correct
+        </Badge>
+      </Stack>
+      <SimpleGrid cols={3} spacing={0} className={classes.stats}>
+        {stats.map(stat => (
+          <Box key={stat.label} className={classes.stat} py={12} px={{ base: 4, sm: 8 }} ta="center">
             <Text fz={12} c="dimmed">
-              Score (accuracy)
+              {stat.label}
             </Text>
-            <Text ff="monospace" fz={isFirst ? 28 : 22} fw={700} lh={1.2}>
-              {formatScore(entry.score, entry.totalQuestions)}{' '}
-              <Text component="span" fz={13} c="dimmed" ff="var(--mantine-font-family)" fw={500}>
-                / {entry.percentage}%
-              </Text>
+            <Text ff={stat.label === 'Completed' ? undefined : 'monospace'} fz={{ base: 14, sm: 15 }} fw={700} truncate>
+              {stat.value}
             </Text>
           </Box>
-          <Box>
-            <Text fz={12} c="dimmed">
-              Time taken
-            </Text>
-            <Text ff="monospace" fz={isFirst ? 22 : 18} fw={700} lh={1.4}>
-              {formatClock(entry.timeTakenSeconds)}
-            </Text>
-          </Box>
-        </SimpleGrid>
-      </Paper>
-      <Text fz={13} c="dimmed" mt={14}>
-        {entry.completedAt ? `Completed ${formatDateTime(entry.completedAt)}` : ''}
-      </Text>
+        ))}
+      </SimpleGrid>
     </Paper>
   );
 };

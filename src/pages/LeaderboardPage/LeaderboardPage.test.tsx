@@ -45,7 +45,8 @@ describe('LeaderboardPage', () => {
     expect(top).toHaveLength(3);
     expect(top[0]).toHaveTextContent('1st');
     expect(top[0]).toHaveTextContent('Fatima Al Mansoori');
-    expect(top[0]).toHaveTextContent('6/6 / 100%');
+    expect(top[0]).toHaveTextContent('6/6 correct');
+    expect(top[0]).toHaveTextContent(/Accuracy.*100%/);
     expect(top[1]).toHaveTextContent('Diya Nair');
     expect(top[2]).toHaveTextContent('Aarav Menon');
     expect(top[2]).toHaveTextContent('You');
@@ -65,10 +66,12 @@ describe('LeaderboardPage', () => {
     renderRoute('/leaderboard/q1');
     await podium();
 
-    expect(standing()).toHaveTextContent('Your rank: #3 of 4');
+    expect(standing()).toHaveTextContent(/Your rank.*#3 of 4/);
     expect(standing()).toHaveTextContent('Top 75%');
     expect(standing()).toHaveTextContent("You're level with Diya Nair on score. Finish 23 s faster to move up.");
-    expect(standing()).toHaveTextContent('Current standing5/6');
+    expect(standing()).toHaveTextContent(/Score.*5\/6 83.3%/);
+    expect(standing()).toHaveTextContent(/Time.*per question/);
+    expect(standing()).toHaveTextContent('Keeps your best score');
     expect(within(standing()).getByRole('link', { name: 'Retake quiz' })).toHaveAttribute('href', '/quizzes/q1');
   });
 
@@ -103,7 +106,7 @@ describe('LeaderboardPage', () => {
     await waitFor(() => {
       expect(tableRows()).toHaveLength(3);
     });
-    expect(standing()).toHaveTextContent('Your rank: #4 of 4');
+    expect(standing()).toHaveTextContent(/Your rank.*#4 of 4/);
     expect(standing()).toHaveTextContent('3 players ahead of you.');
   });
 

@@ -1,0 +1,38 @@
+.segments {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 18px 16px;
+
+  @mixin larger-than $mantine-breakpoint-sm {
+    grid-template-columns: minmax(0, 2fr);
+    grid-auto-flow: column;
+    grid-auto-columns: minmax(0, 1fr);
+    gap: 0;
+  }
+}
+
+.segment {
+  &[data-wide] {
+    grid-column: 1 / -1;
+  }
+
+  @mixin larger-than $mantine-breakpoint-sm {
+    padding-inline: 24px;
+
+    &[data-wide] {
+      grid-column: auto;
+    }
+
+    &:first-child {
+      padding-left: 0;
+    }
+
+    &:last-child {
+      padding-right: 0;
+    }
+
+    & + & {
+      border-left: 1px solid var(--mantine-color-default-border);
+    }
+  }
+}

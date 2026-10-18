@@ -22,7 +22,6 @@ import { useDebouncedSearch } from '../../hooks/useDebouncedSearch';
 import { useLeaderboard } from '../../hooks/useLeaderboard';
 import type { Leaderboard, LeaderboardEntry } from '../../service/types';
 import { useSessionStore } from '../../session/sessionStore';
-import classes from './LeaderboardPage.module.css';
 
 const topOptions = [
   { value: '3', label: 'Top 3' },
@@ -59,7 +58,6 @@ const board = (leaderboard: Leaderboard, options: BoardOptions) => {
       <RankBanner leaderboard={leaderboard} quizId={quizId} />
       <SimpleGrid
         component="ol"
-        className={classes.podium}
         cols={{ base: 1, sm: 3 }}
         spacing={{ base: 12, sm: 20 }}
         m={0}

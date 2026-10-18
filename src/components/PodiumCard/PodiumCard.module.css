@@ -1,15 +1,7 @@
-.place {
-  @mixin larger-than $mantine-breakpoint-sm {
-    &[data-place='1'] {
-      order: 2;
-    }
+.stats {
+  border-top: 1px solid var(--mantine-color-default-border);
+}
 
-    &[data-place='2'] {
-      order: 1;
-    }
-
-    &[data-place='3'] {
-      order: 3;
-    }
-  }
+.stat + .stat {
+  border-left: 1px solid var(--mantine-color-default-border);
 }

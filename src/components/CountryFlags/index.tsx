@@ -10,7 +10,7 @@ export const CountryFlags = ({ codes, countries }: CountryFlagsProps) => {
 
   return (
     <Tooltip label={names.join(', ')} withArrow multiline maw={240}>
-      <Group gap={6} wrap="nowrap" role="img" aria-label={`Available in ${names.join(', ')}`}>
+      <Group gap={6} wrap="nowrap" w="fit-content" role="img" aria-label={`Available in ${names.join(', ')}`}>
         {codes.slice(0, MAX_SHOWN).map(code => (
           <Flag key={code} code={code} />
         ))}

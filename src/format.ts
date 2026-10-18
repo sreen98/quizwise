@@ -32,6 +32,8 @@ export const formatTimerShort = (timeLimitSeconds: number | null, perQuestionSec
   return null;
 };
 
+export const formatDate = (isoDate: string) => calendarDate.format(Date.parse(isoDate));
+
 export const formatDateTime = (isoDate: string, now = Date.now()) => {
   const time = Date.parse(isoDate);
   const daysAgo = Math.round((startOfDay(now) - startOfDay(time)) / DAY_MS);

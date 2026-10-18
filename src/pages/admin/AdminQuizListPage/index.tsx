@@ -126,6 +126,7 @@ export const AdminQuizListPage = () => {
 
   return (
     <Stack gap={24}>
+      <title>Manage quizzes - Quizwise</title>
       <Flex wrap="wrap" justify="space-between" align="flex-end" gap={16}>
         <Box>
           <Title order={1} fz={{ base: 28, sm: 36 }} lts="-0.01em">

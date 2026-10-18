@@ -138,6 +138,7 @@ export const LeaderboardPage = () => {
 
   return (
     <Stack gap={24}>
+      <title>Leaderboard - Quizwise</title>
       <Flex wrap="wrap" align={{ base: 'stretch', sm: 'flex-end' }} justify="space-between" gap={{ base: 14, sm: 20 }}>
         <Box>
           <Title order={1} fz={{ base: 28, sm: 36 }} lts="-0.01em">

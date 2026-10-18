@@ -45,6 +45,7 @@ const message = (icon: ReactNode, color: string, title: string, body: ReactNode,
       px={{ base: 22, sm: 32 }}
       py={{ base: 32, sm: 48 }}
     >
+      <title>{`${title} - Quizwise`}</title>
       <ThemeIcon variant="light" color={color} size={64} radius="xl" display="flex" mx="auto" mb={18} aria-hidden>
         {icon}
       </ThemeIcon>
@@ -139,6 +140,7 @@ export const AttemptEndedPage = () => {
   if (state.status === 'missing') {
     return (
       <Stack gap="sm" align="flex-start">
+        <title>Attempt not found - Quizwise</title>
         <Title order={1}>Attempt not found</Title>
         <Text c="dimmed">This attempt doesn't exist or has been removed.</Text>
         <Anchor component={Link} to="/quizzes" fw={600} display="inline-block" lh="44px">

@@ -99,6 +99,7 @@ export const QuizStartPage = () => {
   if (state.status === 'missing') {
     return (
       <Stack gap="sm" align="flex-start">
+        <title>Quiz not found - Quizwise</title>
         <Title order={1}>Quiz not found</Title>
         <Text c="dimmed">This quiz doesn't exist or has been removed.</Text>
         <Anchor component={Link} to="/quizzes" fw={600} display="inline-block" lh="44px">
@@ -121,6 +122,7 @@ export const QuizStartPage = () => {
 
   return (
     <Box maw={1120} mx="auto">
+      {quiz && <title>{`${quiz.title} - Quizwise`}</title>}
       {backLink}
       <Card
         component="section"

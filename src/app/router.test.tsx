@@ -82,6 +82,28 @@ describe('routes', () => {
     scrollTo.mockRestore();
   });
 
+  it('names the browser tab after the page', async () => {
+    useSessionStore.setState({ userId: 'u1', countryFilter: null, slowNetwork: false });
+    renderRoute('/quizzes/q1');
+
+    await waitFor(() => {
+      expect(document.title).toBe('JavaScript Basics - Quizwise');
+    });
+  });
+
+  it('skips past the header to the page heading', async () => {
+    const user = userEvent.setup();
+    useSessionStore.setState({ userId: 'u1', countryFilter: null, slowNetwork: false });
+    renderRoute('/leaderboard/q1');
+
+    await screen.findByRole('heading', { level: 1, name: 'Leaderboard' });
+    await user.tab();
+    expect(screen.getByRole('link', { name: 'Skip to content' })).toHaveFocus();
+    await user.keyboard('{Enter}');
+
+    expect(screen.getByRole('heading', { level: 1, name: 'Leaderboard' })).toHaveFocus();
+  });
+
   it('keeps focus on a control inside the page when the path changes', async () => {
     const user = userEvent.setup();
     useSessionStore.setState({ userId: 'u1', countryFilter: null, slowNetwork: false });

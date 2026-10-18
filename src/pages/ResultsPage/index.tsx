@@ -195,6 +195,7 @@ export const ResultsPage = () => {
   if (state.status === 'missing') {
     return (
       <Stack gap="sm" align="flex-start">
+        <title>Result not found - Quizwise</title>
         <Title order={1}>Result not found</Title>
         <Text c="dimmed">This result doesn't exist or its quiz has been removed.</Text>
         <Anchor component={Link} to="/quizzes" fw={600} display="inline-block" lh="44px">
@@ -218,6 +219,7 @@ export const ResultsPage = () => {
 
   return (
     <Stack maw={{ base: 920, lg: 1280 }} mx="auto" gap={20}>
+      <title>{`Results: ${state.quizTitle} - Quizwise`}</title>
       <Box>{backLink}</Box>
       <SimpleGrid cols={{ base: 1, lg: 2 }} spacing={20}>
         <Stack gap={20} className={classes.side}>

@@ -14,6 +14,7 @@ export const QuizEditorPage = () => {
   if (state.status === 'missing') {
     return (
       <Stack gap="sm" align="flex-start">
+        <title>Quiz not found - Quizwise</title>
         <Title order={1}>Quiz not found</Title>
         <Text c="dimmed">This quiz doesn't exist or has been removed.</Text>
         <Anchor component={Link} to="/admin" fw={600} display="inline-block" lh="44px">
@@ -42,12 +43,15 @@ export const QuizEditorPage = () => {
   };
 
   return (
-    <QuizForm
-      key={quizId ?? 'new'}
-      initialValues={state.quiz}
-      countries={state.countries}
-      isNew={!quizId}
-      onSubmit={handleSubmit}
-    />
+    <>
+      <title>{quizId ? 'Edit quiz - Quizwise' : 'New quiz - Quizwise'}</title>
+      <QuizForm
+        key={quizId ?? 'new'}
+        initialValues={state.quiz}
+        countries={state.countries}
+        isNew={!quizId}
+        onSubmit={handleSubmit}
+      />
+    </>
   );
 };

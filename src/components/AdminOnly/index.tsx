@@ -42,6 +42,7 @@ export const AdminOnly = () => {
         py={{ base: 32, sm: 48 }}
         ta="center"
       >
+        <title>Admins only - Quizwise</title>
         <ThemeIcon variant="light" color="orange" size={72} radius="xl" mb={16} aria-hidden>
           <IconLock size={38} />
         </ThemeIcon>

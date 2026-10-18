@@ -75,6 +75,7 @@ export const QuizListPage = () => {
 
   return (
     <Stack gap={24}>
+      <title>Your quizzes - Quizwise</title>
       <Flex wrap="wrap" justify="space-between" align="flex-end" columnGap={32} rowGap={20}>
         <Box>
           <Skeleton visible={loading} w="fit-content" mb={8}>

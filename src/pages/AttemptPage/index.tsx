@@ -113,6 +113,8 @@ export const AttemptPage = () => {
         />
       </AppShell.Header>
       <AppShell.Main>
+        {state.status === 'missing' && <title>Attempt not found - Quizwise</title>}
+        {question && <title>{`${question.quizTitle} - Quizwise`}</title>}
         <VisuallyHidden aria-live="assertive">
           {announcement && `${announcement}. Your selection will be submitted automatically when time runs out.`}
         </VisuallyHidden>

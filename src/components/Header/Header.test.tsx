@@ -99,6 +99,36 @@ describe('Header user controls', () => {
     await expect(quizService.getQuiz('q1')).resolves.toMatchObject({ id: 'q1' });
   });
 
+  it('updates the user list when the data changes', async () => {
+    const user = userEvent.setup();
+    renderRoute('/quizzes');
+    await waitFor(() => {
+      expect(userSelect()).toHaveAccessibleName('Viewing as: Aarav Menon');
+    });
+
+    await quizService.loadTestData();
+    await user.click(userSelect());
+
+    expect((await screen.findAllByRole('option')).length).toBeGreaterThan(5);
+  });
+
+  it('switches back to the default user when the selected user is gone after a reset', async () => {
+    const user = userEvent.setup();
+    await quizService.loadTestData();
+    const testUser = (await quizService.getUsers()).find(item => item.id.startsWith('t-u'));
+    useSessionStore.setState({ userId: testUser?.id ?? '', countryFilter: null, slowNetwork: false });
+    renderRoute('/quizzes');
+
+    await openResetDialog();
+    const dialog = await screen.findByRole('dialog', { name: 'Reset all data?' });
+    await user.click(within(dialog).getByRole('button', { name: 'Reset data' }));
+
+    await waitFor(() => {
+      expect(useSessionStore.getState().userId).toBe(DEFAULT_USER_ID);
+    });
+    expect(await screen.findByRole('heading', { level: 2, name: 'JavaScript Basics' })).toBeInTheDocument();
+  });
+
   it('closes the settings before showing the reset dialog', async () => {
     renderRoute('/quizzes');
 

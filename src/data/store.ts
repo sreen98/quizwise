@@ -26,4 +26,6 @@ export const resetDataStore = (store: StoreApi<QuizData>) => {
   store.setState(migrateSeed(seed), true);
 };
 
+export const seedUsers = () => migrateSeed(seed).users;
+
 export const dataStore = createDataStore();

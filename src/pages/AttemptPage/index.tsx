@@ -53,6 +53,7 @@ export const AttemptPage = () => {
     attemptId,
     userId
   );
+  const isMissing = state.status === 'missing';
   const question = state.status === 'in_progress' ? state : null;
   const timers = question ? timersFor(question) : [];
   const urgent = timers.find(timer => timer.deadlineAt === question?.deadlineAt);
@@ -107,8 +108,14 @@ export const AttemptPage = () => {
         <VisuallyHidden aria-live="assertive">
           {announcement && `${announcement}. Your selection will be submitted automatically when time runs out.`}
         </VisuallyHidden>
-        <Box maw={1000} mx="auto" px={{ base: 16, sm: 24 }} pt={{ base: 20, sm: 36 }} pb={{ base: 112, sm: 48 }}>
-          {state.status === 'missing' ? (
+        <Box
+          maw={1000}
+          mx="auto"
+          px={{ base: 16, sm: 24 }}
+          pt={isMissing ? { base: 48, sm: 24 } : { base: 20, sm: 36 }}
+          pb={isMissing ? { base: 48, sm: 24 } : { base: 112, sm: 48 }}
+        >
+          {isMissing ? (
             <MessageCard
               icon={<IconFileOff size={38} />}
               title="Attempt not found"

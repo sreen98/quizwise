@@ -1,5 +1,5 @@
 import type { StoreApi } from 'zustand/vanilla';
-import { dataStore, resetDataStore } from '../data/store';
+import { dataStore, resetDataStore, seedUsers } from '../data/store';
 import { parseQuizInput, quizInputSchema } from '../data/schema';
 import type { Attempt, Quiz, QuizData, QuizInput } from '../types/models';
 import { finishAttempt, hasSelection, recordAnswer, settleAttempt, toPublicQuestion, toSelection } from './attempts';
@@ -367,6 +367,8 @@ export const createQuizService = (
       }),
 
     getUsers: () => respond(() => store.getState().users),
+
+    getSeedUsers: () => respond(() => seedUsers()),
 
     getCountries: () => respond(() => store.getState().countries),
 

@@ -17,3 +17,7 @@
 .radioIndicator:not([data-checked], [data-disabled]) {
   border-color: var(--control-border);
 }
+
+.buttonLoader {
+  transform: translate(-50%, -50%);
+}

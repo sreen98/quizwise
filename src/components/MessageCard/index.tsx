@@ -3,7 +3,7 @@ import type { MessageCardProps } from './types';
 
 export const MessageCard = ({ icon, color = 'blue', badge, title, children, actions }: MessageCardProps) => {
   return (
-    <Flex align="center" justify="center" mih={{ base: 'auto', sm: 'calc(100dvh - 116px)' }}>
+    <Flex align="center" justify="center" mih={{ base: 'calc(100dvh - 156px)', sm: 'calc(100dvh - 116px)' }}>
       <title>{`${title} - Quizwise`}</title>
       <Paper
         component="section"

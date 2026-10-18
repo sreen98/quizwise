@@ -85,6 +85,7 @@ export const theme = createTheme({
     Drawer: Drawer.extend({ defaultProps: { closeButtonProps: { 'aria-label': 'Close' } } }),
     Notification: Notification.extend({ defaultProps: { closeButtonProps: { 'aria-label': 'Dismiss notification' } } }),
     Button: Button.extend({
+      classNames: { loader: classes.buttonLoader },
       vars: (_theme, { variant }) => ({
         root: { '--button-height': TOUCH_TARGET, '--button-color': isFilled(variant) ? FILLED_INK : undefined }
       })

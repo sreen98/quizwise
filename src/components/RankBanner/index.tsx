@@ -38,7 +38,15 @@ export const RankBanner = ({ leaderboard, quizId }: RankBannerProps) => {
   const showButton = !me || leaderboard.retakesAllowed;
 
   return (
-    <Paper component="section" aria-label="Your standing" withBorder radius="lg" px={{ base: 18, sm: 24 }} py={18}>
+    <Paper
+      component="section"
+      aria-label="Your standing"
+      withBorder
+      radius="lg"
+      pos="relative"
+      px={{ base: 18, sm: 24 }}
+      py={18}
+    >
       <Box className={classes.segments}>
         {me ? (
           <>
@@ -47,7 +55,9 @@ export const RankBanner = ({ leaderboard, quizId }: RankBannerProps) => {
               <>
                 <Group gap={10}>
                   {bigValue(`#${String(me.rank)}`, `of ${String(leaderboard.rankedCount)}`)}
-                  <Badge variant="light">Top {Math.ceil((me.rank / leaderboard.rankedCount) * 100)}%</Badge>
+                  <Badge variant="light" className={classes.topBadge}>
+                    Top {Math.ceil((me.rank / leaderboard.rankedCount) * 100)}%
+                  </Badge>
                 </Group>
                 {hint(standingLine(leaderboard, me))}
               </>,

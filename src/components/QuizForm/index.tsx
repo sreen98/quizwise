@@ -119,7 +119,8 @@ export const QuizForm = ({ initialValues, countries, isNew, onSubmit }: QuizForm
     initialValues,
     validate: schemaResolver(quizInputSchema, { sync: true })
   });
-  useUnsavedChangesPrompt(form.isDirty() && !saving);
+  const hasChanges = JSON.stringify(form.values) !== JSON.stringify(initialValues);
+  useUnsavedChangesPrompt(hasChanges && !saving);
 
   const handleSubmit = async (values: QuizInput) => {
     setSaving(true);
@@ -207,7 +208,7 @@ export const QuizForm = ({ initialValues, countries, isNew, onSubmit }: QuizForm
           <Title order={1} fz={{ base: 22, sm: 26 }} lts="-0.01em">
             {isNew ? 'New quiz' : 'Edit quiz'}
           </Title>
-          {form.isDirty() && <Badge color="orange">Unsaved changes</Badge>}
+          {hasChanges && <Badge color="orange">Unsaved changes</Badge>}
         </Group>
         <Group gap={12} justify="space-between" w={{ base: '100%', sm: 'auto' }}>
           <Button component={Link} to="/admin" variant="default">

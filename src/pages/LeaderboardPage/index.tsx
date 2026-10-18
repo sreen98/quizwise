@@ -13,7 +13,8 @@ import {
   Title
 } from '@mantine/core';
 import { IconFileOff, IconSearch } from '@tabler/icons-react';
-import { Link, Navigate, useNavigate, useParams, useSearchParams } from 'react-router';
+import { useEffect } from 'react';
+import { Link, useNavigate, useParams, useSearchParams } from 'react-router';
 import { EmptyState } from '../../components/EmptyState';
 import { MessageCard } from '../../components/MessageCard';
 import { PodiumCard } from '../../components/PodiumCard';
@@ -126,17 +127,20 @@ const board = (leaderboard: Leaderboard, options: BoardOptions) => {
 };
 
 export const LeaderboardPage = () => {
-  const { quizId = '' } = useParams();
+  const { quizId: routeQuizId = '' } = useParams();
   const [searchParams, setSearchParams] = useSearchParams();
   const navigate = useNavigate();
   const userId = useSessionStore(state => state.userId);
   const { search, setSearch, debouncedSearch, query } = useDebouncedSearch();
   const top = topOptions.some(option => option.value === searchParams.get('top')) ? searchParams.get('top') : '10';
   const limit = top === 'all' ? Number.POSITIVE_INFINITY : Number(top);
-  const { quizzes, leaderboard, loading } = useLeaderboard(quizId, limit, userId);
+  const { quizId: firstQuizId, quizzes, leaderboard, loading } = useLeaderboard(routeQuizId, limit, userId);
+  const quizId = routeQuizId || firstQuizId;
 
-  const [firstQuiz] = quizzes;
-  if (!quizId && firstQuiz) return <Navigate to={`/leaderboard/${firstQuiz.id}`} replace />;
+  useEffect(() => {
+    if (routeQuizId || !firstQuizId) return;
+    void navigate({ pathname: `/leaderboard/${firstQuizId}`, search: searchParams.toString() }, { replace: true });
+  }, [routeQuizId, firstQuizId, searchParams, navigate]);
 
   if (!loading && !leaderboard) {
     return (
@@ -181,7 +185,7 @@ export const LeaderboardPage = () => {
             Best attempt per player. Ties go to the faster time.
           </Text>
         </Box>
-        <Group gap={12} wrap="nowrap" align="flex-end">
+        <Group gap={12} wrap="nowrap" align="flex-end" w={{ base: '100%', sm: 'auto' }}>
           <Box flex={2} miw={0} w={{ sm: 260 }}>
             <SearchableSelect
               label="Quiz"
@@ -207,12 +211,18 @@ export const LeaderboardPage = () => {
 
       {loading && (
         <Stack gap={28}>
-          <Skeleton h={84} radius="lg" />
+          <Skeleton h={{ base: 314, sm: 114 }} radius="lg" />
           <SimpleGrid cols={{ base: 1, sm: 3 }} spacing={{ base: 12, sm: 20 }}>
             {[1, 2, 3].map(index => (
-              <Skeleton key={index} h={250} radius="lg" />
+              <Skeleton key={index} h={{ base: 294, sm: 306 }} radius="lg" />
             ))}
           </SimpleGrid>
+          <Stack gap={14}>
+            <Skeleton h={{ base: 90, sm: 44 }} radius="md" />
+            {[1, 2, 3].map(index => (
+              <Skeleton key={index} h={{ base: 96, sm: 56 }} radius="md" />
+            ))}
+          </Stack>
         </Stack>
       )}
 

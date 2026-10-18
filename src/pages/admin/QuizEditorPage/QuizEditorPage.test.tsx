@@ -202,6 +202,20 @@ describe('QuizEditorPage', () => {
     expect(screen.queryByRole('textbox', { name: 'Option 5' })).not.toBeInTheDocument();
   });
 
+  it('counts removing an option as an unsaved change and asks before leaving', async () => {
+    const user = userEvent.setup();
+    renderRoute('/admin/quizzes/q5/edit');
+
+    await user.type(await titleInput(), 'x');
+    await user.type(screen.getByRole('textbox', { name: /Title/ }), '{Backspace}');
+    await user.click(screen.getByRole('button', { name: 'Edit question 1' }));
+    await user.click(screen.getByRole('button', { name: 'Remove option 4' }));
+
+    expect(screen.getByText('Unsaved changes')).toBeInTheDocument();
+    await user.click(screen.getByRole('link', { name: 'Cancel' }));
+    expect(await screen.findByRole('dialog', { name: 'Leave without saving?' })).toBeInTheDocument();
+  });
+
   it('keeps two options and says why when trying to remove another', async () => {
     const user = userEvent.setup();
     renderRoute('/admin/quizzes/q5/edit');

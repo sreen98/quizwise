@@ -29,12 +29,13 @@ describe('LeaderboardPage', () => {
     await quizService.resetData();
   });
 
-  it('opens the first quiz when no quiz is chosen', async () => {
+  it('opens the first quiz when no quiz is chosen without loading it twice', async () => {
     const { router } = renderRoute('/leaderboard');
 
     await waitFor(() => {
       expect(router.state.location.pathname).toBe('/leaderboard/q1');
     });
+    expect(screen.getByRole('list', { name: 'Top players' })).toBeInTheDocument();
   });
 
   it('shows the top three on a podium in rank order for screen readers', async () => {

@@ -36,3 +36,11 @@
     }
   }
 }
+
+.topBadge {
+  @mixin smaller-than $mantine-breakpoint-sm {
+    position: absolute;
+    top: 16px;
+    right: 18px;
+  }
+}

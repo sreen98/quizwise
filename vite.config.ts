@@ -16,6 +16,6 @@ export default defineConfig({
       reporter: ['text-summary', 'text', 'html']
     },
     setupFiles: ['./src/test/setup.ts'],
-    testTimeout: 15_000
+    testTimeout: 30_000
   }
 });

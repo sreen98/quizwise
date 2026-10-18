@@ -33,6 +33,30 @@ Quizwise is a quiz platform frontend built with React, TypeScript and Vite for t
 - Light and dark mode, and reduced motion respected.
 - "Simulate slow network" (300 to 800 ms per call) to see the loading states, and Reset data to go back to the seed.
 
+## Screenshots
+
+The quiz flow as Aarav Menon and the admin section as Admin User, from the seed data, on desktop (1280 px) and on a phone (390 px). The screenshots were captured with Playwright, each in a fresh browser profile with reduced motion on, as full pages.
+
+**Screen recording:** [watch the quiz flow](screenshots/quiz-flow.webm) (about 30 seconds, WebM). Diya Nair opens World Geography, answers all five questions, sees her result and finds herself first on the leaderboard. It was recorded with Playwright against the production build.
+
+| Step           | Desktop                                                                           | Phone                                                                            |
+| -------------- | --------------------------------------------------------------------------------- | -------------------------------------------------------------------------------- |
+| Quiz list      | <img src="screenshots/desktop-1-quiz-list.png" width="520" alt="Quiz list">       | <img src="screenshots/mobile-1-quiz-list.png" width="180" alt="Quiz list">       |
+| Start screen   | <img src="screenshots/desktop-2-start.png" width="520" alt="Start screen">        | <img src="screenshots/mobile-2-start.png" width="180" alt="Start screen">        |
+| Question       | <img src="screenshots/desktop-3-question.png" width="520" alt="Question">         | <img src="screenshots/mobile-3-question.png" width="180" alt="Question">         |
+| Results        | <img src="screenshots/desktop-4-results.png" width="520" alt="Results">           | <img src="screenshots/mobile-4-results.png" width="180" alt="Results">           |
+| Leaderboard    | <img src="screenshots/desktop-5-leaderboard.png" width="520" alt="Leaderboard">   | <img src="screenshots/mobile-5-leaderboard.png" width="180" alt="Leaderboard">   |
+| Manage quizzes | <img src="screenshots/desktop-6-admin-list.png" width="520" alt="Manage quizzes"> | <img src="screenshots/mobile-6-admin-list.png" width="180" alt="Manage quizzes"> |
+| Edit quiz      | <img src="screenshots/desktop-7-admin-edit.png" width="520" alt="Edit quiz">      | <img src="screenshots/mobile-7-admin-edit.png" width="180" alt="Edit quiz">      |
+
+Dark mode, with warm charcoal surfaces and the same blue and orange:
+
+| Step        | Desktop                                                                                           | Phone                                                                                            |
+| ----------- | ------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------ |
+| Quiz list   | <img src="screenshots/desktop-dark-1-quiz-list.png" width="520" alt="Quiz list in dark mode">     | <img src="screenshots/mobile-dark-1-quiz-list.png" width="180" alt="Quiz list in dark mode">     |
+| Leaderboard | <img src="screenshots/desktop-dark-2-leaderboard.png" width="520" alt="Leaderboard in dark mode"> | <img src="screenshots/mobile-dark-2-leaderboard.png" width="180" alt="Leaderboard in dark mode"> |
+| Question    | <img src="screenshots/desktop-dark-3-question.png" width="520" alt="Question in dark mode">       | <img src="screenshots/mobile-dark-3-question.png" width="180" alt="Question in dark mode">       |
+
 ## Setup
 
 You need Node 22.12 or later (`.nvmrc` pins 24).
@@ -54,12 +78,12 @@ The end-to-end test needs a Playwright browser once: `npx playwright install chr
 
 ## Testing
 
-- **Service unit tests** cover scoring (all-or-nothing multiple choice), deadlines for overall, per-question and combined limits, catching up on missed deadlines, ranking and the seed's tricky cases: the long-expired attempt a11 finishing as a timeout, tie-breaks by time on q1 and q3, quizzes without retakes, and the country filter hiding q2 and q4 from a user in the UAE.
-- **Hook tests** check the countdown with fake timers, including a hidden tab and the expiry firing only once.
-- **Component tests** (Testing Library, queried by role and label) cover answering, auto-submit on timeout, resume after a reload, the results page, the leaderboard, the admin form and its validation, routing and focus.
-- **One end-to-end test** (Playwright) picks a user, takes a quiz from start to finish, checks the result and the leaderboard.
+- **Service unit tests.** They cover scoring (all-or-nothing multiple choice), deadlines for overall, per-question and combined limits, catching up on missed deadlines, ranking and the seed's tricky cases: the long-expired attempt a11 finishing as a timeout, tie-breaks by time on q1 and q3, quizzes without retakes, and the country filter hiding q2 and q4 from a user in the UAE.
+- **Hook tests.** They check the countdown with fake timers, including a hidden tab and the expiry firing only once.
+- **Component tests.** Written with Testing Library and queried by role and label, they cover answering, auto-submit on timeout, resume after a reload, the results page, the leaderboard, the admin form and its validation, routing and focus.
+- **End-to-end test.** One Playwright test picks a user, takes a quiz from start to finish, and checks the result and the leaderboard.
 
-Coverage, from `npm run test:coverage` (356 tests across 93 source files):
+Coverage, from `npm run test:coverage` (357 tests across 93 source files):
 
 | Area       | Lines     | Branches | Functions |
 | ---------- | --------- | -------- | --------- |
@@ -73,6 +97,8 @@ Coverage, from `npm run test:coverage` (356 tests across 93 source files):
 | app        | 82.6%     | 83.3%    | 87.5%     |
 
 The lowest files are `App.tsx`, which only mounts the router and is covered by the end-to-end test instead, the route error screen, and the development-only Load test data button.
+
+Coverage only shows that code ran, not that a test would notice it breaking. To check that, I broke 11 core rules on purpose, one at a time (scoring, deadlines, tie-breaks, the country filter, retakes, double answers, closing attempts after an edit, the disabled Submit button and others) and ran the suite. The tests caught 10; the one that slipped through (a multiple choice answer with one correct option swapped for a wrong one) now has its own test.
 
 ## Data
 
@@ -167,16 +193,16 @@ Added functions: `saveDraft`, `getQuizSummary`, `getAttemptResult`, `getEndedAtt
 - Everything lives in the browser. The UI never receives the correct answers during an attempt, but the full quiz data, answers included, is in localStorage, so anyone can read it in the browser's developer tools or make themselves admin by editing the stored user. The real fix is a backend that keeps the answers, scores attempts and checks roles on the server.
 - An expired in-progress attempt still shows as in progress on the quiz list until it is opened, which is when the "time ran out while you were away" screen appears.
 - Two tabs on the same attempt are not kept in sync.
-- `crypto.randomUUID` needs a secure context, so starting attempts from a phone on the local network (plain HTTP) doesn't work. Over HTTPS, or on localhost, it works.
+- New IDs come from `crypto.randomUUID`, which needs a secure context. Over plain HTTP (for example the dev server opened from a phone on the local network) starting an attempt, creating or importing a quiz, and adding a question or option fail. Over HTTPS, or on localhost, everything works.
 - Users with exactly the same score and time are ranked by who finished first, not given a shared rank.
 
 ## What I would do with more time
 
 - **Create quizzes from a prompt.** Instead of building a quiz by hand, the admin describes it: "A quiz about Kerala with easy and difficult questions, 10 questions, 10 minutes in total, 1 minute per question." An LLM asks for anything missing, such as the countries, generates the quiz in our schema, validates it with the same Zod schema and opens the edit form already filled in. The admin's job becomes reviewing and saving.
-- **Image-based answer options**, which the brief lists as a bonus.
-- **Localisation** of the UI text and dates.
-- **A real backend and login**, so the correct answers stay on the server, attempts are scored there, roles are enforced and results are shared between devices. This removes the biggest known limitation, and the service layer is already the single point to swap.
-- **Insights for admins**, on a dashboard per quiz:
+- **Image-based answer options.** The brief lists them as a bonus.
+- **Localisation.** Translated UI text and dates formatted for each language.
+- **A real backend and login.** The correct answers would stay on the server, attempts are scored there, roles are enforced and results are shared between devices. This removes the biggest known limitation, and the service layer is already the single point to swap.
+- **Insights for admins.** A dashboard per quiz showing:
   - which questions are missed most often and how long each one takes, to spot unclear or too easy questions
   - which wrong option is picked most, which points to a misleading option or a wrong answer key
   - questions that the top scorers mostly get wrong, a strong sign of a wrong answer key
@@ -186,13 +212,13 @@ Added functions: `saveDraft`, `getQuizSummary`, `getAttemptResult`, `getEndedAtt
   - how much users improve between their first and best attempt on quizzes with retakes
   - participation and scores by country, and attempts over time
   - how scores changed after an edit, and how many attempts were closed by it
-- **Explanations on the results page**: an optional note per question explaining the correct answer, shown only when the user can't retake the quiz (retakes off, or no attempts left). On quizzes with retakes, showing answers would let users look them up and retry for a full score.
-- **A question bank with random order**, so retakes don't show the same questions in the same order.
-- **Scheduled quizzes** with open and close dates.
-- **Syncing two tabs** through the `storage` event.
-- **Close expired attempts on the quiz list**, so an attempt whose time ran out while the user was away shows as finished straight away instead of in progress.
-- **Shared ranks** for users with exactly the same score and time.
-- **More end-to-end tests**: a phone viewport, the timeout path and the admin flow, run on every pull request.
+- **Explanations on the results page.** An optional note per question explaining the correct answer, shown only when the user can't retake the quiz (retakes off, or no attempts left). On quizzes with retakes, showing answers would let users look them up and retry for a full score.
+- **A question bank with random order.** Retakes wouldn't show the same questions in the same order.
+- **Scheduled quizzes.** Open and close dates for each quiz.
+- **Syncing two tabs.** Listen to the `storage` event so two tabs on the same attempt stay in step.
+- **Close expired attempts on the quiz list.** An attempt whose time ran out while the user was away would show as finished straight away instead of in progress.
+- **Shared ranks.** Users with exactly the same score and time would share a rank.
+- **More end-to-end tests.** A phone viewport, the timeout path and the admin flow, run on every pull request.
 
 ## Development workflow
 
@@ -200,13 +226,13 @@ Added functions: `saveDraft`, `getQuizSummary`, `getAttemptResult`, `getEndedAtt
 - **Rules and guard rails for the agent.** The coding standards (naming, folder per component, no comments, styling rules, file size limits) are written in `CLAUDE.md`, and Claude Code hooks in `.claude/hooks` enforce the important ones: Git commands are blocked so I do all Git work, Prettier runs after every file write, and writes containing banned characters or comments are flagged. This kept the agent inside the agreed structure instead of improvising.
 - **Small steps, each reviewed.** Work was split into small pieces. For each one the agent explained the approach first, then wrote the code; I reviewed it, checked it in the browser on a phone width and on desktop, and only then committed. Lint, type check, unit tests and the build had to pass before every commit. This is why the history has so many commits: each one is a single, reviewable change, and bugs found later were fixed in their own commits instead of being folded into other work.
 - **Reviews per phase.** At the end of each phase, separate Claude Code review agents reviewed the phase's changes, and I decided which findings to fix as their own commits.
-- **Git hooks, added at the end.** During development the rules were enforced by the Claude Code hooks, and lint, type check, unit tests and the build were run at the end of every step before committing. I added the Husky hooks in `.husky` last, so they wouldn't slow down the fast commit and push cycle while building. From now on they make the checks automatic for anyone working on the project, me included: pre-commit checks the formatting of the staged files and runs ESLint, and pre-push runs the type check, the unit tests and the build. Code that breaks the rules or fails the tests can't be committed or pushed.
+- **Git hooks, added at the end.** During development the rules were enforced by the Claude Code hooks, and lint, type check, unit tests and the build were run at the end of every step before committing. I added the Husky hooks in `.husky` last, so they wouldn't slow down the fast commit and push cycle while building. From now on they make the checks automatic for anyone working on the project, me included: pre-commit checks the formatting of the changed files and runs ESLint on the project, and pre-push runs the type check, the unit tests and the build. A commit or push that breaks the rules or fails the tests is stopped, unless someone deliberately skips the hooks with `--no-verify`.
 - **Security review.** As the final step, a security audit of the whole codebase and its dependencies was run (untrusted input, imported JSON, stored data, rendering, `npm audit`). Its findings were fixed as their own commits: the stored session is now validated when it loads, and quiz text has length limits.
 - **Coverage check.** At the end, test coverage was measured with Vitest's V8 coverage to find untested code. The results are in the Testing section.
 - **Requirements check.** At the end, a separate agent went through the assignment brief requirement by requirement and looked for the code behind each one, to make sure nothing was missed.
 
 ## AI usage
 
-- **Design:** the mockups were made with Claude (claude.ai) and Google Stitch.
-- **Planning and code:** Claude Code was my pair programmer. It helped write the plan and wrote most of the code, the tests and this README, working through the plan one step at a time.
-- **My part:** I set the requirements and the coding standards, made the product and design decisions, reviewed every step, tested the app in the browser on phone and desktop, reported the bugs and layout issues to fix, and did all the Git work.
+- **Design.** The mockups were made with Claude (claude.ai) and Google Stitch.
+- **Planning and code.** Claude Code was my pair programmer. It helped write the plan and wrote most of the code, the tests and this README, working through the plan one step at a time.
+- **My part.** I set the requirements and the coding standards, made the product and design decisions, reviewed every step, tested the app in the browser on phone and desktop, reported the bugs and layout issues to fix, and did all the Git work.

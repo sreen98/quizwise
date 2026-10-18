@@ -13,7 +13,7 @@ describe('BottomNav', () => {
     await quizService.resetData();
   });
 
-  it('opens the account sheet with the user switcher and settings', async () => {
+  it('opens the account sheet with the user list and settings', async () => {
     const user = userEvent.setup();
     renderRoute('/quizzes');
 
@@ -21,7 +21,8 @@ describe('BottomNav', () => {
 
     const sheet = await screen.findByRole('dialog', { name: 'Account' });
     expect(accountTab()).toHaveAttribute('aria-expanded', 'true');
-    expect(within(sheet).getByRole('combobox', { name: 'Viewing as' })).toBeInTheDocument();
+    expect(await within(sheet).findByRole('button', { name: 'Aarav Menon' })).toHaveAttribute('aria-pressed', 'true');
+    expect(within(sheet).getByRole('button', { name: 'Diya Nair' })).toHaveAttribute('aria-pressed', 'false');
     expect(within(sheet).getByRole('switch', { name: /Simulate slow network/ })).toBeInTheDocument();
     expect(within(sheet).getByRole('button', { name: 'Reset data' })).toBeInTheDocument();
   });
@@ -32,16 +33,30 @@ describe('BottomNav', () => {
 
     await user.click(accountTab());
     const sheet = await screen.findByRole('dialog', { name: 'Account' });
-    const select = within(sheet).getByRole('combobox', { name: 'Viewing as' });
-    await waitFor(() => {
-      expect(select).toBeEnabled();
-    });
-    await user.click(select);
-    await user.click(await screen.findByRole('option', { name: 'Diya Nair' }));
+    await user.click(await within(sheet).findByRole('button', { name: 'Diya Nair' }));
 
     expect(useSessionStore.getState().userId).toBe('u4');
     await waitFor(() => {
       expect(screen.queryByRole('dialog', { name: 'Account' })).not.toBeInTheDocument();
     });
+  });
+
+  it('filters the user list by name', async () => {
+    const user = userEvent.setup();
+    renderRoute('/quizzes');
+
+    await user.click(accountTab());
+    const sheet = await screen.findByRole('dialog', { name: 'Account' });
+    await within(sheet).findByRole('button', { name: 'Diya Nair' });
+    await user.type(within(sheet).getByRole('textbox', { name: 'Search users' }), 'fat');
+
+    await waitFor(() => {
+      expect(within(sheet).queryByRole('button', { name: 'Diya Nair' })).not.toBeInTheDocument();
+    });
+    expect(within(sheet).getByRole('button', { name: 'Fatima Al Mansoori' })).toBeInTheDocument();
+
+    await user.clear(within(sheet).getByRole('textbox', { name: 'Search users' }));
+    await user.type(within(sheet).getByRole('textbox', { name: 'Search users' }), 'zzz');
+    expect(await within(sheet).findByText('No users match "zzz".')).toBeInTheDocument();
   });
 });

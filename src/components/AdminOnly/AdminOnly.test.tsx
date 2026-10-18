@@ -69,7 +69,7 @@ describe('AdminOnly', () => {
     renderRoute('/admin');
     await screen.findByRole('heading', { name: 'Manage quizzes' });
 
-    await user.click(screen.getByRole('combobox', { name: 'Viewing as' }));
+    await user.click(screen.getByRole('button', { name: /^Viewing as/ }));
     await user.click(await screen.findByRole('option', { name: 'Aarav Menon' }));
 
     expect(await noAccess()).toBeInTheDocument();

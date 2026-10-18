@@ -8,7 +8,7 @@ import { useUserOptions } from '../../hooks/useUserOptions';
 import { ResetDataButton } from '../ResetDataButton';
 import { SlowNetworkSwitch } from '../SlowNetworkSwitch';
 import { TestDataButton } from '../TestDataButton';
-import { UserSelect } from '../UserSelect';
+import { UserList } from '../UserList';
 import classes from './BottomNav.module.css';
 
 const tabs = [
@@ -60,11 +60,11 @@ export const BottomNav = () => {
         onClose={closeAccount}
         title="Account"
         position="bottom"
-        size={import.meta.env.DEV ? 330 : 280}
+        classNames={{ content: classes.sheet }}
         radius="lg"
       >
         <Stack gap="sm" pb="md">
-          <UserSelect userOptions={userOptions} onDone={closeAccount} />
+          <UserList userOptions={userOptions} onDone={closeAccount} />
           <Divider my={4} />
           <SlowNetworkSwitch />
           <ResetDataButton onDialogOpen={handleDialogOpen} />

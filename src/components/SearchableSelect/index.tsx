@@ -4,11 +4,13 @@ import type { SearchableSelectProps } from './types';
 
 export const SearchableSelect = ({
   label,
+  hideLabel,
   searchLabel,
   nothingFoundMessage,
   data,
   value,
-  onChange
+  onChange,
+  renderIcon
 }: SearchableSelectProps) => {
   const [search, setSearch] = useState('');
   const combobox = useCombobox({
@@ -39,9 +41,11 @@ export const SearchableSelect = ({
           component="button"
           type="button"
           pointer
-          label={label}
+          disabled={data.length === 0}
+          label={hideLabel ? undefined : label}
           aria-label={`${label}: ${selectedLabel}`}
           aria-haspopup="listbox"
+          leftSection={renderIcon && selectedLabel && renderIcon(selectedLabel)}
           rightSection={<Combobox.Chevron />}
           rightSectionPointerEvents="none"
           onClick={() => {
@@ -73,6 +77,7 @@ export const SearchableSelect = ({
                 aria-selected={option.value === value}
               >
                 <Group wrap="nowrap" gap={10}>
+                  {renderIcon?.(option.label)}
                   <Text inherit flex={1}>
                     {option.label}
                   </Text>

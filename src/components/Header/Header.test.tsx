@@ -7,7 +7,7 @@ import { DEFAULT_USER_ID, useSessionStore } from '../../session/sessionStore';
 import { simulatedDelay } from '../../service/latency';
 import { renderRoute } from '../../test/renderWithProviders';
 
-const userSelect = () => screen.getByRole('combobox', { name: 'Viewing as' });
+const userSelect = () => screen.getByRole('button', { name: /^Viewing as/ });
 
 const openResetDialog = async () => {
   const user = userEvent.setup();
@@ -33,7 +33,7 @@ describe('Header user controls', () => {
     renderRoute('/quizzes');
 
     await waitFor(() => {
-      expect(userSelect()).toHaveValue('Aarav Menon');
+      expect(userSelect()).toHaveAccessibleName('Viewing as: Aarav Menon');
     });
     await user.click(userSelect());
 
@@ -43,7 +43,7 @@ describe('Header user controls', () => {
   it('switches the user and remembers the choice', async () => {
     renderRoute('/quizzes');
     await waitFor(() => {
-      expect(userSelect()).toHaveValue('Aarav Menon');
+      expect(userSelect()).toHaveAccessibleName('Viewing as: Aarav Menon');
     });
 
     await chooseUser('Fatima Al Mansoori');
@@ -55,7 +55,7 @@ describe('Header user controls', () => {
   it('leaves a results page when the user changes', async () => {
     const { router } = renderRoute('/attempts/a1/results');
     await waitFor(() => {
-      expect(userSelect()).toHaveValue('Aarav Menon');
+      expect(userSelect()).toHaveAccessibleName('Viewing as: Aarav Menon');
     });
 
     await chooseUser('Diya Nair');
@@ -81,7 +81,7 @@ describe('Header user controls', () => {
     renderRoute('/quizzes');
 
     await waitFor(() => {
-      expect(userSelect()).toHaveValue('Aarav Menon');
+      expect(userSelect()).toHaveAccessibleName('Viewing as: Aarav Menon');
     });
     expect(useSessionStore.getState().userId).toBe(DEFAULT_USER_ID);
   });

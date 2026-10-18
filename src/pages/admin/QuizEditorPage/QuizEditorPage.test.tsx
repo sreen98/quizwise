@@ -315,7 +315,7 @@ describe('QuizEditorPage', () => {
     renderRoute('/admin/quizzes/q5/edit');
 
     await user.type(await titleInput(), ' Quiz');
-    await user.click(screen.getByRole('combobox', { name: 'Viewing as' }));
+    await user.click(screen.getByRole('button', { name: /^Viewing as/ }));
     await user.click(await screen.findByRole('option', { name: 'Aarav Menon' }));
     await user.click(await screen.findByRole('button', { name: 'Keep editing' }));
 
@@ -328,7 +328,7 @@ describe('QuizEditorPage', () => {
     renderRoute('/admin/quizzes/q5/edit');
 
     await user.type(await titleInput(), ' Quiz');
-    await user.click(screen.getByRole('combobox', { name: 'Viewing as' }));
+    await user.click(screen.getByRole('button', { name: /^Viewing as/ }));
     await user.click(await screen.findByRole('option', { name: 'Aarav Menon' }));
     await user.click(await screen.findByRole('button', { name: 'Switch user' }));
 

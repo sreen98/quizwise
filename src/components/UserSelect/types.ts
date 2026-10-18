@@ -5,5 +5,4 @@ export interface UserOption {
 
 export interface UserSelectProps {
   userOptions: UserOption[];
-  onDone?: () => void;
 }

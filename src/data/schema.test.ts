@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { parseQuizData, quizSchema } from './schema';
+import { parseQuizData, quizInputSchema, quizSchema } from './schema';
 import seed from './seed.json';
 
 const validQuiz = {
@@ -119,5 +119,39 @@ describe('quizSchema', () => {
     expect(messagesFor(withQuestion({ correctOptionIds: ['z'] }))).toContain(
       'A correct answer points to a missing option'
     );
+  });
+});
+
+describe('quizInputSchema', () => {
+  const inputMessages = (quiz: unknown) => {
+    const result = quizInputSchema.safeParse(quiz);
+    return result.success ? [] : result.error.issues.map(issue => `${issue.path.join('.')}: ${issue.message}`);
+  };
+
+  it('accepts text within the length limits', () => {
+    expect(inputMessages(validQuiz)).toEqual([]);
+  });
+
+  it('rejects a title, question or option that is too long', () => {
+    const quiz = {
+      ...withQuestion({
+        text: 'q'.repeat(501),
+        options: [
+          { id: 'a', text: 'o'.repeat(201) },
+          { id: 'b', text: 'Rome' }
+        ]
+      }),
+      title: 'a'.repeat(121)
+    };
+
+    expect(inputMessages(quiz)).toEqual([
+      'title: Keep the title under 120 characters',
+      'questions.0.text: Keep the question under 500 characters',
+      'questions.0.options.0.text: Keep the option under 200 characters'
+    ]);
+  });
+
+  it('keeps accepting long text in stored quizzes', () => {
+    expect(messagesFor({ ...validQuiz, title: 'a'.repeat(121) })).toEqual([]);
   });
 });

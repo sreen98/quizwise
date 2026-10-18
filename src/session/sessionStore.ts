@@ -1,3 +1,4 @@
+import { z } from 'zod';
 import { create } from 'zustand';
 import { createJSONStorage, persist } from 'zustand/middleware';
 import * as latency from '../service/latency';
@@ -14,6 +15,14 @@ interface SessionState {
 }
 
 export const DEFAULT_USER_ID = 'u1';
+
+const storedSessionSchema = z
+  .object({
+    userId: z.string().min(1).catch(DEFAULT_USER_ID),
+    countryFilter: z.array(z.string()).nullable().catch(null),
+    slowNetwork: z.boolean().catch(true)
+  })
+  .catch({ userId: DEFAULT_USER_ID, countryFilter: null, slowNetwork: true });
 
 export const useSessionStore = create<SessionState>()(
   persist(
@@ -38,7 +47,8 @@ export const useSessionStore = create<SessionState>()(
     {
       name: 'quizwise:session',
       storage: createJSONStorage(() => localStorage),
-      partialize: ({ userId, countryFilter, slowNetwork }) => ({ userId, countryFilter, slowNetwork })
+      partialize: ({ userId, countryFilter, slowNetwork }) => ({ userId, countryFilter, slowNetwork }),
+      merge: (stored, current) => ({ ...current, ...storedSessionSchema.parse(stored) })
     }
   )
 );

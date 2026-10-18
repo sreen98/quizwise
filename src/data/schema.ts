@@ -112,7 +112,31 @@ const quizDataSchema = z.object({
 
 export const parseQuizData = (json: unknown): QuizData => quizDataSchema.parse(json);
 
-export const quizInputSchema = quizFields.omit({ id: true, version: true }).superRefine(checkQuestionIds);
+const MAX_TITLE = 120;
+const MAX_DESCRIPTION = 500;
+const MAX_QUESTION = 500;
+const MAX_OPTION = 200;
+
+const checkTextLengths = (quiz: QuizInput, ctx: z.RefinementCtx) => {
+  const tooLong = (text: string, max: number, path: (string | number)[], what: string) => {
+    if (text.length > max)
+      ctx.addIssue({ code: 'custom', path, message: `Keep the ${what} under ${String(max)} characters` });
+  };
+
+  tooLong(quiz.title, MAX_TITLE, ['title'], 'title');
+  tooLong(quiz.description, MAX_DESCRIPTION, ['description'], 'description');
+  quiz.questions.forEach((question, questionIndex) => {
+    tooLong(question.text, MAX_QUESTION, ['questions', questionIndex, 'text'], 'question');
+    question.options.forEach((option, optionIndex) => {
+      tooLong(option.text, MAX_OPTION, ['questions', questionIndex, 'options', optionIndex, 'text'], 'option');
+    });
+  });
+};
+
+export const quizInputSchema = quizFields
+  .omit({ id: true, version: true })
+  .superRefine(checkQuestionIds)
+  .superRefine(checkTextLengths);
 
 export const parseQuizInput = (data: unknown): QuizInput => {
   const result = quizInputSchema.safeParse(data);

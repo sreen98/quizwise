@@ -2,6 +2,8 @@
 
 Quizwise is a quiz platform frontend built with React, TypeScript and Vite for the Portable Medical Technology ReactJS assignment. There is no backend: all data comes from a seed file, lives in the browser's localStorage and goes through one service layer, so a real API could replace it later without touching the screens.
 
+**Live demo: [quizwise.sreenathp.com](https://quizwise.sreenathp.com)**. Pick a user in the header (or the Account tab on a phone), and choose Admin User to see the admin section. Each visitor starts from the seed data in their own browser, and Reset data brings it back.
+
 ## Features
 
 **Taking quizzes**

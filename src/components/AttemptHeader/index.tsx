@@ -54,7 +54,7 @@ export const AttemptHeader = ({ quizTitle, timers, showExitConfirm }: AttemptHea
       >
         <IconArrowLeft size={20} aria-hidden />
       </ActionIcon>
-      <Skeleton visible={quizTitle === null} w="auto" miw={0}>
+      <Skeleton visible={quizTitle === null} w="auto" miw={0} maw={{ base: '100%', sm: 480 }}>
         <Text fw={700} fz={{ base: 15, sm: 16 }} truncate>
           {quizTitle ?? 'Loading quiz'}
         </Text>

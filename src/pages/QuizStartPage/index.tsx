@@ -143,11 +143,11 @@ export const QuizStartPage = () => {
           gap={16}
         >
           <Skeleton visible={!quiz} w="fit-content" maw="100%">
-            <Title id="quiz-title" order={1} fz={{ base: 30, sm: 40 }} lh={1.1} lts="-0.01em">
+            <Title id="quiz-title" order={1} fz={{ base: 30, sm: 40 }} lh={1.1} lts="-0.01em" lineClamp={3}>
               {quiz?.title ?? 'Loading quiz'}
             </Title>
           </Skeleton>
-          <Button h={52} px={28} disabled={!quiz} loading={starting} onClick={() => void start()}>
+          <Button h={52} px={28} flex="none" disabled={!quiz} loading={starting} onClick={() => void start()}>
             {quiz?.inProgress ? 'Resume quiz' : 'Start quiz'}
           </Button>
         </Flex>

@@ -4,6 +4,7 @@ html {
 
 body {
   background-color: var(--bg);
+  overflow-wrap: break-word;
 }
 
 :is(h1, h2)[tabindex='-1']:focus {

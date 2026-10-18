@@ -78,7 +78,7 @@ export const SearchableSelect = ({
               >
                 <Group wrap="nowrap" gap={10}>
                   {renderIcon?.(option.label)}
-                  <Text inherit flex={1}>
+                  <Text inherit flex={1} lineClamp={2}>
                     {option.label}
                   </Text>
                   {option.value === value && <CheckIcon size={12} aria-hidden />}

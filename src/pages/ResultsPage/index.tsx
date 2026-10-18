@@ -61,7 +61,7 @@ const summary = (result: ResultDetails) => (
         <Text fz={14} fw={600} c="dimmed">
           {result.endReason === 'timeout' ? 'Time ran out' : 'Quiz complete'}
         </Text>
-        <Title id="result-title" order={1} fz={{ base: 28, sm: 34 }} lts="-0.01em" my={8}>
+        <Title id="result-title" order={1} fz={{ base: 28, sm: 34 }} lts="-0.01em" my={8} lineClamp={3}>
           {result.quizTitle}
         </Title>
         <Text c="dimmed" fz={17} mb={24}>

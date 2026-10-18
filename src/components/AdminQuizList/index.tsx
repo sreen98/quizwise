@@ -108,7 +108,9 @@ const quizCards = (props: AdminQuizListProps) => (
         <Box px={16} py={14}>
           <Group justify="space-between" align="flex-start" wrap="nowrap" gap={8}>
             <Box miw={0}>
-              <Text fw={700}>{quiz.title}</Text>
+              <Text fw={700} lineClamp={2}>
+                {quiz.title}
+              </Text>
               <Text fz={13} c="dimmed" lineClamp={2}>
                 {quiz.description}
               </Text>

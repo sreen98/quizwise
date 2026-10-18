@@ -150,7 +150,7 @@ describe('QuizListPage', () => {
     useSessionStore.setState({ countryFilter: ['GB'] });
     renderRoute('/quizzes');
 
-    expect(await screen.findByRole('heading', { name: 'No quizzes here yet' })).toBeInTheDocument();
+    expect(await screen.findByText('No quizzes here yet')).toBeInTheDocument();
     await user.click(screen.getByRole('button', { name: 'Show all countries' }));
 
     expect(await card('Kerala Culture and History')).toBeTruthy();

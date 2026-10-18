@@ -12,8 +12,9 @@ import {
   TextInput,
   Title
 } from '@mantine/core';
-import { IconFileOff } from '@tabler/icons-react';
+import { IconFileOff, IconSearch } from '@tabler/icons-react';
 import { Link, Navigate, useNavigate, useParams, useSearchParams } from 'react-router';
+import { EmptyState } from '../../components/EmptyState';
 import { MessageCard } from '../../components/MessageCard';
 import { PodiumCard } from '../../components/PodiumCard';
 import { RankBanner } from '../../components/RankBanner';
@@ -91,7 +92,22 @@ const board = (leaderboard: Leaderboard, options: BoardOptions) => {
           />
         </Flex>
         {standings.length === 0 ? (
-          <Text c="dimmed">No players match "{debouncedSearch.trim()}".</Text>
+          <EmptyState
+            icon={<IconSearch size={28} />}
+            title="No results found"
+            action={
+              <Button
+                variant="default"
+                onClick={() => {
+                  onSearchChange('');
+                }}
+              >
+                Clear search
+              </Button>
+            }
+          >
+            No players match "{debouncedSearch.trim()}".
+          </EmptyState>
         ) : (
           <PaginatedList
             items={standings}

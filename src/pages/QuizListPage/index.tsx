@@ -11,10 +11,11 @@ import {
   Title,
   VisuallyHidden
 } from '@mantine/core';
+import { IconFilterOff, IconSearch } from '@tabler/icons-react';
 import { useState } from 'react';
 import { useSearchParams } from 'react-router';
 import { CountryFilter } from '../../components/CountryFilter';
-import { EmptyQuizList } from '../../components/EmptyQuizList';
+import { EmptyState } from '../../components/EmptyState';
 import { PaginatedList } from '../../components/PaginatedList';
 import { QuizCard } from '../../components/QuizCard';
 import { QuizCardSkeleton } from '../../components/QuizCardSkeleton';
@@ -142,40 +143,60 @@ export const QuizListPage = () => {
         {!loading && hasFailed && <Text c="dimmed">The quizzes could not be loaded. Try reloading the page.</Text>}
 
         {!loading && !hasFailed && quizzes.length === 0 && (
-          <EmptyQuizList
-            countryName={countryNames || 'all countries'}
-            onShowAll={() => {
-              setCountryFilter([]);
-            }}
-          />
+          <EmptyState
+            icon={<IconFilterOff size={28} />}
+            title="No quizzes here yet"
+            action={
+              <Button
+                onClick={() => {
+                  setCountryFilter([]);
+                }}
+              >
+                Show all countries
+              </Button>
+            }
+          >
+            There aren't any quizzes assigned to {countryNames || 'all countries'} right now. Try another country, or
+            check back later.
+          </EmptyState>
         )}
 
         {!loading && quizzes.length > 0 && statusQuizzes.length === 0 && (
-          <Stack align="flex-start" gap={12}>
-            <Text c="dimmed">No quizzes are {activeFilter.label.toLowerCase()} here.</Text>
-            <Button
-              variant="default"
-              onClick={() => {
-                setStatus('all');
-              }}
-            >
-              Show all quizzes
-            </Button>
-          </Stack>
+          <EmptyState
+            icon={<IconFilterOff size={28} />}
+            title="No quizzes with this status"
+            action={
+              <Button
+                variant="default"
+                onClick={() => {
+                  setStatus('all');
+                }}
+              >
+                Show all quizzes
+              </Button>
+            }
+          >
+            No quizzes are {activeFilter.label.toLowerCase()} here.
+          </EmptyState>
         )}
 
         {!loading && statusQuizzes.length > 0 && matchingQuizzes.length === 0 && (
-          <Stack align="flex-start" gap={12}>
-            <Text c="dimmed">No quizzes match "{debouncedSearch.trim()}".</Text>
-            <Button
-              variant="default"
-              onClick={() => {
-                setSearch('');
-              }}
-            >
-              Clear search
-            </Button>
-          </Stack>
+          <EmptyState
+            icon={<IconSearch size={28} />}
+            title="No results found"
+            action={
+              <Button
+                variant="default"
+                onClick={() => {
+                  setSearch('');
+                }}
+              >
+                Clear search
+              </Button>
+            }
+          >
+            No quizzes match "{debouncedSearch.trim()}".
+          </EmptyState>
         )}
 
         {!loading && matchingQuizzes.length > 0 && (

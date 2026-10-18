@@ -1,11 +1,13 @@
 import { Box, Button, Flex, Group, Paper, Select, Skeleton, Stack, Text, TextInput, Title } from '@mantine/core';
 import { modals } from '@mantine/modals';
 import { notifications } from '@mantine/notifications';
+import { IconFileOff, IconFilterOff, IconSearch } from '@tabler/icons-react';
 import { useEffect } from 'react';
 import { Link, useSearchParams } from 'react-router';
 import { AdminQuizList } from '../../../components/AdminQuizList';
 import { AdminQuizListSkeleton } from '../../../components/AdminQuizListSkeleton';
 import { CountryFilter } from '../../../components/CountryFilter';
+import { EmptyState } from '../../../components/EmptyState';
 import { ImportQuizButton } from '../../../components/ImportQuizButton';
 import { PaginatedList } from '../../../components/PaginatedList';
 import { formatCount } from '../../../format';
@@ -209,31 +211,39 @@ export const AdminQuizListPage = () => {
               )}
 
               {!hasFailed && quizzes.length === 0 && (
-                <Stack align="flex-start" gap={12} p={16} pt={0}>
-                  <Text c="dimmed">There are no quizzes yet.</Text>
-                  <Button component={Link} to="/admin/quizzes/new">
-                    New quiz
-                  </Button>
-                </Stack>
+                <EmptyState
+                  icon={<IconFileOff size={28} />}
+                  title="No quizzes yet"
+                  action={
+                    <Button component={Link} to="/admin/quizzes/new">
+                      New quiz
+                    </Button>
+                  }
+                >
+                  Create a quiz or import one from JSON.
+                </EmptyState>
               )}
 
               {quizzes.length > 0 && matching.length === 0 && (
-                <Stack align="flex-start" gap={12} p={16} pt={0}>
-                  <Text c="dimmed">
-                    {debouncedSearch.trim()
-                      ? `No quizzes match "${debouncedSearch.trim()}".`
-                      : 'No quizzes match these filters.'}
-                  </Text>
-                  <Button
-                    variant="default"
-                    onClick={() => {
-                      setSearch('');
-                      updateParams({ countries: '', retakes: '', page: '' });
-                    }}
-                  >
-                    Clear filters
-                  </Button>
-                </Stack>
+                <EmptyState
+                  icon={debouncedSearch.trim() ? <IconSearch size={28} /> : <IconFilterOff size={28} />}
+                  title="No results found"
+                  action={
+                    <Button
+                      variant="default"
+                      onClick={() => {
+                        setSearch('');
+                        updateParams({ countries: '', retakes: '', page: '' });
+                      }}
+                    >
+                      Clear filters
+                    </Button>
+                  }
+                >
+                  {debouncedSearch.trim()
+                    ? `No quizzes match "${debouncedSearch.trim()}".`
+                    : 'No quizzes match these filters.'}
+                </EmptyState>
               )}
 
               {shown.length > 0 && (

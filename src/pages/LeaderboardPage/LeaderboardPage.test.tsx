@@ -89,6 +89,11 @@ describe('LeaderboardPage', () => {
     await user.type(screen.getByRole('textbox', { name: 'Search players' }), 'nobody');
 
     expect(await screen.findByText('No players match "nobody".')).toBeInTheDocument();
+
+    await user.click(screen.getByRole('button', { name: 'Clear search' }));
+
+    expect(screen.getByRole('textbox', { name: 'Search players' })).toHaveValue('');
+    expect(await screen.findByText('Showing 4 players')).toBeInTheDocument();
   });
 
   it('limits the list to the top players and still shows the rank of a user below them', async () => {

@@ -53,6 +53,8 @@ describe('AdminQuizListPage', () => {
     ]);
     const science = within(screen.getByRole('table')).getAllByRole('row')[1];
     expect(science).toHaveTextContent('6:00 + 45 s / q');
+    expect(science).toHaveTextContent('Retakes allowed');
+    expect(within(screen.getByRole('table')).getAllByRole('row')[3]).toHaveTextContent('No retakes');
     expect(
       within(science as HTMLElement).getByRole('img', { name: 'Available in United Arab Emirates, United Kingdom' })
     ).toBeInTheDocument();

@@ -1,5 +1,5 @@
 import { ActionIcon, Box, Divider, Group, Stack, Table, Text, VisuallyHidden } from '@mantine/core';
-import { IconDownload, IconPencil, IconTrash } from '@tabler/icons-react';
+import { IconCheck, IconDownload, IconPencil, IconTrash, IconX } from '@tabler/icons-react';
 import { Link } from 'react-router';
 import { formatCount, formatTimerShort } from '../../format';
 import { CountryFlags } from '../CountryFlags';
@@ -18,6 +18,17 @@ const columns = [
   { label: 'Countries', width: 150, isNumber: false },
   { label: 'Attempts', width: 100, isNumber: true }
 ];
+
+const retakesMark = (quiz: AdminQuizItem) => (
+  <>
+    {quiz.retakesAllowed ? (
+      <IconCheck size={20} color="var(--mantine-primary-color-filled)" aria-hidden />
+    ) : (
+      <IconX size={20} color="var(--mantine-color-dimmed)" aria-hidden />
+    )}
+    <VisuallyHidden>{quiz.retakesAllowed ? 'Retakes allowed' : 'No retakes'}</VisuallyHidden>
+  </>
+);
 
 const countryFlags = (quiz: AdminQuizItem, { countries }: AdminQuizListProps) => (
   <CountryFlags codes={quiz.countries} countries={countries} />
@@ -105,7 +116,7 @@ const quizTable = (props: AdminQuizListProps) => (
                   {timerText(quiz)}
                 </TruncatedText>
               </Table.Td>
-              <Table.Td>{quiz.retakesAllowed ? 'Yes' : 'No'}</Table.Td>
+              <Table.Td>{retakesMark(quiz)}</Table.Td>
               <Table.Td>{countryFlags(quiz, props)}</Table.Td>
               <Table.Td ta="right">{quiz.attemptCount}</Table.Td>
               <Table.Td>{actions(quiz, props)}</Table.Td>

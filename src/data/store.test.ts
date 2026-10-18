@@ -1,3 +1,4 @@
+import { waitFor } from '@testing-library/react';
 import { beforeEach, describe, expect, it } from 'vitest';
 import { createDataStore, resetDataStore, STORAGE_KEY } from './store';
 
@@ -71,6 +72,32 @@ describe('data store', () => {
     resetDataStore(store);
 
     expect(createDataStore().getState().quizzes).toHaveLength(5);
+  });
+
+  it('picks up changes another tab saves, so it never writes back stale data', async () => {
+    const thisTab = createDataStore();
+    const otherTab = createDataStore();
+
+    otherTab.setState({ quizzes: otherTab.getState().quizzes.filter(quiz => quiz.id !== 'q1') });
+    window.dispatchEvent(new StorageEvent('storage', { key: STORAGE_KEY }));
+
+    await waitFor(() => {
+      expect(thisTab.getState().quizzes.map(quiz => quiz.id)).not.toContain('q1');
+    });
+    thisTab.setState({ users: thisTab.getState().users });
+    expect(readStorage().state.quizzes).toHaveLength(4);
+  });
+
+  it('ignores storage events for other keys', async () => {
+    const thisTab = createDataStore();
+    const otherTab = createDataStore();
+    otherTab.setState({ quizzes: [] });
+    localStorage.setItem(STORAGE_KEY, JSON.stringify({ state: thisTab.getState(), version: 1 }));
+
+    window.dispatchEvent(new StorageEvent('storage', { key: 'quizwise:session' }));
+    await new Promise(resolve => setTimeout(resolve, 0));
+
+    expect(thisTab.getState().quizzes).toHaveLength(5);
   });
 
   it('keeps the stored score and time of completed seed attempts', () => {

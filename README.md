@@ -104,7 +104,7 @@ Coverage only shows that code ran, not that a test would notice it breaking. To 
 
 ## Data
 
-On first load the seed (`src/data/seed.json`) is migrated and copied to localStorage under `quizwise:v1`. Every change after that is saved there, so a reload keeps it. If the stored data fails the schema (edited by hand or an old shape), the app falls back to the seed.
+On first load the seed (`src/data/seed.json`) is migrated and copied to localStorage under `quizwise:v1`. Every change after that is saved there, so a reload keeps it. If the stored data fails the schema (edited by hand or an old shape), the app falls back to the seed. Open tabs stay in sync: when one tab saves, the others reload the data through the browser's `storage` event, so a tab never writes back stale data and lists update without a reload. The selected user stays per tab.
 
 The selected user, the country filter and the slow network switch are saved separately under `quizwise:session`. They are checked when they load too, and a value with the wrong shape goes back to its default. Mantine remembers the colour scheme.
 
@@ -194,7 +194,6 @@ Added functions: `saveDraft`, `getQuizSummary`, `getAttemptResult`, `getEndedAtt
 
 - Everything lives in the browser. The UI never receives the correct answers during an attempt, but the full quiz data, answers included, is in localStorage, so anyone can read it in the browser's developer tools or make themselves admin by editing the stored user. The real fix is a backend that keeps the answers, scores attempts and checks roles on the server.
 - An expired in-progress attempt still shows as in progress on the quiz list until it is opened, which is when the "time ran out while you were away" screen appears.
-- Two tabs on the same attempt are not kept in sync.
 - New IDs come from `crypto.randomUUID`, which needs a secure context. Over plain HTTP (for example the dev server opened from a phone on the local network) starting an attempt, creating or importing a quiz, and adding a question or option fail. Over HTTPS, or on localhost, everything works.
 - Users with exactly the same score and time are ranked by who finished first, not given a shared rank.
 
@@ -217,7 +216,6 @@ Added functions: `saveDraft`, `getQuizSummary`, `getAttemptResult`, `getEndedAtt
 - **Explanations on the results page.** An optional note per question explaining the correct answer, shown only when the user can't retake the quiz (retakes off, or no attempts left). On quizzes with retakes, showing answers would let users look them up and retry for a full score.
 - **A question bank with random order.** Retakes wouldn't show the same questions in the same order.
 - **Scheduled quizzes.** Open and close dates for each quiz.
-- **Syncing two tabs.** Listen to the `storage` event so two tabs on the same attempt stay in step.
 - **Close expired attempts on the quiz list.** An attempt whose time ran out while the user was away would show as finished straight away instead of in progress.
 - **Shared ranks.** Users with exactly the same score and time would share a rank.
 - **More end-to-end tests.** A phone viewport, the timeout path and the admin flow, run on every pull request.

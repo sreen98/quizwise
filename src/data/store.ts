@@ -19,6 +19,9 @@ export const createDataStore = () => {
   );
 
   store.setState(store.getState(), true);
+  window.addEventListener('storage', event => {
+    if (event.key === STORAGE_KEY) void store.persist.rehydrate();
+  });
   return store;
 };
 

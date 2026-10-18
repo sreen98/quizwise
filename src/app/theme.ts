@@ -1,6 +1,22 @@
-import { Badge, Button, createTheme, Input, Modal, Switch, type CSSVariablesResolver } from '@mantine/core';
+import {
+  Avatar,
+  Badge,
+  Button,
+  Checkbox,
+  createTheme,
+  Input,
+  Modal,
+  Pagination,
+  Radio,
+  Switch,
+  ThemeIcon,
+  type CSSVariablesResolver
+} from '@mantine/core';
 
 const TOUCH_TARGET = '44px';
+const FILLED_INK = 'var(--filled-ink)';
+
+const isFilled = (variant: string | undefined) => (variant ?? 'filled') === 'filled';
 
 export const theme = createTheme({
   white: '#FFFDFA',
@@ -59,12 +75,26 @@ export const theme = createTheme({
   respectReducedMotion: true,
   components: {
     Modal: Modal.extend({ defaultProps: { centered: true } }),
-    Button: Button.extend({ vars: () => ({ root: { '--button-height': TOUCH_TARGET } }) }),
+    Button: Button.extend({
+      vars: (_theme, { variant }) => ({
+        root: { '--button-height': TOUCH_TARGET, '--button-color': isFilled(variant) ? FILLED_INK : undefined }
+      })
+    }),
+    ThemeIcon: ThemeIcon.extend({
+      vars: (_theme, { variant }) => ({ root: { '--ti-color': isFilled(variant) ? FILLED_INK : undefined } })
+    }),
+    Checkbox: Checkbox.extend({ vars: () => ({ root: { '--checkbox-icon-color': FILLED_INK } }) }),
+    Radio: Radio.extend({ vars: () => ({ root: { '--radio-icon-color': FILLED_INK } }) }),
+    Pagination: Pagination.extend({ vars: () => ({ root: { '--pagination-active-color': FILLED_INK } }) }),
+    Avatar: Avatar.extend({
+      vars: (_theme, { variant }) => ({ root: { '--avatar-color': variant === 'filled' ? FILLED_INK : undefined } })
+    }),
     Input: Input.extend({ vars: () => ({ wrapper: { '--input-height': TOUCH_TARGET } }) }),
     Switch: Switch.extend({ styles: { body: { minHeight: TOUCH_TARGET, alignItems: 'center' } } }),
     Badge: Badge.extend({
       defaultProps: { variant: 'light', radius: 'xs', size: 'lg' },
-      styles: { root: { textTransform: 'none', fontWeight: 600 } }
+      styles: { root: { textTransform: 'none', fontWeight: 600 } },
+      vars: (_theme, { variant }) => ({ root: { '--badge-color': variant === 'filled' ? FILLED_INK : undefined } })
     })
   }
 });
@@ -80,6 +110,7 @@ export const cssVariablesResolver: CSSVariablesResolver = () => ({
     '--warn-soft': '#FDF0E2',
     '--mantine-color-error': '#A64B07',
     '--skeleton': '#E8E3DA',
+    '--filled-ink': '#FFFDFA',
     '--mantine-color-body': '#FFFDFA',
     '--mantine-color-text': '#181B21',
     '--mantine-color-dimmed': '#545964',
@@ -93,6 +124,7 @@ export const cssVariablesResolver: CSSVariablesResolver = () => ({
     '--warn': '#F6A963',
     '--warn-soft': '#3A2614',
     '--mantine-color-error': '#F6A963',
-    '--skeleton': '#223047'
+    '--skeleton': '#223047',
+    '--filled-ink': '#0B111C'
   }
 });

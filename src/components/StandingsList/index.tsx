@@ -11,7 +11,7 @@ const rankChip = (rank: number, isMe: boolean) => (
     bdrs="md"
     fw={700}
     bg={isMe ? 'blue' : 'var(--surface-2)'}
-    c={isMe ? 'white' : undefined}
+    c={isMe ? 'var(--filled-ink)' : undefined}
     bd={isMe ? undefined : '1px solid var(--mantine-color-default-border)'}
   >
     <VisuallyHidden>Rank </VisuallyHidden>

@@ -1,10 +1,11 @@
-import { Anchor, Group, ThemeIcon } from '@mantine/core';
+import { Anchor, Box, Group, ThemeIcon } from '@mantine/core';
 import { IconCheck } from '@tabler/icons-react';
 import { useEffect } from 'react';
 import { Link, NavLink } from 'react-router';
 import { useCurrentUser } from '../../hooks/useCurrentUser';
 import { useUserOptions } from '../../hooks/useUserOptions';
 import { DEFAULT_USER_ID, useSessionStore } from '../../session/sessionStore';
+import { ColorSchemeToggle } from '../ColorSchemeToggle';
 import { SettingsMenu } from '../SettingsMenu';
 import { UserSelect } from '../UserSelect';
 import classes from './Header.module.css';
@@ -57,9 +58,14 @@ export const Header = () => {
         {links}
       </Group>
 
-      <Group gap={8} wrap="nowrap" visibleFrom="sm">
-        <UserSelect userOptions={userOptions} />
-        <SettingsMenu />
+      <Group gap={8} wrap="nowrap" ml="auto">
+        <Box visibleFrom="sm">
+          <UserSelect userOptions={userOptions} />
+        </Box>
+        <ColorSchemeToggle />
+        <Box visibleFrom="sm">
+          <SettingsMenu />
+        </Box>
       </Group>
     </Group>
   );

@@ -6,6 +6,7 @@ const entry = (rank: number, userName: string, score: number, timeTakenSeconds: 
   rank,
   userId: `u${String(rank)}`,
   userName,
+  country: 'IN',
   countryName: 'India',
   score,
   totalQuestions: 6,

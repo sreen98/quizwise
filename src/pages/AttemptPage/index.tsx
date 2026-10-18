@@ -138,6 +138,9 @@ export const AttemptPage = () => {
                     Question {question ? question.index + 1 : 1} of {question?.total ?? 1}
                   </Text>
                 </Skeleton>
+                <Box visibleFrom="sm">
+                  <KeyboardHint />
+                </Box>
                 <Skeleton visible={!question} w="fit-content">
                   <Text c="dimmed" fz={14}>
                     {question?.index ?? 0} answered
@@ -160,10 +163,7 @@ export const AttemptPage = () => {
                 <Skeleton h={360} radius="lg" />
               )}
 
-              <Group className={classes.actions} justify="space-between" gap={16} mt={{ base: 0, sm: 24 }}>
-                <Box visibleFrom="sm">
-                  <KeyboardHint />
-                </Box>
+              <Group className={classes.actions} justify="flex-end" gap={16} mt={{ base: 0, sm: 24 }}>
                 <Button
                   type="submit"
                   h={52}

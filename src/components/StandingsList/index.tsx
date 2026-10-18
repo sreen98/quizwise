@@ -1,5 +1,7 @@
 import { Avatar, Badge, Box, Flex, Group, Paper, Progress, Stack, Table, Text, VisuallyHidden } from '@mantine/core';
 import { formatClock, formatDateTime, formatScore } from '../../format';
+import type { LeaderboardEntry } from '../../service/types';
+import { CountryFlags } from '../CountryFlags';
 import type { StandingsListProps } from './types';
 
 const rankChip = (rank: number, isMe: boolean) => (
@@ -17,6 +19,10 @@ const rankChip = (rank: number, isMe: boolean) => (
     <VisuallyHidden>Rank </VisuallyHidden>
     {rank}
   </Flex>
+);
+
+const flag = (entry: LeaderboardEntry) => (
+  <CountryFlags codes={[entry.country]} countries={[{ code: entry.country, name: entry.countryName }]} />
 );
 
 const youBadge = (
@@ -62,7 +68,7 @@ export const StandingsList = ({ quizTitle, entries, userId }: StandingsListProps
                         {isMe && youBadge}
                       </Group>
                     </Table.Td>
-                    <Table.Td c="dimmed">{entry.countryName}</Table.Td>
+                    <Table.Td>{flag(entry)}</Table.Td>
                     <Table.Td fw={700} ff="monospace">
                       {formatScore(entry.score, entry.totalQuestions)}
                     </Table.Td>
@@ -106,9 +112,12 @@ export const StandingsList = ({ quizTitle, entries, userId }: StandingsListProps
                     </Text>
                     {isMe && youBadge}
                   </Group>
-                  <Text fz={13} c="dimmed">
-                    {entry.countryName}
-                  </Text>
+                  <Group gap={6} wrap="nowrap">
+                    {flag(entry)}
+                    <Text fz={13} c="dimmed">
+                      {entry.countryName}
+                    </Text>
+                  </Group>
                   <Group gap={16} fz={14} c="dimmed" mt={4}>
                     <span>
                       <Text component="b" ff="monospace" c="var(--mantine-color-text)" fw={700} inherit>

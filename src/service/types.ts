@@ -36,6 +36,7 @@ export interface LeaderboardEntry {
   rank: number;
   userId: string;
   userName: string;
+  country: string;
   countryName: string;
   score: number;
   totalQuestions: number;

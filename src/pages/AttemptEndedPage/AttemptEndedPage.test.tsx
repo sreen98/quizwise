@@ -17,7 +17,7 @@ describe('AttemptEndedPage', () => {
     expect(router.state.location.pathname).toBe('/attempts/a11/ended');
     expect(screen.getByText(/You started World Geography .* It has a 4 min limit/)).toBeInTheDocument();
     expect(screen.getByText('2 of 5')).toBeInTheDocument();
-    expect(screen.getByText('2 / 5 · 40%')).toBeInTheDocument();
+    expect(screen.getByText('2/5 · 40%')).toBeInTheDocument();
     expect(screen.getByText('4:00')).toBeInTheDocument();
     expect(screen.getByRole('link', { name: 'See results' })).toHaveAttribute('href', '/attempts/a11/results');
   });

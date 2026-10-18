@@ -124,7 +124,7 @@ const nextSteps = (result: ResultDetails) => (
   <SimpleGrid cols={{ base: 1, sm: 2 }} spacing={16}>
     {actionCard(
       `/leaderboard/${result.quizId}`,
-      'See where you stand',
+      'Your ranking',
       result.rank === null
         ? 'Open the leaderboard'
         : `Best rank #${String(result.rank)} of ${String(result.rankedCount)}`

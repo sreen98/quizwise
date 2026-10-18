@@ -89,6 +89,7 @@ const toLeaderboardEntry = (attempt: Attempt, index: number, { users, countries 
     rank: index + 1,
     userId: attempt.userId,
     userName: user?.name ?? 'Unknown user',
+    country: user?.country ?? '',
     countryName: countries.find(country => country.code === user?.country)?.name ?? '',
     score: attempt.score ?? 0,
     totalQuestions: attempt.totalQuestions,

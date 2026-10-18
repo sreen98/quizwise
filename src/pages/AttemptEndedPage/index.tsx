@@ -1,7 +1,8 @@
-import { Anchor, Box, Button, Card, Flex, Group, Skeleton, Stack, Text, Title } from '@mantine/core';
+import { Anchor, Box, Button, Card, Group, SimpleGrid, Skeleton, Stack, Text, ThemeIcon, Title } from '@mantine/core';
+import { IconHourglassEmpty, IconRefresh, IconTrashX } from '@tabler/icons-react';
 import type { ReactNode } from 'react';
 import { Link, Navigate, useLocation, useParams } from 'react-router';
-import { formatClock, formatDateTime, formatSeconds } from '../../format';
+import { formatClock, formatDateTime, formatScore, formatSeconds } from '../../format';
 import { useEndedAttempt } from '../../hooks/useEndedAttempt';
 import { useSessionStore } from '../../session/sessionStore';
 import type { EndedAttempt } from '../../service/types';
@@ -24,49 +25,58 @@ const focusOnMount = (heading: HTMLHeadingElement | null) => {
 };
 
 const stat = (label: string, value: ReactNode) => (
-  <Group key={label} className={classes.stat} justify="space-between" py={14} fz={15}>
-    <Text component="dt" c="dimmed" fw={600} inherit>
+  <Box key={label} className={classes.stat} pt={14}>
+    <Text component="dt" fz={13} c="dimmed" fw={600} mb={4}>
       {label}
     </Text>
-    <Box component="dd" m={0} fw={700}>
+    <Box component="dd" m={0} fz={{ base: 16, sm: 18 }} fw={700}>
       {value}
     </Box>
-  </Group>
+  </Box>
 );
 
-const message = (title: string, body: ReactNode, actions: ReactNode) => (
+const message = (icon: ReactNode, color: string, title: string, body: ReactNode, primaryAction?: ReactNode) => (
   <Stack gap={16}>
-    <Card component="section" aria-labelledby="ended-title" withBorder radius="lg" p={{ base: 22, sm: 32 }}>
+    <Card
+      component="section"
+      aria-labelledby="ended-title"
+      withBorder
+      radius="lg"
+      px={{ base: 22, sm: 32 }}
+      py={{ base: 32, sm: 48 }}
+    >
+      <ThemeIcon variant="light" color={color} size={64} radius="xl" display="flex" mx="auto" mb={18} aria-hidden>
+        {icon}
+      </ThemeIcon>
       <Title ref={focusOnMount} id="ended-title" tabIndex={-1} order={1} fz={{ base: 24, sm: 28 }} lh={1.25} mb={10}>
         {title}
       </Title>
       {body}
     </Card>
-    <Flex direction={{ base: 'column', sm: 'row' }} gap={10}>
-      {actions}
-    </Flex>
+    <Group justify="space-between" gap={10}>
+      <Button component={Link} to="/quizzes" variant="default">
+        Back to quizzes
+      </Button>
+      {primaryAction}
+    </Group>
   </Stack>
-);
-
-const backButton = (primary: boolean) => (
-  <Button component={Link} to="/quizzes" variant={primary ? 'filled' : 'default'} h={48}>
-    Back to quizzes
-  </Button>
 );
 
 const timeoutMessage = (attempt: EndedAttempt, isEndedWhileAway: boolean) =>
   message(
+    <IconHourglassEmpty size={34} />,
+    'orange',
     isEndedWhileAway ? 'Time ran out while you were away' : 'Time ran out',
     <>
       <Text c="dimmed" fz={15} lh={1.55} mb={20}>
         You started {attempt.quizTitle} {formatDateTime(attempt.startedAt)}. {limitSentence(attempt)}, so the attempt
         was finished with the answers you'd already given. Questions you didn't reach count as incorrect.
       </Text>
-      <Box component="dl" m={0}>
+      <SimpleGrid component="dl" cols={3} spacing={16} mt={8} mb={0}>
         {stat('Answered', `${String(attempt.answeredCount)} of ${String(attempt.totalQuestions)}`)}
         {stat(
           'Score',
-          `${String(attempt.score ?? 0)} / ${String(attempt.totalQuestions)} · ${String(attempt.percentage ?? 0)}%`
+          `${formatScore(attempt.score ?? 0, attempt.totalQuestions)} · ${String(attempt.percentage ?? 0)}%`
         )}
         {stat(
           'Time used',
@@ -74,14 +84,11 @@ const timeoutMessage = (attempt: EndedAttempt, isEndedWhileAway: boolean) =>
             {formatClock(attempt.timeTakenSeconds ?? 0)}
           </Text>
         )}
-      </Box>
+      </SimpleGrid>
     </>,
-    <>
-      <Button component={Link} to={`/attempts/${attempt.attemptId}/results`} h={48}>
-        See results
-      </Button>
-      {backButton(false)}
-    </>
+    <Button component={Link} to={`/attempts/${attempt.attemptId}/results`}>
+      See results
+    </Button>
   );
 
 const changedMessage = (attempt: EndedAttempt) => {
@@ -89,6 +96,8 @@ const changedMessage = (attempt: EndedAttempt) => {
     attempt.bestResult && `${String(attempt.bestResult.score)} / ${String(attempt.bestResult.totalQuestions)}`;
 
   return message(
+    <IconRefresh size={34} />,
+    'blue',
     'This quiz was updated',
     <Stack gap={14}>
       <Text c="dimmed" fz={15} lh={1.55}>
@@ -102,24 +111,22 @@ const changedMessage = (attempt: EndedAttempt) => {
         </Text>
       )}
     </Stack>,
-    <>
-      {attempt.canStartAgain && (
-        <Button component={Link} to={`/quizzes/${attempt.quizId}`} h={48}>
-          Start the new version
-        </Button>
-      )}
-      {backButton(!attempt.canStartAgain)}
-    </>
+    attempt.canStartAgain && (
+      <Button component={Link} to={`/quizzes/${attempt.quizId}`}>
+        Start the new version
+      </Button>
+    )
   );
 };
 
 const deletedMessage = message(
+  <IconTrashX size={34} />,
+  'orange',
   'This quiz is no longer available',
   <Text c="dimmed" fz={15} lh={1.55}>
     It was removed by an admin while you were taking it. Your progress wasn't scored and nothing was added to the
     leaderboard.
-  </Text>,
-  backButton(true)
+  </Text>
 );
 
 export const AttemptEndedPage = () => {
@@ -143,7 +150,7 @@ export const AttemptEndedPage = () => {
 
   if (state.status === 'loading') {
     return (
-      <Box maw={640} mx="auto">
+      <Box maw={520} mx="auto">
         <Skeleton h={260} radius="lg" />
       </Box>
     );
@@ -153,7 +160,7 @@ export const AttemptEndedPage = () => {
   if (attempt.endReason === 'submitted') return <Navigate to={`/attempts/${attempt.attemptId}/results`} replace />;
 
   return (
-    <Box maw={640} mx="auto">
+    <Box maw={520} mx="auto">
       {attempt.endReason === 'timeout' && timeoutMessage(attempt, isEndedWhileAway)}
       {attempt.endReason === 'quiz_changed' && changedMessage(attempt)}
       {attempt.endReason === 'quiz_deleted' && deletedMessage}

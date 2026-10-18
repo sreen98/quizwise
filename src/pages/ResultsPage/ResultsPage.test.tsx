@@ -24,7 +24,7 @@ describe('ResultsPage', () => {
   it('offers the leaderboard and a retake as next steps', async () => {
     renderRoute('/attempts/a1/results');
 
-    expect(await screen.findByRole('link', { name: /See where you stand\s*Best rank #3 of 4/ })).toHaveAttribute(
+    expect(await screen.findByRole('link', { name: /Your ranking\s*Best rank #3 of 4/ })).toHaveAttribute(
       'href',
       '/leaderboard/q1'
     );
@@ -51,7 +51,7 @@ describe('ResultsPage', () => {
     expect(await screen.findByText('Already completed')).toBeInTheDocument();
     expect(screen.getByText('This quiz allows one attempt, so this is your final result.')).toBeInTheDocument();
     expect(screen.queryByRole('link', { name: /Try again/ })).not.toBeInTheDocument();
-    expect(screen.getByRole('link', { name: /See where you stand/ })).toHaveAttribute('href', '/leaderboard/q2');
+    expect(screen.getByRole('link', { name: /Your ranking/ })).toHaveAttribute('href', '/leaderboard/q2');
   });
 
   it('hides the breakdown when the quiz has changed since the attempt', async () => {

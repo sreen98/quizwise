@@ -37,9 +37,7 @@ export const AttemptHeader = ({ quizTitle, timers, showExitConfirm }: AttemptHea
         component={Link}
         to="/quizzes"
         onClick={handleExit}
-        variant="subtle"
-        color="gray"
-        px={12}
+        variant="default"
         leftSection={<IconArrowLeft size={18} aria-hidden />}
         visibleFrom="sm"
       >
@@ -49,8 +47,7 @@ export const AttemptHeader = ({ quizTitle, timers, showExitConfirm }: AttemptHea
         component={Link}
         to="/quizzes"
         onClick={handleExit}
-        variant="subtle"
-        color="gray"
+        variant="default"
         size={44}
         aria-label="Save and exit"
         hiddenFrom="sm"

@@ -309,7 +309,7 @@ describe('AttemptPage', () => {
       expect(await screen.findByRole('heading', { name: 'Time ran out' })).toBeInTheDocument();
       expect(router.state.location.pathname).toMatch(/\/ended$/);
       expect(screen.getByText('1 of 6')).toBeInTheDocument();
-      expect(screen.getByText('1 / 6 · 16.7%')).toBeInTheDocument();
+      expect(screen.getByText('1/6 · 16.7%')).toBeInTheDocument();
     });
 
     it('closes the leave dialog when the time runs out', async () => {

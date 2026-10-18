@@ -1,4 +1,4 @@
-import { Card, Fieldset, Text, Title } from '@mantine/core';
+import { Box, Card, Fieldset, Text, Title } from '@mantine/core';
 import { useEffect, useRef } from 'react';
 import { OptionList } from '../OptionList';
 import classes from './QuestionView.module.css';
@@ -38,9 +38,13 @@ export const QuestionView = ({ question, value, onChange, disabled }: QuestionVi
           </Title>
         }
       >
-        <Text c="dimmed" fz={{ base: 14, sm: 15 }} mt={10} mb={24}>
-          {question.type === 'multiple' ? 'Multiple choice · Select all that apply' : 'Single choice · Pick one'}
-        </Text>
+        {question.type === 'multiple' ? (
+          <Text c="dimmed" fz={{ base: 14, sm: 15 }} mt={10} mb={24}>
+            Multiple choice · Select all that apply
+          </Text>
+        ) : (
+          <Box h={20} />
+        )}
         <OptionList
           type={question.type}
           options={question.options}

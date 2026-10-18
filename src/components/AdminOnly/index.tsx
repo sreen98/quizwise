@@ -1,4 +1,5 @@
-import { Badge, Button, Flex, Paper, Skeleton, Text, Title } from '@mantine/core';
+import { Badge, Box, Button, Flex, Paper, Skeleton, Text, ThemeIcon, Title } from '@mantine/core';
+import { IconLock } from '@tabler/icons-react';
 import { Suspense } from 'react';
 import { Link, Outlet } from 'react-router';
 import { useCurrentUser } from '../../hooks/useCurrentUser';
@@ -33,9 +34,14 @@ export const AdminOnly = () => {
         py={{ base: 32, sm: 48 }}
         ta="center"
       >
-        <Badge color="orange" mb={16}>
-          Admins only
-        </Badge>
+        <ThemeIcon variant="light" color="orange" size={72} radius="xl" mb={16} aria-hidden>
+          <IconLock size={38} />
+        </ThemeIcon>
+        <Box>
+          <Badge color="orange" mb={16}>
+            Admins only
+          </Badge>
+        </Box>
         <Title id="no-access-title" order={1} fz={{ base: 26, sm: 30 }} lts="-0.01em" mb={12}>
           You don't have access to this page
         </Title>

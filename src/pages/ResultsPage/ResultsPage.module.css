@@ -13,3 +13,11 @@
     transition: none;
   }
 }
+
+.side {
+  @mixin larger-than $mantine-breakpoint-lg {
+    position: sticky;
+    top: 88px;
+    align-self: start;
+  }
+}

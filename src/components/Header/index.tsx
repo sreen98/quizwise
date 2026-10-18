@@ -45,6 +45,8 @@ export const Header = () => {
         fz={17}
         fw={700}
         lts="-0.01em"
+        display="block"
+        py={8}
       >
         <Group gap={10} wrap="nowrap">
           <ThemeIcon size={28} radius="md" aria-hidden>

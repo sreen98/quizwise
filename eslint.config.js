@@ -47,6 +47,27 @@ export default defineConfig([
     }
   },
   {
+    files: ['src/pages/**', 'src/components/**'],
+    ignores: ['**/*.test.{ts,tsx}'],
+    rules: {
+      'no-restricted-imports': [
+        'error',
+        {
+          patterns: [
+            {
+              group: ['**/data/store', '**/data/migrate'],
+              message: 'Read and change data through quizService, not the data store.'
+            },
+            {
+              group: ['**/service/quizService'],
+              message: 'Call quizService from a hook, not from a page or component.'
+            }
+          ]
+        }
+      ]
+    }
+  },
+  {
     files: ['src/**/*.{ts,tsx}'],
     ignores: ['src/test/**', '**/*.test.{ts,tsx}'],
     rules: {

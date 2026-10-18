@@ -125,6 +125,10 @@ export const cssVariablesResolver: CSSVariablesResolver = () => ({
     '--warn-soft': '#3A2614',
     '--mantine-color-error': '#F6A963',
     '--skeleton': '#223047',
-    '--filled-ink': '#0B111C'
+    '--filled-ink': '#0B111C',
+    '--mantine-color-blue-light': '#1B2947',
+    '--mantine-color-blue-light-color': '#86A8FF',
+    '--mantine-color-orange-light': '#3A2614',
+    '--mantine-color-orange-light-color': '#F6A963'
   }
 });

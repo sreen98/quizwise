@@ -66,7 +66,7 @@ const summary = (result: ResultDetails) => (
           {praiseFor(result.percentage)}, {result.userName.split(' ')[0]}. You scored {result.score} out of{' '}
           {result.totalQuestions}.
         </Text>
-        <SimpleGrid component="dl" cols={{ base: 2, sm: 4 }} spacing={12} m={0}>
+        <SimpleGrid component="dl" cols={{ base: 2, sm: 4, lg: 2, xl: 4 }} spacing={12} m={0}>
           {stat('Correct', result.correctCount)}
           {stat('Incorrect', result.incorrectCount)}
           {stat(
@@ -164,11 +164,11 @@ const breakdown = (result: ResultDetails) => (
     </Title>
     {result.breakdown ? (
       <Box component="ol" m={0} p={0}>
-        {result.breakdown.map((item, index) => (
+        {result.breakdown.map((item, index, items) => (
           <Box component="li" key={item.questionId} display="block">
             {index > 0 && <Divider />}
             <Group gap={14} py={14} wrap="nowrap" align="flex-start">
-              <Text ff="monospace" c="dimmed" fw={700} w={24}>
+              <Text ff="monospace" c="dimmed" fw={700} w={`${String(String(items.length).length + 1)}ch`}>
                 {index + 1}
               </Text>
               <Text flex={1}>{item.text}</Text>
@@ -206,20 +206,26 @@ export const ResultsPage = () => {
 
   if (state.status === 'loading') {
     return (
-      <Stack maw={920} mx="auto" gap={24}>
-        <Skeleton h={240} radius="lg" />
-        <Skeleton h={84} radius="lg" />
+      <SimpleGrid maw={{ base: 920, lg: 1280 }} mx="auto" cols={{ base: 1, lg: 2 }} spacing={24}>
+        <Stack gap={24}>
+          <Skeleton h={240} radius="lg" />
+          <Skeleton h={84} radius="lg" />
+        </Stack>
         <Skeleton h={320} radius="lg" />
-      </Stack>
+      </SimpleGrid>
     );
   }
 
   return (
-    <Stack maw={920} mx="auto" gap={20}>
+    <Stack maw={{ base: 920, lg: 1280 }} mx="auto" gap={20}>
       <Box>{backLink}</Box>
-      {summary(state)}
-      {nextSteps(state)}
-      {breakdown(state)}
+      <SimpleGrid cols={{ base: 1, lg: 2 }} spacing={20}>
+        <Stack gap={20} className={classes.side}>
+          {summary(state)}
+          {nextSteps(state)}
+        </Stack>
+        {breakdown(state)}
+      </SimpleGrid>
     </Stack>
   );
 };

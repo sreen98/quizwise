@@ -131,16 +131,15 @@ export const QuestionEditor = ({ form, question, index, total, onClose, handle }
                     flex={1}
                     {...form.getInputProps(`${path}.options.${String(optionIndex)}.text`)}
                   />
-                  <Group gap={8} wrap="nowrap">
+                  <Group component="label" gap={8} wrap="nowrap" justify="center" mih={44} miw={44}>
                     <Checkbox
-                      id={`${option.id}-correct`}
                       aria-label={`Option ${optionNumber} is correct`}
                       checked={question.correctOptionIds.includes(option.id)}
                       onChange={event => {
                         toggleCorrect(option.id, event.currentTarget.checked);
                       }}
                     />
-                    <Text component="label" htmlFor={`${option.id}-correct`} fz={14} visibleFrom="sm">
+                    <Text fz={14} visibleFrom="sm">
                       Correct
                     </Text>
                   </Group>

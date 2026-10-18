@@ -1,21 +1,11 @@
 import { Button, Text } from '@mantine/core';
 import { modals } from '@mantine/modals';
 import { notifications } from '@mantine/notifications';
-import { useLeaveAttemptPages } from '../../hooks/useLeaveAttemptPages';
-import { quizService } from '../../service/quizService';
-import { useSessionStore } from '../../session/sessionStore';
+import { useResetData } from '../../hooks/useResetData';
 import type { ResetDataButtonProps } from './types';
 
 export const ResetDataButton = ({ onDialogOpen }: ResetDataButtonProps) => {
-  const setCountry = useSessionStore(state => state.setCountry);
-  const leaveAttemptPages = useLeaveAttemptPages();
-
-  const resetData = async () => {
-    leaveAttemptPages();
-    setCountry(null);
-    await quizService.resetData();
-    notifications.show({ message: 'Data reset' });
-  };
+  const resetData = useResetData();
 
   const handleClick = () => {
     onDialogOpen();
@@ -27,7 +17,9 @@ export const ResetDataButton = ({ onDialogOpen }: ResetDataButtonProps) => {
       labels: { confirm: 'Reset data', cancel: 'Cancel' },
       confirmProps: { color: 'orange' },
       onConfirm: () => {
-        void resetData();
+        void resetData().then(() => {
+          notifications.show({ message: 'Data reset' });
+        });
       }
     });
   };

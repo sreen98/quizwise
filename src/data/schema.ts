@@ -1,6 +1,8 @@
 import { z } from 'zod';
 import type { QuizData, QuizInput } from '../types/models';
 
+z.config({ jitless: true });
+
 const id = z.string().min(1);
 const seconds = z
   .number({ message: 'Enter a whole number above 0' })

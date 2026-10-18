@@ -8,12 +8,7 @@
     <link rel="manifest" href="/site.webmanifest" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Quizwise</title>
-    <script>
-      try {
-        var scheme = localStorage.getItem('mantine-color-scheme-value') === 'dark' ? 'dark' : 'light';
-        document.documentElement.setAttribute('data-mantine-color-scheme', scheme);
-      } catch (error) {}
-    </script>
+    <script src="/color-scheme.js"></script>
   </head>
   <body>
     <div id="root"></div>

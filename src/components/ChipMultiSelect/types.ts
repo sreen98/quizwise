@@ -15,4 +15,5 @@ export interface ChipMultiSelectProps {
   error?: ReactNode;
   onFocus?: () => void;
   onBlur?: () => void;
+  renderIcon?: (value: string) => ReactNode;
 }

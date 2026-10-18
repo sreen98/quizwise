@@ -6,7 +6,6 @@ export interface QuestionEditorProps {
   form: UseFormReturnType<QuizInput>;
   question: Question;
   index: number;
-  total: number;
   onClose: () => void;
   handle: ReactNode;
 }

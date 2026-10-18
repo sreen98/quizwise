@@ -3,6 +3,7 @@ import userEvent from '@testing-library/user-event';
 import { useState } from 'react';
 import { describe, expect, it } from 'vitest';
 import { renderWithProviders } from '../../test/renderWithProviders';
+import { Flag } from '../Flag';
 import { ChipMultiSelect } from '.';
 
 const countries = [
@@ -61,6 +62,25 @@ describe('ChipMultiSelect', () => {
 
     await user.type(screen.getByRole('combobox', { name: 'Available in' }), 'zzz');
     expect(await screen.findByText('No countries found')).toBeInTheDocument();
+  });
+
+  it('shows the given icon next to each option and on each chip', async () => {
+    const user = userEvent.setup();
+    renderWithProviders(
+      <ChipMultiSelect
+        label="Available in"
+        placeholder="Search countries"
+        nothingFoundMessage="No countries found"
+        data={countries}
+        value={['GB']}
+        onChange={() => {}}
+        renderIcon={code => <Flag code={code} />}
+      />
+    );
+
+    expect(screen.getByRole('button', { name: 'Remove United Kingdom' }).querySelector('.fi-gb')).toBeInTheDocument();
+    await user.click(screen.getByRole('combobox', { name: 'Available in' }));
+    expect((await screen.findByRole('option', { name: 'India' })).querySelector('.fi-in')).toBeInTheDocument();
   });
 
   it('picks an option with the keyboard', async () => {

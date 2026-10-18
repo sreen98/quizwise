@@ -13,6 +13,12 @@ const toggleCountry = async (user: ReturnType<typeof userEvent.setup>, name: str
   await user.click(await screen.findByRole('option', { name }));
 };
 
+const fillDetails = async (user: ReturnType<typeof userEvent.setup>) => {
+  await user.type(await titleInput(), 'Astronomy');
+  await toggleCountry(user, 'India');
+  await user.click(screen.getByRole('button', { name: 'Next' }));
+};
+
 describe('QuizEditorPage', () => {
   beforeAll(async () => {
     await import('.');
@@ -87,12 +93,42 @@ describe('QuizEditorPage', () => {
     expect(screen.getByText('Unsaved changes')).toBeInTheDocument();
   });
 
+  it('asks for the details first and moves on only when they are valid', async () => {
+    const user = userEvent.setup();
+    renderRoute('/admin/quizzes/new');
+
+    await titleInput();
+    expect(screen.queryByRole('heading', { name: /Questions/ })).not.toBeInTheDocument();
+    await user.click(screen.getByRole('button', { name: 'Next' }));
+
+    expect(await screen.findByText('Enter a title')).toBeInTheDocument();
+    expect(screen.getByText('Pick at least one country')).toBeInTheDocument();
+    await waitFor(() => {
+      expect(screen.getByRole('textbox', { name: /Title/ })).toHaveFocus();
+    });
+    expect(screen.queryByRole('heading', { name: /Questions/ })).not.toBeInTheDocument();
+  });
+
+  it('opens the questions step with the first question ready to fill in', async () => {
+    const user = userEvent.setup();
+    renderRoute('/admin/quizzes/new');
+
+    await fillDetails(user);
+
+    expect(await screen.findByRole('heading', { name: 'Questions (1)' })).toBeInTheDocument();
+    await waitFor(() => {
+      expect(screen.getByRole('textbox', { name: 'Question text' })).toHaveFocus();
+    });
+    expect(screen.getByRole('button', { name: 'Add another question' })).toBeInTheDocument();
+    expect(screen.getByRole('textbox', { name: /Title/ })).toHaveValue('Astronomy');
+  });
+
   it('asks for a question before a new quiz can be created', async () => {
     const user = userEvent.setup();
     const { router } = renderRoute('/admin/quizzes/new');
 
-    await user.type(await titleInput(), 'Astronomy');
-    await toggleCountry(user, 'India');
+    await fillDetails(user);
+    await user.click(await screen.findByRole('button', { name: 'Delete question 1' }));
     await user.click(screen.getByRole('button', { name: 'Create quiz' }));
 
     expect(await screen.findByText('Add at least one question')).toBeInTheDocument();
@@ -103,10 +139,8 @@ describe('QuizEditorPage', () => {
     const user = userEvent.setup();
     const { router } = renderRoute('/admin/quizzes/new');
 
-    await user.type(await titleInput(), 'Astronomy');
-    await toggleCountry(user, 'India');
-    await user.click(screen.getByRole('button', { name: 'Add question' }));
-    await user.type(screen.getByRole('textbox', { name: 'Question text' }), 'Which planet is largest?');
+    await fillDetails(user);
+    await user.type(await screen.findByRole('textbox', { name: 'Question text' }), 'Which planet is largest?');
     await user.type(screen.getByRole('textbox', { name: 'Option 1' }), 'Mars');
     await user.type(screen.getByRole('textbox', { name: 'Option 2' }), 'Jupiter');
     await user.click(screen.getByRole('checkbox', { name: 'Option 2 is correct' }));
@@ -123,10 +157,8 @@ describe('QuizEditorPage', () => {
     const user = userEvent.setup();
     renderRoute('/admin/quizzes/new');
 
-    await user.type(await titleInput(), 'Astronomy');
-    await toggleCountry(user, 'India');
-    await user.click(screen.getByRole('button', { name: 'Add question' }));
-    await user.click(screen.getByRole('button', { name: 'Create quiz' }));
+    await fillDetails(user);
+    await user.click(await screen.findByRole('button', { name: 'Create quiz' }));
 
     expect(await screen.findByText('Enter the question text')).toBeInTheDocument();
     expect(screen.getAllByText('Enter the option text')).toHaveLength(2);
@@ -151,7 +183,8 @@ describe('QuizEditorPage', () => {
 
     await user.click(await screen.findByRole('button', { name: 'Edit question 2' }));
     expect(screen.getByRole('checkbox', { name: 'Option 3 is correct' })).toBeChecked();
-    await user.click(screen.getByRole('radio', { name: 'Single choice' }));
+    expect(screen.getByRole('switch', { name: 'Allow multiple answers' })).toBeChecked();
+    await user.click(screen.getByRole('switch', { name: 'Allow multiple answers' }));
 
     expect(screen.getByRole('checkbox', { name: 'Option 1 is correct' })).toBeChecked();
     expect(screen.getByRole('checkbox', { name: 'Option 3 is correct' })).not.toBeChecked();
@@ -169,16 +202,17 @@ describe('QuizEditorPage', () => {
     expect(screen.queryByRole('textbox', { name: 'Option 5' })).not.toBeInTheDocument();
   });
 
-  it('moves and deletes questions', async () => {
+  it('collapses and deletes questions', async () => {
     const user = userEvent.setup();
     renderRoute('/admin/quizzes/q5/edit');
 
     await user.click(await screen.findByRole('button', { name: 'Edit question 2' }));
-    await user.click(screen.getByRole('button', { name: 'Move question 2 up' }));
     expect(screen.getByRole('textbox', { name: 'Question text' })).toHaveValue('Which of these are noble gases?');
-    expect(screen.getByRole('button', { name: 'Move question 1 down' })).toBeInTheDocument();
+    await user.click(screen.getByRole('button', { name: 'Collapse question 2' }));
+    expect(screen.queryByRole('textbox', { name: 'Question text' })).not.toBeInTheDocument();
 
-    await user.click(screen.getByRole('button', { name: 'Delete question 1' }));
+    await user.click(screen.getByRole('button', { name: 'Edit question 2' }));
+    await user.click(screen.getByRole('button', { name: 'Delete question 2' }));
 
     expect(screen.getByRole('heading', { name: 'Questions (5)' })).toBeInTheDocument();
     expect(screen.queryByText('Which of these are noble gases?')).not.toBeInTheDocument();
@@ -333,9 +367,7 @@ describe('QuizEditorPage', () => {
     renderRoute('/admin/quizzes/q5/edit');
 
     await titleInput();
-    const [topButton] = screen.getAllByRole('button', { name: 'Add question' });
-    if (!topButton) throw new Error('No Add question button');
-    await user.click(topButton);
+    await user.click(screen.getByRole('button', { name: 'Add another question' }));
 
     expect(screen.getByRole('heading', { name: 'Questions (7)' })).toBeInTheDocument();
     await waitFor(() => {

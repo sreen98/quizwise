@@ -1,4 +1,4 @@
-import { Box, Button, CheckIcon, Combobox, Group, InputBase, ScrollArea, useCombobox } from '@mantine/core';
+import { Box, Button, CheckIcon, Combobox, Group, InputBase, ScrollArea, Text, useCombobox } from '@mantine/core';
 import { IconX } from '@tabler/icons-react';
 import { useState } from 'react';
 import type { ChipMultiSelectProps } from './types';
@@ -12,7 +12,8 @@ export const ChipMultiSelect = ({
   onChange,
   error,
   onFocus,
-  onBlur
+  onBlur,
+  renderIcon
 }: ChipMultiSelectProps) => {
   const [search, setSearch] = useState('');
   const combobox = useCombobox({
@@ -74,8 +75,11 @@ export const ChipMultiSelect = ({
               ) : (
                 matches.map(item => (
                   <Combobox.Option key={item.value} value={item.value} active={value.includes(item.value)}>
-                    <Group justify="space-between" wrap="nowrap" gap={8}>
-                      {item.label}
+                    <Group wrap="nowrap" gap={10}>
+                      {renderIcon?.(item.value)}
+                      <Text inherit flex={1}>
+                        {item.label}
+                      </Text>
                       {value.includes(item.value) && <CheckIcon size={12} aria-hidden />}
                     </Group>
                   </Combobox.Option>
@@ -93,6 +97,7 @@ export const ChipMultiSelect = ({
               variant="light"
               radius="lg"
               size="compact-md"
+              leftSection={renderIcon?.(item.value)}
               rightSection={<IconX size={16} aria-hidden />}
               aria-label={`Remove ${item.label}`}
               onClick={() => {

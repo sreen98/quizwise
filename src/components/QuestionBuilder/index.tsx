@@ -17,18 +17,8 @@ import type { Question } from '../../types/models';
 import { QuestionEditor } from '../QuestionEditor';
 import { SortableQuestion } from '../SortableQuestion';
 import classes from './QuestionBuilder.module.css';
+import { newQuestion } from './newQuestion';
 import type { QuestionBuilderProps } from './types';
-
-const newQuestion = (): Question => ({
-  id: crypto.randomUUID(),
-  text: '',
-  type: 'single',
-  options: [
-    { id: crypto.randomUUID(), text: '' },
-    { id: crypto.randomUUID(), text: '' }
-  ],
-  correctOptionIds: []
-});
 
 const errorText = (error: unknown) => (typeof error === 'string' ? error : null);
 
@@ -38,9 +28,11 @@ const screenReaderInstructions = {
 };
 
 export const QuestionBuilder = ({ form }: QuestionBuilderProps) => {
-  const [openIds, setOpenIds] = useState<string[]>([]);
+  const [openIds, setOpenIds] = useState(() =>
+    form.values.questions.filter(question => !question.text).map(question => question.id)
+  );
   const lastOverId = useRef<UniqueIdentifier | null>(null);
-  const pendingFocusId = useRef<string | null>(null);
+  const pendingFocusId = useRef(openIds[0] ?? null);
   const { questions } = form.values;
   const sensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 6 } }),
@@ -157,7 +149,6 @@ export const QuestionBuilder = ({ form }: QuestionBuilderProps) => {
                       form={form}
                       question={question}
                       index={index}
-                      total={questions.length}
                       onClose={() => {
                         toggle(question.id);
                       }}
@@ -186,7 +177,7 @@ export const QuestionBuilder = ({ form }: QuestionBuilderProps) => {
         className={classes.addBar}
       >
         <Button variant="default" onClick={addQuestion}>
-          Add question
+          {questions.length > 0 ? 'Add another question' : 'Add question'}
         </Button>
       </Box>
     </>

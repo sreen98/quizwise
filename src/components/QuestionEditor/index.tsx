@@ -6,27 +6,20 @@ import {
   Checkbox,
   Fieldset,
   Group,
-  SegmentedControl,
   Stack,
+  Switch,
   Text,
   TextInput,
   UnstyledButton
 } from '@mantine/core';
-import { IconArrowDown, IconArrowUp, IconTrash, IconX } from '@tabler/icons-react';
+import { IconChevronUp, IconPlus, IconTrash, IconX } from '@tabler/icons-react';
 import { formatCount } from '../../format';
 import type { QuestionType } from '../../types/models';
 import type { QuestionEditorProps } from './types';
 
-const typeOptions: { value: QuestionType; label: string }[] = [
-  { value: 'single', label: 'Single choice' },
-  { value: 'multiple', label: 'Multiple choice' }
-];
-
-const isQuestionType = (value: string): value is QuestionType => value === 'single' || value === 'multiple';
-
 const errorText = (error: unknown) => (typeof error === 'string' ? error : null);
 
-export const QuestionEditor = ({ form, question, index, total, onClose, handle }: QuestionEditorProps) => {
+export const QuestionEditor = ({ form, question, index, onClose, handle }: QuestionEditorProps) => {
   const number = String(index + 1);
   const path = `questions.${String(index)}`;
   const problems = Object.keys(form.errors).filter(key => key.startsWith(`${path}.`)).length;
@@ -66,30 +59,6 @@ export const QuestionEditor = ({ form, question, index, total, onClose, handle }
           variant="subtle"
           color="gray"
           size={44}
-          aria-label={`Move question ${number} up`}
-          disabled={index === 0}
-          onClick={() => {
-            form.reorderListItem('questions', { from: index, to: index - 1 });
-          }}
-        >
-          <IconArrowUp size={18} aria-hidden />
-        </ActionIcon>
-        <ActionIcon
-          variant="subtle"
-          color="gray"
-          size={44}
-          aria-label={`Move question ${number} down`}
-          disabled={index === total - 1}
-          onClick={() => {
-            form.reorderListItem('questions', { from: index, to: index + 1 });
-          }}
-        >
-          <IconArrowDown size={18} aria-hidden />
-        </ActionIcon>
-        <ActionIcon
-          variant="subtle"
-          color="gray"
-          size={44}
           aria-label={`Delete question ${number}`}
           onClick={() => {
             form.removeListItem('questions', index);
@@ -97,27 +66,26 @@ export const QuestionEditor = ({ form, question, index, total, onClose, handle }
         >
           <IconTrash size={18} aria-hidden />
         </ActionIcon>
+        <ActionIcon
+          variant="subtle"
+          color="gray"
+          size={44}
+          aria-label={`Collapse question ${number}`}
+          onClick={onClose}
+        >
+          <IconChevronUp size={18} aria-hidden />
+        </ActionIcon>
       </Group>
 
       <Stack gap={18} px={{ base: 14, sm: 20 }} pt={8} pb={{ base: 14, sm: 20 }}>
-        <Group gap={16} align="flex-start" wrap="wrap">
-          <TextInput
-            id={`${question.id}-text`}
-            label="Question text"
-            flex="1 1 260px"
-            {...form.getInputProps(`${path}.text`)}
-          />
-          <Fieldset legend="Answer type" variant="unstyled" p={0} w={{ base: '100%', sm: 'auto' }}>
-            <SegmentedControl
-              fullWidth
-              data={typeOptions}
-              value={question.type}
-              onChange={value => {
-                if (isQuestionType(value)) changeType(value);
-              }}
-            />
-          </Fieldset>
-        </Group>
+        <TextInput id={`${question.id}-text`} label="Question text" {...form.getInputProps(`${path}.text`)} />
+        <Switch
+          label="Allow multiple answers"
+          checked={question.type === 'multiple'}
+          onChange={event => {
+            changeType(event.currentTarget.checked ? 'multiple' : 'single');
+          }}
+        />
 
         <Fieldset
           legend={
@@ -172,9 +140,9 @@ export const QuestionEditor = ({ form, question, index, total, onClose, handle }
               </Text>
             ))}
           <Button
-            variant="subtle"
-            mt={8}
-            px={10}
+            variant="default"
+            mt={12}
+            leftSection={<IconPlus size={16} aria-hidden />}
             onClick={() => {
               form.insertListItem(`${path}.options`, { id: crypto.randomUUID(), text: '' });
             }}

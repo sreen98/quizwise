@@ -163,7 +163,7 @@ export const QuestionEditor = ({ form, question, index, total, onClose, handle }
           {[errorText(form.errors[`${path}.options`]), errorText(form.errors[`${path}.correctOptionIds`])]
             .filter(message => message !== null)
             .map(message => (
-              <Text key={message} c="var(--mantine-color-error)" fz={13} mt={6}>
+              <Text key={message} c="var(--mantine-color-error)" fz={13} mt={6} data-form-error>
                 {message}
               </Text>
             ))}

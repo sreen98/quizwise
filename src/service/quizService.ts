@@ -31,6 +31,24 @@ const wait = (milliseconds: number) =>
     setTimeout(resolve, milliseconds);
   });
 
+const toInput = ({
+  title,
+  description,
+  countries,
+  timeLimitSeconds,
+  perQuestionSeconds,
+  retakesAllowed,
+  questions
+}: Quiz): QuizInput => ({
+  title,
+  description,
+  countries,
+  timeLimitSeconds,
+  perQuestionSeconds,
+  retakesAllowed,
+  questions
+});
+
 const toDetails = (quiz: Quiz): QuizDetails => ({
   id: quiz.id,
   title: quiz.title,
@@ -373,7 +391,9 @@ export const createQuizService = (
     updateQuiz: (quizId: string, data: QuizInput) =>
       respond((): Quiz => {
         const existing = findQuiz(quizId);
-        const quiz: Quiz = { ...parseQuizInput(data), id: existing.id, version: existing.version + 1 };
+        const input = parseQuizInput(data);
+        if (JSON.stringify(input) === JSON.stringify(toInput(existing))) return existing;
+        const quiz: Quiz = { ...input, id: existing.id, version: existing.version + 1 };
         store.setState(state => ({ quizzes: state.quizzes.map(item => (item.id === quizId ? quiz : item)) }));
         return quiz;
       }),
@@ -387,12 +407,7 @@ export const createQuizService = (
         }));
       }),
 
-    exportQuiz: (quizId: string) =>
-      respond((): QuizInput => {
-        const { title, description, countries, timeLimitSeconds, perQuestionSeconds, retakesAllowed, questions } =
-          findQuiz(quizId);
-        return { title, description, countries, timeLimitSeconds, perQuestionSeconds, retakesAllowed, questions };
-      }),
+    exportQuiz: (quizId: string) => respond(() => toInput(findQuiz(quizId))),
 
     importQuiz: (json: string) =>
       respond((): ImportResult => {

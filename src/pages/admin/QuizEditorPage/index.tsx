@@ -32,7 +32,15 @@ export const QuizEditorPage = () => {
   }
 
   const handleSubmit = async (values: QuizInput) => {
-    await save(values);
+    try {
+      await save(values);
+    } catch {
+      notifications.show({
+        color: 'orange',
+        message: `Couldn't save ${values.title}. The quiz may have been deleted.`
+      });
+      return;
+    }
     notifications.show({ message: quizId ? `${values.title} saved` : `${values.title} created` });
     await navigate('/admin');
   };

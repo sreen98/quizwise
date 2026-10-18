@@ -57,7 +57,10 @@ const quizFields = z.object({
   id,
   title: z.string().trim().min(1, 'Enter a title'),
   description: z.string().trim(),
-  countries: z.array(z.string().min(1)).min(1, 'Pick at least one country'),
+  countries: z
+    .array(z.string().min(1))
+    .min(1, 'Pick at least one country')
+    .refine(codes => !hasDuplicates(codes), 'Each country can only be picked once'),
   timeLimitSeconds: seconds,
   perQuestionSeconds: seconds,
   retakesAllowed: z.boolean(),

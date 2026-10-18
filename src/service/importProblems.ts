@@ -29,9 +29,15 @@ const placeOf = (path: PropertyKey[]) => {
   return typeof field === 'string' ? (fieldLabels[field] ?? field) : null;
 };
 
+const messageOf = (issue: z.core.$ZodIssue) => {
+  if (issue.code === 'invalid_type') return 'Missing or not the right kind of value';
+  if (issue.code === 'invalid_value') return `Use one of ${issue.values.map(String).join(', ')}`;
+  return issue.message;
+};
+
 const describeIssue = (issue: z.core.$ZodIssue) => {
   const place = placeOf(issue.path);
-  const message = issue.code === 'invalid_type' ? 'Missing or not the right kind of value' : issue.message;
+  const message = messageOf(issue);
   return place ? `${place}: ${message}` : "This file doesn't contain a quiz.";
 };
 

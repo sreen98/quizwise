@@ -19,7 +19,7 @@ import {
 } from '@mantine/core';
 import { schemaResolver, useForm, type UseFormReturnType } from '@mantine/form';
 import { IconArrowLeft } from '@tabler/icons-react';
-import { useState } from 'react';
+import { useState, type SyntheticEvent } from 'react';
 import { Link } from 'react-router';
 import { quizInputSchema } from '../../data/schema';
 import { useUnsavedChangesPrompt } from '../../hooks/useUnsavedChangesPrompt';
@@ -79,6 +79,7 @@ const limitInput = (form: UseFormReturnType<QuizInput>, row: LimitRow) => {
             form.setFieldValue(row.field, typeof value === 'number' ? value * row.secondsPerUnit : 0);
           }}
           disabled={seconds === null}
+          error={Boolean(form.errors[row.field])}
           allowDecimal={false}
           allowNegative={false}
           hideControls
@@ -107,6 +108,15 @@ export const QuizForm = ({ initialValues, countries, isNew, onSubmit }: QuizForm
   });
   useUnsavedChangesPrompt(form.isDirty() && !saving);
 
+  const showFirstError = (_errors: unknown, _values: QuizInput, event?: SyntheticEvent<HTMLFormElement>) => {
+    const formElement = event?.target instanceof HTMLFormElement ? event.target : null;
+    setTimeout(() => {
+      const target = formElement?.querySelector<HTMLElement>('[aria-invalid="true"], [data-form-error]');
+      if (target?.matches('[aria-invalid="true"]')) target.focus();
+      else target?.scrollIntoView({ block: 'center' });
+    }, 0);
+  };
+
   const handleSubmit = async (values: QuizInput) => {
     setSaving(true);
     try {
@@ -117,7 +127,7 @@ export const QuizForm = ({ initialValues, countries, isNew, onSubmit }: QuizForm
   };
 
   return (
-    <Box component="form" noValidate onSubmit={form.onSubmit(values => void handleSubmit(values))}>
+    <Box component="form" noValidate onSubmit={form.onSubmit(values => void handleSubmit(values), showFirstError)}>
       <Flex
         pos={{ base: 'static', sm: 'sticky' }}
         top={{ base: 60, sm: 68 }}

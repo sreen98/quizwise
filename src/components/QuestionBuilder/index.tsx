@@ -162,7 +162,7 @@ export const QuestionBuilder = ({ form }: QuestionBuilderProps) => {
         </SortableContext>
       </DndContext>
       {errorText(form.errors.questions) && (
-        <Text c="var(--mantine-color-error)" fz={13} mt={10}>
+        <Text c="var(--mantine-color-error)" fz={13} mt={10} data-form-error>
           {errorText(form.errors.questions)}
         </Text>
       )}

@@ -179,22 +179,20 @@ export const AdminQuizListPage = () => {
         )}
 
         {!loading && shown.length > 0 && (
-          <>
-            <AdminQuizList
-              quizzes={shown}
-              onExport={quiz => {
-                exportQuiz(quiz).catch(() => {
-                  notifications.show({
-                    color: 'orange',
-                    message: `Couldn't export ${quiz.title}. It may have been deleted.`
-                  });
+          <AdminQuizList
+            quizzes={shown}
+            onExport={quiz => {
+              exportQuiz(quiz).catch(() => {
+                notifications.show({
+                  color: 'orange',
+                  message: `Couldn't export ${quiz.title}. It may have been deleted.`
                 });
-              }}
-              onDelete={quiz => {
-                confirmDelete(quiz, deleteQuiz);
-              }}
-            />
-          </>
+              });
+            }}
+            onDelete={quiz => {
+              confirmDelete(quiz, deleteQuiz);
+            }}
+          />
         )}
       </Paper>
 

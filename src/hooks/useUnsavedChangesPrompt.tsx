@@ -2,11 +2,13 @@ import { Text } from '@mantine/core';
 import { modals } from '@mantine/modals';
 import { useEffect } from 'react';
 import { useBlocker } from 'react-router';
+import { useSessionStore } from '../session/sessionStore';
 
 const LEAVE_MODAL_ID = 'leave-unsaved';
 
 export const useUnsavedChangesPrompt = (hasChanges: boolean) => {
   const blocker = useBlocker(hasChanges);
+  const setHasUnsavedChanges = useSessionStore(state => state.setHasUnsavedChanges);
 
   useEffect(() => {
     if (blocker.state !== 'blocked') return;
@@ -33,6 +35,13 @@ export const useUnsavedChangesPrompt = (hasChanges: boolean) => {
     },
     []
   );
+
+  useEffect(() => {
+    setHasUnsavedChanges(hasChanges);
+    return () => {
+      setHasUnsavedChanges(false);
+    };
+  }, [hasChanges, setHasUnsavedChanges]);
 
   useEffect(() => {
     if (!hasChanges) return;

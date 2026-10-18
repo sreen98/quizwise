@@ -6,9 +6,11 @@ interface SessionState {
   userId: string;
   country: string | null;
   slowNetwork: boolean;
+  hasUnsavedChanges: boolean;
   setUserId: (userId: string) => void;
   setCountry: (country: string | null) => void;
   setSlowNetwork: (enabled: boolean) => void;
+  setHasUnsavedChanges: (hasUnsavedChanges: boolean) => void;
 }
 
 export const DEFAULT_USER_ID = 'u1';
@@ -19,6 +21,7 @@ export const useSessionStore = create<SessionState>()(
       userId: DEFAULT_USER_ID,
       country: null,
       slowNetwork: true,
+      hasUnsavedChanges: false,
       setUserId: userId => {
         set({ userId, country: null });
       },
@@ -27,9 +30,16 @@ export const useSessionStore = create<SessionState>()(
       },
       setSlowNetwork: slowNetwork => {
         set({ slowNetwork });
+      },
+      setHasUnsavedChanges: hasUnsavedChanges => {
+        set({ hasUnsavedChanges });
       }
     }),
-    { name: 'quizwise:session', storage: createJSONStorage(() => localStorage) }
+    {
+      name: 'quizwise:session',
+      storage: createJSONStorage(() => localStorage),
+      partialize: ({ userId, country, slowNetwork }) => ({ userId, country, slowNetwork })
+    }
   )
 );
 

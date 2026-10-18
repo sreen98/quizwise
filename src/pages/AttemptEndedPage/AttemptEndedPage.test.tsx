@@ -24,7 +24,7 @@ describe('AttemptEndedPage', () => {
 
   it('closes the attempt when the quiz was updated and keeps the earlier best score', async () => {
     const { attemptId } = await quizService.startOrResumeAttempt('q1', 'u1');
-    await quizService.updateQuiz('q1', await quizService.getQuizForEdit('q1'));
+    await quizService.updateQuiz('q1', { ...(await quizService.getQuizForEdit('q1')), description: 'Revised' });
 
     renderRoute(`/attempts/${attemptId}`);
 

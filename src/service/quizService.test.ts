@@ -636,7 +636,7 @@ describe('getAttemptResult', () => {
 
   it('leaves out the breakdown once the quiz has changed since the attempt', async () => {
     const { service } = setup();
-    await service.updateQuiz('q1', await service.getQuizForEdit('q1'));
+    await service.updateQuiz('q1', { ...(await service.getQuizForEdit('q1')), title: 'JavaScript Basics, revised' });
 
     expect(await service.getAttemptResult('a1')).toMatchObject({ score: 5, breakdown: null });
   });
@@ -679,7 +679,7 @@ describe('getEndedAttempt', () => {
   it('keeps the earlier best result when the quiz was updated during the attempt', async () => {
     const { service } = setup();
     const { attemptId } = await service.startOrResumeAttempt('q1', 'u1');
-    await service.updateQuiz('q1', await service.getQuizForEdit('q1'));
+    await service.updateQuiz('q1', { ...(await service.getQuizForEdit('q1')), description: 'Revised' });
 
     expect(await service.getEndedAttempt(attemptId)).toMatchObject({
       quizTitle: 'JavaScript Basics',
@@ -770,6 +770,16 @@ describe('updateQuiz', () => {
     await service.updateQuiz('q1', { ...q1, title: 'JavaScript Basics, revised' });
 
     expect(await service.getCurrentQuestion(attemptId)).toEqual({ status: 'closed', endReason: 'quiz_changed' });
+  });
+
+  it('keeps the version and running attempts when saved without changes', async () => {
+    const { service, attemptId } = await startQ1();
+    const q1 = await service.getQuizForEdit('q1');
+
+    const saved = await service.updateQuiz('q1', await service.exportQuiz('q1'));
+
+    expect(saved.version).toBe(q1.version);
+    expect(await service.getCurrentQuestion(attemptId)).toMatchObject({ status: 'in_progress' });
   });
 
   it('rejects an unknown quiz', async () => {
@@ -891,6 +901,22 @@ describe('importQuiz', () => {
         'Question 1, correct answers: Mark at least one correct option'
       ]
     });
+  });
+
+  it('names the allowed values when a value is not one of them', async () => {
+    const quiz = newQuiz();
+    const broken = { ...quiz, questions: [{ ...quiz.questions[0], type: 'true_false' }] };
+
+    await expect(setup().service.importQuiz(JSON.stringify(broken))).resolves.toEqual({
+      isImported: false,
+      problems: ['Question 1, answer type: Use one of single, multiple']
+    });
+  });
+
+  it('rejects a country listed twice', async () => {
+    await expect(
+      setup().service.importQuiz(JSON.stringify({ ...newQuiz(), countries: ['GB', 'GB'] }))
+    ).resolves.toEqual({ isImported: false, problems: ['Available in: Each country can only be picked once'] });
   });
 
   it('rejects a country the app does not know', async () => {

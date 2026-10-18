@@ -272,6 +272,58 @@ describe('QuizEditorPage', () => {
     expect(unload()).toBe(true);
   });
 
+  it('asks before switching user with unsaved changes and stays when the admin keeps editing', async () => {
+    const user = userEvent.setup();
+    renderRoute('/admin/quizzes/q5/edit');
+
+    await user.type(await titleInput(), ' Quiz');
+    await user.click(screen.getByRole('combobox', { name: 'Viewing as' }));
+    await user.click(await screen.findByRole('option', { name: 'Aarav Menon' }));
+    await user.click(await screen.findByRole('button', { name: 'Keep editing' }));
+
+    expect(useSessionStore.getState().userId).toBe('u5');
+    expect(screen.getByRole('textbox', { name: /Title/ })).toHaveValue('General Science Quiz');
+  });
+
+  it('switches user and drops the changes when the admin confirms', async () => {
+    const user = userEvent.setup();
+    renderRoute('/admin/quizzes/q5/edit');
+
+    await user.type(await titleInput(), ' Quiz');
+    await user.click(screen.getByRole('combobox', { name: 'Viewing as' }));
+    await user.click(await screen.findByRole('option', { name: 'Aarav Menon' }));
+    await user.click(await screen.findByRole('button', { name: 'Switch user' }));
+
+    expect(await screen.findByRole('heading', { name: "You don't have access to this page" })).toBeInTheDocument();
+    expect(useSessionStore.getState()).toMatchObject({ userId: 'u1', hasUnsavedChanges: false });
+  });
+
+  it('says so and stays on the form when the quiz was deleted before saving', async () => {
+    const user = userEvent.setup();
+    const { router } = renderRoute('/admin/quizzes/q5/edit');
+
+    await user.type(await titleInput(), ' Quiz');
+    await quizService.deleteQuiz('q5');
+    await user.click(screen.getByRole('button', { name: 'Save quiz' }));
+
+    expect(
+      await screen.findByText("Couldn't save General Science Quiz. The quiz may have been deleted.")
+    ).toBeInTheDocument();
+    expect(router.state.location.pathname).toBe('/admin/quizzes/q5/edit');
+  });
+
+  it('moves focus to the first field with a problem when saving fails validation', async () => {
+    const user = userEvent.setup();
+    renderRoute('/admin/quizzes/q5/edit');
+
+    await user.clear(await titleInput());
+    await user.click(screen.getByRole('button', { name: 'Save quiz' }));
+
+    await waitFor(() => {
+      expect(screen.getByRole('textbox', { name: /Title/ })).toHaveFocus();
+    });
+  });
+
   it('says when the quiz to edit does not exist', async () => {
     renderRoute('/admin/quizzes/q99/edit');
 

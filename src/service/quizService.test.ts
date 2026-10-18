@@ -416,6 +416,16 @@ describe('submitAnswer', () => {
     expect(answers()).toEqual([expect.objectContaining({ questionId: 'q1-1', selectedOptionIds: [] })]);
   });
 
+  it('counts only answers with a selection as answered', async () => {
+    const { service, attemptId, correct } = await startQ1();
+
+    await service.submitAnswer(attemptId, 'q1-1', correct(0));
+    await service.submitAnswer(attemptId, 'q1-2', []);
+
+    expect(await service.getCurrentQuestion(attemptId)).toMatchObject({ index: 2, answered: [true, false] });
+    expect((await service.getQuizSummary('q1', 'u5')).inProgress).toMatchObject({ answeredCount: 1 });
+  });
+
   it('rejects an option from another question', async () => {
     const { service, attemptId, correct } = await startQ1();
 

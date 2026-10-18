@@ -4,12 +4,14 @@ import { isWarning } from '../../hooks/useCountdown';
 import classes from './TimerBadge.module.css';
 import type { TimerBadgeProps } from './types';
 
+const URGENT_MS = 5000;
+
 export const TimerBadge = ({ scope, remainingMs, limitSeconds, showShortLabel }: TimerBadgeProps) => {
   return (
     <Group
       role="timer"
       className={classes.badge}
-      mod={{ warning: isWarning(remainingMs, limitSeconds) }}
+      mod={{ warning: isWarning(remainingMs, limitSeconds), urgent: remainingMs > 0 && remainingMs <= URGENT_MS }}
       gap={8}
       wrap="nowrap"
       justify="flex-end"

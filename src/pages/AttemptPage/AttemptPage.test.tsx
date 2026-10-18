@@ -299,6 +299,20 @@ describe('AttemptPage', () => {
       expect(screen.getByText('1 answered')).toBeInTheDocument();
     });
 
+    it('counts a question that ran out of time with nothing selected as missed', async () => {
+      renderRoute(`/attempts/${await startQuiz('q2')}`);
+      await screen.findByRole('radio', { name: 'useEffect' });
+
+      await advance(30_000);
+
+      expect(await screen.findByText('Question 2 of 7')).toBeInTheDocument();
+      expect(screen.getByText('0 answered, 1 missed')).toBeInTheDocument();
+      expect(screen.getByRole('progressbar', { name: 'Quiz progress' })).toHaveAttribute(
+        'aria-valuetext',
+        '0 answered, 1 missed, 6 to go'
+      );
+    });
+
     it('submits the selection and says time ran out when the whole quiz runs out', async () => {
       const user = userEvent.setup({ advanceTimers: vi.advanceTimersByTime });
       const { router } = renderRoute(`/attempts/${await startQuiz()}`);

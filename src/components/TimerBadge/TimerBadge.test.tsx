@@ -27,6 +27,19 @@ describe('TimerBadge', () => {
     expect(screen.getByRole('timer')).toHaveAttribute('data-warning');
   });
 
+  it('pulses for attention only in the last 5 seconds', () => {
+    const { rerender } = renderWithProviders(
+      <TimerBadge scope="question" remainingMs={5_100} limitSeconds={30} showShortLabel={false} />
+    );
+    expect(screen.getByRole('timer')).not.toHaveAttribute('data-urgent');
+
+    rerender(<TimerBadge scope="question" remainingMs={5_000} limitSeconds={30} showShortLabel={false} />);
+    expect(screen.getByRole('timer')).toHaveAttribute('data-urgent');
+
+    rerender(<TimerBadge scope="question" remainingMs={0} limitSeconds={30} showShortLabel={false} />);
+    expect(screen.getByRole('timer')).not.toHaveAttribute('data-urgent');
+  });
+
   it('waits until 10 seconds are left when the limit is only 30 seconds', () => {
     const { rerender } = renderWithProviders(
       <TimerBadge scope="question" remainingMs={25_000} limitSeconds={30} showShortLabel={false} />

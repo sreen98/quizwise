@@ -48,6 +48,14 @@ const timersFor = (question: QuestionInProgress) => {
   return timers;
 };
 
+const answeredLabel = (answered: boolean[]) => {
+  const answeredCount = answered.filter(Boolean).length;
+  const missedCount = answered.length - answeredCount;
+  return missedCount > 0
+    ? `${String(answeredCount)} answered, ${String(missedCount)} missed`
+    : `${String(answeredCount)} answered`;
+};
+
 export const AttemptPage = () => {
   const { attemptId = '' } = useParams();
   const userId = useSessionStore(state => state.userId);
@@ -143,12 +151,16 @@ export const AttemptPage = () => {
                 </Box>
                 <Skeleton visible={!question} w="fit-content">
                   <Text c="dimmed" fz={14}>
-                    {question?.index ?? 0} answered
+                    {answeredLabel(question?.answered ?? [])}
                   </Text>
                 </Skeleton>
               </Group>
               <Box mb={{ base: 20, sm: 32 }}>
-                {question ? <SegmentedProgress total={question.total} answered={question.index} /> : <Skeleton h={6} />}
+                {question ? (
+                  <SegmentedProgress total={question.total} answered={question.answered} />
+                ) : (
+                  <Skeleton h={6} />
+                )}
               </Box>
 
               {question ? (

@@ -2,7 +2,7 @@ import type { StoreApi } from 'zustand/vanilla';
 import { dataStore, resetDataStore } from '../data/store';
 import { parseQuizInput, quizInputSchema } from '../data/schema';
 import type { Attempt, Quiz, QuizData, QuizInput } from '../types/models';
-import { finishAttempt, recordAnswer, settleAttempt, toPublicQuestion, toSelection } from './attempts';
+import { finishAttempt, hasSelection, recordAnswer, settleAttempt, toPublicQuestion, toSelection } from './attempts';
 import { describeProblems } from './importProblems';
 import { simulatedDelay } from './latency';
 import { rankBestAttempts } from './ranking';
@@ -75,7 +75,11 @@ const toListItem = (quiz: Quiz, quizAttempts: Attempt[], userId: string): QuizLi
     bestPercentage: best?.percentage ?? null,
     bestAttemptId: best?.id ?? null,
     inProgress: inProgress
-      ? { attemptId: inProgress.id, answeredCount: inProgress.answers.length, startedAt: inProgress.startedAt }
+      ? {
+          attemptId: inProgress.id,
+          answeredCount: inProgress.answers.filter(hasSelection).length,
+          startedAt: inProgress.startedAt
+        }
       : null,
     rank: rankIndex === -1 ? null : rankIndex + 1,
     rankedCount: ranked.length
@@ -110,6 +114,7 @@ const toCurrentQuestion = (attempt: Attempt, quiz: Quiz | undefined): CurrentQue
     quizTitle: quiz.title,
     question: toPublicQuestion(question),
     index: attempt.currentQuestionIndex,
+    answered: attempt.answers.map(hasSelection),
     total: quiz.questions.length,
     timeLimitSeconds: quiz.timeLimitSeconds,
     perQuestionSeconds: quiz.perQuestionSeconds,
@@ -351,7 +356,7 @@ export const createQuizService = (
           startedAt: attempt.startedAt,
           timeLimitSeconds: quiz?.timeLimitSeconds ?? null,
           perQuestionSeconds: quiz?.perQuestionSeconds ?? null,
-          answeredCount: attempt.answers.filter(answer => answer.selectedOptionIds.length > 0).length,
+          answeredCount: attempt.answers.filter(hasSelection).length,
           totalQuestions: attempt.totalQuestions,
           score: attempt.score,
           percentage: attempt.percentage,

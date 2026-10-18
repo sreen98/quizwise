@@ -63,6 +63,7 @@ export interface QuestionInProgress {
   quizTitle: string;
   question: PublicQuestion;
   index: number;
+  answered: boolean[];
   total: number;
   timeLimitSeconds: number | null;
   perQuestionSeconds: number | null;

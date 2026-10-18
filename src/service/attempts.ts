@@ -1,4 +1,4 @@
-import type { Attempt, AttemptEndReason, PublicQuestion, Question, Quiz } from '../types/models';
+import type { Answer, Attempt, AttemptEndReason, PublicQuestion, Question, Quiz } from '../types/models';
 import { isAnswerCorrect, summariseAttempt } from './scoring';
 import { getDeadlines } from './timing';
 
@@ -10,6 +10,8 @@ export const toPublicQuestion = ({ id, text, type, options }: Question): PublicQ
   type,
   options
 });
+
+export const hasSelection = (answer: Answer) => answer.selectedOptionIds.length > 0;
 
 export const toSelection = (question: Question, optionIds: string[]): string[] => {
   const selection = [...new Set(optionIds)];

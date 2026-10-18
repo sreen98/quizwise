@@ -80,7 +80,9 @@ describe('QuizListPage', () => {
     renderRoute('/quizzes');
     const geography = await card('World Geography');
 
-    expect(geography.getByText('In progress · 2 of 5 answered')).toBeInTheDocument();
+    expect(geography.getByText('In progress')).toBeInTheDocument();
+    expect(geography.getByLabelText('2 of 5 answered')).toBeInTheDocument();
+    expect(geography.getByText('3 left')).toBeInTheDocument();
     expect(geography.getByRole('link', { name: 'Resume' })).toHaveAttribute('href', '/attempts/a11');
   });
 
@@ -88,9 +90,9 @@ describe('QuizListPage', () => {
     renderRoute('/quizzes');
     const javascript = await card('JavaScript Basics');
 
-    expect(javascript.getByText('Completed · 83%')).toBeInTheDocument();
-    expect(javascript.getByText('Best score')).toBeInTheDocument();
-    expect(javascript.getByText('5 / 6')).toBeInTheDocument();
+    expect(javascript.getByText('Completed')).toBeInTheDocument();
+    expect(javascript.getByLabelText('Best score 83%')).toBeInTheDocument();
+    expect(javascript.getByText('5 / 6 correct')).toBeInTheDocument();
     expect(javascript.getByRole('link', { name: 'Rank #3 of 4' })).toHaveAttribute('href', '/leaderboard/q1');
     expect(javascript.getByRole('link', { name: 'Retake' })).toHaveAttribute('href', '/quizzes/q1');
   });
@@ -99,9 +101,8 @@ describe('QuizListPage', () => {
     renderRoute('/quizzes');
     const react = await card('React Fundamentals');
 
-    expect(react.getByText('Only once')).toBeInTheDocument();
-    expect(react.getByText('30 s')).toBeInTheDocument();
-    expect(react.getByText('for each question')).toBeInTheDocument();
+    expect(react.getByText('Completed')).toBeInTheDocument();
+    expect(react.queryByRole('link', { name: 'Retake' })).not.toBeInTheDocument();
     expect(react.getByRole('link', { name: 'View result' })).toHaveAttribute('href', '/attempts/a5/results');
   });
 
@@ -109,8 +110,9 @@ describe('QuizListPage', () => {
     renderRoute('/quizzes');
     const kerala = await card('Kerala Culture and History');
 
-    expect(kerala.getByText('Not started')).toBeInTheDocument();
-    expect(kerala.getByText('India only')).toBeInTheDocument();
+    expect(kerala.queryByText('Not started')).not.toBeInTheDocument();
+    expect(kerala.getByRole('img', { name: 'Available in India' })).toBeInTheDocument();
+    expect(kerala.getByText('5 questions · 3:00 · Only once')).toBeInTheDocument();
     expect(kerala.getByRole('link', { name: 'Start' })).toHaveAttribute('href', '/quizzes/q4');
   });
 

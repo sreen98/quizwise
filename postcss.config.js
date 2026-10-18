@@ -8,6 +8,9 @@ export default {
         'mantine-breakpoint-md': '62em',
         'mantine-breakpoint-lg': '75em',
         'mantine-breakpoint-xl': '88em'
+      },
+      unknown: (node, name) => {
+        if (!node.source?.input.file?.includes('node_modules')) throw node.error(`Undefined variable $${name}`);
       }
     }
   }

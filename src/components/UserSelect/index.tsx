@@ -1,8 +1,12 @@
-import { Select, Text } from '@mantine/core';
+import { Avatar, CheckIcon, Group, Select, Text } from '@mantine/core';
 import { modals } from '@mantine/modals';
 import { useLeaveAttemptPages } from '../../hooks/useLeaveAttemptPages';
 import { useSessionStore } from '../../session/sessionStore';
 import type { UserSelectProps } from './types';
+
+const avatar = (name: string, size: number) => (
+  <Avatar name={name} color="blue" variant="light" size={size} aria-hidden />
+);
 
 export const UserSelect = ({ userOptions, onDone }: UserSelectProps) => {
   const userId = useSessionStore(state => state.userId);
@@ -34,6 +38,8 @@ export const UserSelect = ({ userOptions, onDone }: UserSelectProps) => {
     });
   };
 
+  const selectedName = userOptions.find(option => option.value === userId)?.label;
+
   return (
     <Select
       aria-label="Viewing as"
@@ -43,6 +49,16 @@ export const UserSelect = ({ userOptions, onDone }: UserSelectProps) => {
       placeholder="Loading users"
       disabled={!loaded}
       allowDeselect={false}
+      leftSection={selectedName && avatar(selectedName, 24)}
+      renderOption={({ option, checked }) => (
+        <Group gap={10} wrap="nowrap" flex={1}>
+          {avatar(option.label, 28)}
+          <Text fz="sm" flex={1}>
+            {option.label}
+          </Text>
+          {checked && <CheckIcon size={12} aria-hidden />}
+        </Group>
+      )}
       w={{ base: '100%', sm: 240 }}
     />
   );

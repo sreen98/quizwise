@@ -25,7 +25,7 @@ export const ResetDataButton = ({ onDialogOpen }: ResetDataButtonProps) => {
   };
 
   return (
-    <Button variant="subtle" color="gray" onClick={handleClick}>
+    <Button variant="light" color="orange" fullWidth onClick={handleClick}>
       Reset data
     </Button>
   );

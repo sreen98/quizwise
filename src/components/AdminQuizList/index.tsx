@@ -1,19 +1,13 @@
 import { ActionIcon, Badge, Box, Divider, Group, Stack, Table, Text, VisuallyHidden } from '@mantine/core';
 import { IconDownload, IconPencil, IconTrash } from '@tabler/icons-react';
 import { Link } from 'react-router';
-import { formatClock, formatCount, formatSeconds } from '../../format';
+import { formatCount, formatTimerShort } from '../../format';
 import { TruncatedText } from '../TruncatedText';
 import type { AdminQuizItem } from '../../service/types';
 import type { AdminQuizListProps } from './types';
 
-const timerText = ({ timeLimitSeconds, perQuestionSeconds }: AdminQuizItem) => {
-  if (timeLimitSeconds !== null && perQuestionSeconds !== null) {
-    return `${formatClock(timeLimitSeconds)} + ${formatSeconds(perQuestionSeconds)} / q`;
-  }
-  if (timeLimitSeconds !== null) return formatClock(timeLimitSeconds);
-  if (perQuestionSeconds !== null) return `${formatSeconds(perQuestionSeconds)} / q`;
-  return 'None';
-};
+const timerText = ({ timeLimitSeconds, perQuestionSeconds }: AdminQuizItem) =>
+  formatTimerShort(timeLimitSeconds, perQuestionSeconds) ?? 'None';
 
 const columns = [
   { label: 'Title', width: undefined },

@@ -2,10 +2,8 @@ import { Box, Button, Flex, Group, Pagination, Stack, Text } from '@mantine/core
 import { useIntersection, useMediaQuery } from '@mantine/hooks';
 import { useEffect, useEffectEvent, useRef } from 'react';
 import { paginate } from './paginate';
-import classes from './PaginatedList.module.css';
 import type { PaginatedListProps } from './types';
 
-const HEADER_OFFSET = 84;
 const DESKTOP_QUERY = '(min-width: 48em)';
 
 export const PaginatedList = <T,>({
@@ -18,7 +16,6 @@ export const PaginatedList = <T,>({
   children
 }: PaginatedListProps<T>) => {
   const isDesktop = useMediaQuery(DESKTOP_QUERY, true, { getInitialValueInEffect: false });
-  const rootRef = useRef<HTMLDivElement>(null);
   const isScrollPending = useRef(false);
   const { ref: sentinelRef, entry } = useIntersection({ rootMargin: '200px' });
   const { page, pageCount, shown } = paginate(items, requestedPage, pageSize);
@@ -37,8 +34,7 @@ export const PaginatedList = <T,>({
   useEffect(() => {
     if (!isScrollPending.current) return;
     isScrollPending.current = false;
-    const root = rootRef.current;
-    if (root && root.getBoundingClientRect().top < HEADER_OFFSET) root.scrollIntoView({ block: 'start' });
+    window.scrollTo(0, 0);
   }, [page]);
 
   const handlePageChange = (value: number) => {
@@ -58,7 +54,7 @@ export const PaginatedList = <T,>({
       : `Showing ${String(total)} ${total === 1 ? itemName : itemsName}`;
 
   return (
-    <Stack ref={rootRef} gap={20} className={classes.root}>
+    <Stack gap={20}>
       {children(isDesktop ? shown : loaded)}
       {total > 0 && isDesktop && (
         <Flex justify="space-between" align="center" gap={12}>

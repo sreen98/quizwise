@@ -23,16 +23,13 @@ export const formatClock = (totalSeconds: number) => {
   return `${String(minutes)}:${String(seconds).padStart(2, '0')}`;
 };
 
-export const formatTimeLimits = (
-  timeLimitSeconds: number | null,
-  perQuestionSeconds: number | null
-): [main: string, detail: string] => {
+export const formatTimerShort = (timeLimitSeconds: number | null, perQuestionSeconds: number | null) => {
   if (timeLimitSeconds !== null && perQuestionSeconds !== null) {
-    return [`${formatSeconds(timeLimitSeconds)} overall`, `${formatSeconds(perQuestionSeconds)} per question`];
+    return `${formatClock(timeLimitSeconds)} + ${formatSeconds(perQuestionSeconds)} / q`;
   }
-  if (timeLimitSeconds !== null) return [formatSeconds(timeLimitSeconds), 'for the whole quiz'];
-  if (perQuestionSeconds !== null) return [formatSeconds(perQuestionSeconds), 'for each question'];
-  return ['No limit', 'untimed'];
+  if (timeLimitSeconds !== null) return formatClock(timeLimitSeconds);
+  if (perQuestionSeconds !== null) return `${formatSeconds(perQuestionSeconds)} / q`;
+  return null;
 };
 
 export const formatDateTime = (isoDate: string, now = Date.now()) => {

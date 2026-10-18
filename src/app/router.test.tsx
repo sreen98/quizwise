@@ -1,10 +1,14 @@
 import { screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { describe, expect, it, vi } from 'vitest';
+import { beforeAll, describe, expect, it, vi } from 'vitest';
 import { useSessionStore } from '../session/sessionStore';
 import { renderRoute } from '../test/renderWithProviders';
 
 describe('routes', () => {
+  beforeAll(async () => {
+    await Promise.all([import('../pages/admin/AdminQuizListPage'), import('../pages/admin/QuizEditorPage')]);
+  });
+
   it('redirects the home page to the quiz list', async () => {
     const { router } = renderRoute('/');
 

@@ -27,7 +27,7 @@ export const TestDataButton = ({ onDialogOpen }: TestDataButtonProps) => {
   };
 
   return (
-    <Button variant="subtle" color="gray" onClick={handleClick}>
+    <Button variant="default" fullWidth onClick={handleClick}>
       Load test data
     </Button>
   );

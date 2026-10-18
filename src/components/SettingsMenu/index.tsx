@@ -1,4 +1,4 @@
-import { ActionIcon, Divider, Popover, Stack, Text } from '@mantine/core';
+import { ActionIcon, Divider, Popover, Stack } from '@mantine/core';
 import { useDisclosure } from '@mantine/hooks';
 import { IconSettings } from '@tabler/icons-react';
 import { useRef } from 'react';
@@ -18,15 +18,19 @@ export const SettingsMenu = () => {
   return (
     <Popover opened={opened} onChange={toggle} position="bottom-end" width={260} shadow="md" trapFocus>
       <Popover.Target>
-        <ActionIcon ref={targetRef} variant="subtle" color="gray" size={44} aria-label="Settings" onClick={toggle}>
+        <ActionIcon
+          ref={targetRef}
+          variant={opened ? 'light' : 'subtle'}
+          color={opened ? 'blue' : 'gray'}
+          size={44}
+          aria-label="Settings"
+          onClick={toggle}
+        >
           <IconSettings size={22} aria-hidden />
         </ActionIcon>
       </Popover.Target>
-      <Popover.Dropdown>
+      <Popover.Dropdown aria-label="Settings">
         <Stack gap="sm">
-          <Text fw={600} size="sm">
-            Settings
-          </Text>
           <SlowNetworkSwitch />
           <Divider />
           <ResetDataButton onDialogOpen={handleDialogOpen} />

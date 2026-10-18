@@ -5,7 +5,7 @@ import {
   formatDateTime,
   formatScore,
   formatSeconds,
-  formatTimeLimits,
+  formatTimerShort,
   greetingFor
 } from './format';
 
@@ -25,12 +25,12 @@ describe('formatClock', () => {
   });
 });
 
-describe('formatTimeLimits', () => {
-  it('gives a main value and a detail line for every kind of limit', () => {
-    expect(formatTimeLimits(300, null)).toEqual(['5 min', 'for the whole quiz']);
-    expect(formatTimeLimits(null, 30)).toEqual(['30 s', 'for each question']);
-    expect(formatTimeLimits(360, 45)).toEqual(['6 min overall', '45 s per question']);
-    expect(formatTimeLimits(null, null)).toEqual(['No limit', 'untimed']);
+describe('formatTimerShort', () => {
+  it('describes every kind of time limit in a few characters', () => {
+    expect(formatTimerShort(300, null)).toBe('5:00');
+    expect(formatTimerShort(null, 30)).toBe('30 s / q');
+    expect(formatTimerShort(360, 45)).toBe('6:00 + 45 s / q');
+    expect(formatTimerShort(null, null)).toBeNull();
   });
 });
 

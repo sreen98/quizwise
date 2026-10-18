@@ -4,7 +4,6 @@ import {
   Box,
   Button,
   Group,
-  Kbd,
   Paper,
   Skeleton,
   Stack,
@@ -16,6 +15,7 @@ import { useHotkeys } from '@mantine/hooks';
 import type { SubmitEvent } from 'react';
 import { Link, Navigate, useParams } from 'react-router';
 import { AttemptHeader } from '../../components/AttemptHeader';
+import { KeyboardHint } from '../../components/KeyboardHint';
 import { QuestionView } from '../../components/QuestionView';
 import { SegmentedProgress } from '../../components/SegmentedProgress';
 import { TimerBadge } from '../../components/TimerBadge';
@@ -161,9 +161,9 @@ export const AttemptPage = () => {
               )}
 
               <Group className={classes.actions} justify="space-between" gap={16} mt={{ base: 0, sm: 24 }}>
-                <Text c="dimmed" fz={14} visibleFrom="sm">
-                  Tab and Space to select · <Kbd>Enter</Kbd> to submit
-                </Text>
+                <Box visibleFrom="sm">
+                  <KeyboardHint />
+                </Box>
                 <Button
                   type="submit"
                   h={52}

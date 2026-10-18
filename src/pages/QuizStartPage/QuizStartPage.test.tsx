@@ -19,7 +19,8 @@ describe('QuizStartPage', () => {
     renderRoute('/quizzes/q4');
 
     expect(await screen.findByRole('heading', { level: 1, name: 'Kerala Culture and History' })).toBeInTheDocument();
-    expect(screen.getByText('Available in India')).toBeInTheDocument();
+    expect(screen.getByRole('img', { name: 'Available in India' })).toBeInTheDocument();
+    expect(screen.queryByRole('link', { name: 'Not now' })).not.toBeInTheDocument();
     expect(screen.getByText('3:00')).toBeInTheDocument();
     expect(screen.getByText('Only once')).toBeInTheDocument();
     expect(screen.getByText('Single and multiple choice')).toBeInTheDocument();

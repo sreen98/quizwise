@@ -1,21 +1,30 @@
-import { Anchor, Box, Button, Card, Group, List, SimpleGrid, Skeleton, Stack, Text, Title } from '@mantine/core';
+import {
+  Anchor,
+  Box,
+  Button,
+  Card,
+  Flex,
+  Group,
+  List,
+  SimpleGrid,
+  Skeleton,
+  Spoiler,
+  Stack,
+  Text,
+  Title
+} from '@mantine/core';
 import { IconArrowLeft } from '@tabler/icons-react';
 import type { ReactNode } from 'react';
 import { Link, Navigate, useParams } from 'react-router';
+import { CountryFlags } from '../../components/CountryFlags';
+import { KeyboardHint } from '../../components/KeyboardHint';
 import { formatClock, formatSeconds } from '../../format';
 import { useQuizStart } from '../../hooks/useQuizStart';
 import type { QuizListItem } from '../../service/types';
 import { useSessionStore } from '../../session/sessionStore';
 import classes from './QuizStartPage.module.css';
-import type { Country } from '../../types/models';
 
 const KEEPS_RUNNING = 'keeps running if you refresh, switch tabs or close the window.';
-
-const joinNames = (names: string[]) =>
-  names.length <= 1 ? names.join('') : `${names.slice(0, -1).join(', ')} and ${names.at(-1) ?? ''}`;
-
-const countryNames = (quiz: QuizListItem, countries: Country[]) =>
-  joinNames(quiz.countries.map(code => countries.find(country => country.code === code)?.name ?? code));
 
 const questionTypes = (quiz: QuizListItem) => {
   if (quiz.questionTypes.length > 1) return 'Single and multiple choice';
@@ -122,25 +131,37 @@ export const QuizStartPage = () => {
         p={{ base: 24, sm: 32 }}
         mt={4}
       >
-        <SimpleGrid cols={{ base: 1, md: 2 }} spacing={{ base: 32, md: 48 }}>
-          <Box>
-            <Skeleton visible={!quiz} w="fit-content">
-              <Text fz={14} fw={600} c="dimmed">
-                Available in {quiz ? countryNames(quiz, countries) : 'loading'}
-              </Text>
-            </Skeleton>
-            <Skeleton visible={!quiz} my={10}>
-              <Title id="quiz-title" order={1} fz={{ base: 30, sm: 40 }} lh={1.1} lts="-0.01em">
-                {quiz?.title ?? 'Loading quiz'}
-              </Title>
-            </Skeleton>
-            <Skeleton visible={!quiz}>
-              <Text c="dimmed" fz={18} lh={1.5}>
-                {quiz?.description ?? 'Loading the description of this quiz, which says what it covers.'}
-              </Text>
-            </Skeleton>
+        <Flex
+          direction={{ base: 'column', sm: 'row' }}
+          justify="space-between"
+          align={{ base: 'stretch', sm: 'flex-start' }}
+          gap={16}
+        >
+          <Skeleton visible={!quiz} w="fit-content" maw="100%">
+            <Title id="quiz-title" order={1} fz={{ base: 30, sm: 40 }} lh={1.1} lts="-0.01em">
+              {quiz?.title ?? 'Loading quiz'}
+            </Title>
+          </Skeleton>
+          <Button h={52} px={28} disabled={!quiz} loading={starting} onClick={() => void start()}>
+            {quiz?.inProgress ? 'Resume quiz' : 'Start quiz'}
+          </Button>
+        </Flex>
+        {hasStartFailed && (
+          <Text c="var(--mantine-color-error)" fz={14} mt={8} role="alert">
+            The quiz could not be started. Try again.
+          </Text>
+        )}
+        <Skeleton visible={!quiz} mt={12}>
+          <Spoiler maxHeight={81} showLabel="Read more" hideLabel="Show less" fw={600}>
+            <Text c="dimmed" fz={18} lh={1.5} fw={400}>
+              {quiz?.description ?? 'Loading the description of this quiz, which says what it covers.'}
+            </Text>
+          </Spoiler>
+        </Skeleton>
 
-            <SimpleGrid component="dl" cols={2} spacing={12} verticalSpacing={24} mt={32} mb={0}>
+        <SimpleGrid cols={{ base: 1, md: 2 }} spacing={{ base: 32, md: 48 }} mt={32}>
+          <Box>
+            <SimpleGrid component="dl" cols={2} spacing={12} verticalSpacing={24} m={0}>
               {stat(
                 'Questions',
                 <Skeleton visible={!quiz}>
@@ -152,12 +173,14 @@ export const QuizStartPage = () => {
               {stat(
                 'Time limit',
                 <Skeleton visible={!quiz}>
-                  <Text ff="monospace" fz={22} fw={700}>
-                    {limitValue || '0:00'}
-                  </Text>
-                  <Text fz={13} c="dimmed">
-                    {limitDetail || 'loading'}
-                  </Text>
+                  <Group gap={8} align="baseline" wrap="wrap">
+                    <Text ff="monospace" fz={22} fw={700}>
+                      {limitValue || '0:00'}
+                    </Text>
+                    <Text fz={13} c="dimmed">
+                      {limitDetail || 'loading'}
+                    </Text>
+                  </Group>
                 </Skeleton>
               )}
               {stat(
@@ -177,34 +200,28 @@ export const QuizStartPage = () => {
                 </Skeleton>
               )}
             </SimpleGrid>
+            {quiz && (
+              <Group gap={10} mt={24} className={classes.stat} pt={16}>
+                <Text fz={13} fw={600} c="dimmed">
+                  Available in
+                </Text>
+                <CountryFlags codes={quiz.countries} countries={countries} />
+              </Group>
+            )}
           </Box>
 
           <Box bg={{ base: 'transparent', md: 'var(--surface-2)' }} p={{ base: 0, md: 28 }} bdrs="md">
             <Title order={2} fz={17} mb={12}>
               Before you start
             </Title>
-            <Skeleton visible={!quiz} mb={32}>
+            <Skeleton visible={!quiz} mb={20}>
               <List c="dimmed" fz={15} spacing={10}>
                 {(quiz ? rules(quiz) : placeholderRules).map((rule, index) => (
                   <List.Item key={`${String(index)}-${rule}`}>{rule}</List.Item>
                 ))}
               </List>
             </Skeleton>
-
-            {hasStartFailed && (
-              <Text c="orange" fz={14} mb={12} role="alert">
-                The quiz could not be started. Try again.
-              </Text>
-            )}
-
-            <Group gap={12}>
-              <Button h={52} px={28} disabled={!quiz} loading={starting} onClick={() => void start()}>
-                {quiz?.inProgress ? 'Resume quiz' : 'Start quiz'}
-              </Button>
-              <Button component={Link} to="/quizzes" h={52} px={28} variant="subtle" color="gray">
-                Not now
-              </Button>
-            </Group>
+            <KeyboardHint />
           </Box>
         </SimpleGrid>
       </Card>

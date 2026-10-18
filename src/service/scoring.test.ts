@@ -61,6 +61,10 @@ describe('isAnswerCorrect', () => {
   it('rejects a multiple choice answer that adds a wrong option', () => {
     expect(isAnswerCorrect(multipleChoice, ['two', 'three', 'four', 'five'])).toBe(false);
   });
+
+  it('rejects a multiple choice answer that swaps a correct option for a wrong one', () => {
+    expect(isAnswerCorrect(multipleChoice, ['two', 'three', 'four'])).toBe(false);
+  });
 });
 
 describe('summariseAttempt', () => {

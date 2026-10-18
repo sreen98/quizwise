@@ -115,10 +115,10 @@ describe('LeaderboardPage', () => {
     const { router } = renderRoute('/leaderboard/q1');
     await podium();
 
-    const quizSelect = screen.getByRole('combobox', { name: 'Quiz' });
-    await user.clear(quizSelect);
-    await user.type(quizSelect, 'geo');
-    await user.click(await screen.findByRole('option', { name: 'World Geography' }));
+    await user.click(screen.getByRole('button', { name: 'Quiz: JavaScript Basics' }));
+    await user.type(await screen.findByRole('textbox', { name: 'Search quizzes' }), 'geo');
+    expect(screen.queryByRole('option', { name: 'React Fundamentals' })).not.toBeInTheDocument();
+    await user.click(screen.getByRole('option', { name: 'World Geography' }));
 
     await waitFor(() => {
       expect(router.state.location.pathname).toBe('/leaderboard/q3');

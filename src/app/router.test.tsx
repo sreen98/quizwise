@@ -87,8 +87,7 @@ describe('routes', () => {
     useSessionStore.setState({ userId: 'u1', countryFilter: null, slowNetwork: false });
     const { router } = renderRoute('/leaderboard/q1');
 
-    const quizSelect = await screen.findByRole('combobox', { name: 'Quiz' });
-    await user.click(quizSelect);
+    await user.click(await screen.findByRole('button', { name: /^Quiz:/ }));
     await user.click(await screen.findByRole('option', { name: 'React Fundamentals' }));
 
     await waitFor(() => {

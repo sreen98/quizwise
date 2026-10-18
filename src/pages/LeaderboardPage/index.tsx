@@ -16,6 +16,7 @@ import {
 import { Link, Navigate, useNavigate, useParams, useSearchParams } from 'react-router';
 import { PodiumCard } from '../../components/PodiumCard';
 import { RankBanner } from '../../components/RankBanner';
+import { SearchableSelect } from '../../components/SearchableSelect';
 import { PaginatedList } from '../../components/PaginatedList';
 import { StandingsList } from '../../components/StandingsList';
 import { useDebouncedSearch } from '../../hooks/useDebouncedSearch';
@@ -147,19 +148,16 @@ export const LeaderboardPage = () => {
           </Text>
         </Box>
         <Group gap={12} wrap="nowrap" align="flex-end">
-          <Select
-            label="Quiz"
-            data={quizzes.map(quiz => ({ value: quiz.id, label: quiz.title }))}
-            value={quizId || null}
-            onChange={handleQuizChange}
-            allowDeselect={false}
-            searchable
-            limit={20}
-            nothingFoundMessage="No quizzes found"
-            flex={2}
-            miw={0}
-            w={{ sm: 260 }}
-          />
+          <Box flex={2} miw={0} w={{ sm: 260 }}>
+            <SearchableSelect
+              label="Quiz"
+              searchLabel="Search quizzes"
+              nothingFoundMessage="No quizzes found"
+              data={quizzes.map(quiz => ({ value: quiz.id, label: quiz.title }))}
+              value={quizId || null}
+              onChange={handleQuizChange}
+            />
+          </Box>
           <Select
             label="Show"
             data={topOptions}

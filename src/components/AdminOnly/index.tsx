@@ -1,15 +1,23 @@
-import { Badge, Box, Button, Flex, Paper, Skeleton, Text, ThemeIcon, Title } from '@mantine/core';
+import { Badge, Box, Button, Flex, Paper, Text, ThemeIcon, Title } from '@mantine/core';
 import { IconLock } from '@tabler/icons-react';
 import { Suspense } from 'react';
-import { Link, Outlet } from 'react-router';
+import { Link, Outlet, useLocation } from 'react-router';
+import { AdminQuizListSkeleton } from '../AdminQuizListSkeleton';
+import { QuizFormSkeleton } from '../QuizFormSkeleton';
 import { useCurrentUser } from '../../hooks/useCurrentUser';
 import { useSessionStore } from '../../session/sessionStore';
 
 export const AdminOnly = () => {
   const { user, adminUser, loading, isAdmin } = useCurrentUser();
   const setUserId = useSessionStore(state => state.setUserId);
+  const { pathname } = useLocation();
 
-  const placeholder = <Skeleton h={320} radius="lg" />;
+  const placeholder =
+    pathname === '/admin' ? (
+      <AdminQuizListSkeleton withHeader />
+    ) : (
+      <QuizFormSkeleton isNew={pathname.endsWith('/new')} />
+    );
 
   if (loading) return placeholder;
 

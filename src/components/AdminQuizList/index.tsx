@@ -2,6 +2,7 @@ import { ActionIcon, Box, Divider, Group, Stack, Table, Text, VisuallyHidden } f
 import { IconCheck, IconDownload, IconPencil, IconTrash, IconX } from '@tabler/icons-react';
 import { Link } from 'react-router';
 import { formatCount, formatTimerShort } from '../../format';
+import { AdminQuizTableHead } from '../AdminQuizTableHead';
 import { CountryFlags } from '../CountryFlags';
 import { TruncatedText } from '../TruncatedText';
 import type { AdminQuizItem } from '../../service/types';
@@ -9,15 +10,6 @@ import type { AdminQuizListProps } from './types';
 
 const timerText = ({ timeLimitSeconds, perQuestionSeconds }: AdminQuizItem) =>
   formatTimerShort(timeLimitSeconds, perQuestionSeconds) ?? 'None';
-
-const columns = [
-  { label: 'Title', width: undefined, isNumber: false },
-  { label: 'Questions', width: 110, isNumber: true },
-  { label: 'Timer', width: 160, isNumber: false },
-  { label: 'Retakes', width: 90, isNumber: false },
-  { label: 'Countries', width: 150, isNumber: false },
-  { label: 'Attempts', width: 100, isNumber: true }
-];
 
 const retakesMark = (quiz: AdminQuizItem) => (
   <>
@@ -78,27 +70,7 @@ const quizTable = (props: AdminQuizListProps) => (
         <Table.Caption>
           <VisuallyHidden>Quizzes</VisuallyHidden>
         </Table.Caption>
-        <Table.Thead>
-          <Table.Tr>
-            {columns.map(({ label, width, isNumber }) => (
-              <Table.Th
-                key={label}
-                w={width}
-                ta={isNumber ? 'right' : undefined}
-                fz={12}
-                fw={700}
-                tt="uppercase"
-                lts="0.06em"
-                c="dimmed"
-              >
-                {label}
-              </Table.Th>
-            ))}
-            <Table.Th w={170}>
-              <VisuallyHidden>Actions</VisuallyHidden>
-            </Table.Th>
-          </Table.Tr>
-        </Table.Thead>
+        <AdminQuizTableHead />
         <Table.Tbody>
           {props.quizzes.map(quiz => (
             <Table.Tr key={quiz.id}>

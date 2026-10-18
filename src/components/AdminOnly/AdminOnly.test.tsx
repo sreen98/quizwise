@@ -47,7 +47,8 @@ describe('AdminOnly', () => {
     asUser('u5');
     renderRoute('/admin');
 
-    expect(await screen.findByRole('heading', { name: 'Manage quizzes' })).toBeInTheDocument();
+    expect(await screen.findByRole('table')).toBeInTheDocument();
+    expect(screen.getByRole('heading', { name: 'Manage quizzes' })).toBeInTheDocument();
   });
 
   it('shows the Admin tab only to the admin user', async () => {

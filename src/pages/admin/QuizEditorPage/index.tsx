@@ -1,7 +1,8 @@
-import { Anchor, Skeleton, Stack, Text, Title } from '@mantine/core';
+import { Anchor, Stack, Text, Title } from '@mantine/core';
 import { notifications } from '@mantine/notifications';
 import { Link, useNavigate, useParams } from 'react-router';
 import { QuizForm } from '../../../components/QuizForm';
+import { QuizFormSkeleton } from '../../../components/QuizFormSkeleton';
 import { useQuizEditor } from '../../../hooks/useQuizEditor';
 import type { QuizInput } from '../../../types/models';
 
@@ -23,12 +24,7 @@ export const QuizEditorPage = () => {
   }
 
   if (state.status === 'loading') {
-    return (
-      <Stack gap={24}>
-        <Skeleton h={40} w={240} />
-        <Skeleton h={480} radius="lg" />
-      </Stack>
-    );
+    return <QuizFormSkeleton isNew={!quizId} />;
   }
 
   const handleSubmit = async (values: QuizInput) => {

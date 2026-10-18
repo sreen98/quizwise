@@ -22,10 +22,12 @@ export const useFocusHeadingOnNavigate = () => {
     lastPathname.current = pathname;
 
     const main = document.querySelector('main');
-    if (!main || focusHeading(main)) return;
+    if (!main) return;
+    let hasFocused = focusHeading(main);
 
     const observer = new MutationObserver(() => {
-      if (focusHeading(main)) observer.disconnect();
+      if (!hasFocused) hasFocused = focusHeading(main);
+      else if (document.activeElement === document.body) focusHeading(main);
     });
     observer.observe(main, { childList: true, subtree: true });
     const timeout = setTimeout(() => {

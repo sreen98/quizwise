@@ -38,9 +38,9 @@ describe('formatDateTime', () => {
   const now = new Date(2026, 9, 17, 18, 0).getTime();
   const local = (day: number, hour: number, minute: number) => new Date(2026, 9, day, hour, minute).toISOString();
 
-  it('says today or yesterday for recent times', () => {
-    expect(formatDateTime(local(17, 14, 30), now)).toBe('today, 14:30');
-    expect(formatDateTime(local(16, 9, 5), now)).toBe('yesterday, 09:05');
+  it('says Today or Yesterday for recent times', () => {
+    expect(formatDateTime(local(17, 14, 30), now)).toBe('Today, 14:30');
+    expect(formatDateTime(local(16, 9, 5), now)).toBe('Yesterday, 09:05');
   });
 
   it('shows the date for older times', () => {

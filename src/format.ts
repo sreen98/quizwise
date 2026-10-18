@@ -39,8 +39,8 @@ export const formatDateTime = (isoDate: string, now = Date.now()) => {
   const daysAgo = Math.round((startOfDay(now) - startOfDay(time)) / DAY_MS);
   const clock = clockTime.format(time);
 
-  if (daysAgo === 0) return `today, ${clock}`;
-  if (daysAgo === 1) return `yesterday, ${clock}`;
+  if (daysAgo === 0) return `Today, ${clock}`;
+  if (daysAgo === 1) return `Yesterday, ${clock}`;
   return `${calendarDate.format(time)}, ${clock}`;
 };
 

@@ -53,7 +53,7 @@ export const theme = createTheme({
       '#863C06',
       '#663005'
     ],
-    dark: ['#E8EDF5', '#C9D2E0', '#A6B1C4', '#7D899E', '#2A3548', '#223047', '#182233', '#131B29', '#0B111C', '#070B13']
+    dark: ['#ECE8E1', '#CFC9BF', '#A9A298', '#8A8379', '#3A3631', '#322E2A', '#2A2724', '#221F1C', '#1A1816', '#121110']
   },
   primaryColor: 'blue',
   primaryShade: { light: 7, dark: 4 },
@@ -142,19 +142,19 @@ export const cssVariablesResolver: CSSVariablesResolver = () => ({
     '--mantine-color-default-border': '#DDD7CC'
   },
   dark: {
-    '--bg': '#0B111C',
-    '--surface': '#131B29',
-    '--surface-2': '#182233',
-    '--accent-soft': '#1B2947',
+    '--bg': '#1A1816',
+    '--surface': '#221F1C',
+    '--surface-2': '#2A2724',
+    '--accent-soft': '#252E40',
     '--warn': '#F6A963',
-    '--warn-soft': '#3A2614',
+    '--warn-soft': '#3A2A1C',
     '--mantine-color-error': '#F6A963',
-    '--skeleton': '#223047',
-    '--filled-ink': '#0B111C',
-    '--control-border': '#66748C',
-    '--mantine-color-blue-light': '#1B2947',
+    '--skeleton': '#34302B',
+    '--filled-ink': '#1A1816',
+    '--control-border': '#7A7268',
+    '--mantine-color-blue-light': '#252E40',
     '--mantine-color-blue-light-color': '#86A8FF',
-    '--mantine-color-orange-light': '#3A2614',
+    '--mantine-color-orange-light': '#3A2A1C',
     '--mantine-color-orange-light-color': '#F6A963'
   }
 });

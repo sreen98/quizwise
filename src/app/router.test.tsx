@@ -20,7 +20,8 @@ describe('routes', () => {
     useSessionStore.setState({ userId: 'u5', countryFilter: null, slowNetwork: false });
     renderRoute('/admin/quizzes/q2/edit');
 
-    expect(await screen.findByRole('heading', { level: 1, name: 'Edit quiz' })).toBeInTheDocument();
+    expect(await screen.findByRole('textbox', { name: 'Title' })).toHaveValue('React Fundamentals');
+    expect(screen.getByRole('heading', { level: 1, name: 'Edit quiz' })).toBeInTheDocument();
   });
 
   it('shows page not found for an unknown URL', async () => {
@@ -51,6 +52,20 @@ describe('routes', () => {
 
     await waitFor(() => {
       expect(screen.getByRole('heading', { level: 1, name: 'Leaderboard' })).toHaveFocus();
+    });
+  });
+
+  it('keeps focus on the page heading when the loading skeleton is replaced', async () => {
+    const user = userEvent.setup();
+    useSessionStore.setState({ userId: 'u5', countryFilter: null, slowNetwork: false });
+    renderRoute('/admin');
+
+    await screen.findByRole('table');
+    await user.click(screen.getByRole('link', { name: 'New quiz' }));
+
+    expect(await screen.findByRole('textbox', { name: 'Title' })).toBeInTheDocument();
+    await waitFor(() => {
+      expect(screen.getByRole('heading', { level: 1, name: 'New quiz' })).toHaveFocus();
     });
   });
 

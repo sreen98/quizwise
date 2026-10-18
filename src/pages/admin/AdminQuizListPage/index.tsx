@@ -4,6 +4,7 @@ import { notifications } from '@mantine/notifications';
 import { useEffect } from 'react';
 import { Link, useSearchParams } from 'react-router';
 import { AdminQuizList } from '../../../components/AdminQuizList';
+import { AdminQuizListSkeleton } from '../../../components/AdminQuizListSkeleton';
 import { CountryFilter } from '../../../components/CountryFilter';
 import { ImportQuizButton } from '../../../components/ImportQuizButton';
 import { PaginatedList } from '../../../components/PaginatedList';
@@ -144,121 +145,117 @@ export const AdminQuizListPage = () => {
         </Group>
       </Flex>
 
-      <PaginatedList
-        items={loading ? [] : matching}
-        page={Number(searchParams.get('page'))}
-        pageSize={PAGE_SIZE}
-        itemName="quiz"
-        itemsName="quizzes"
-        onPageChange={value => {
-          updateParams({ page: value === 1 ? '' : String(value) });
-        }}
-      >
-        {shown => (
-          <Paper withBorder radius="lg">
-            <Flex direction={{ base: 'column', sm: 'row' }} gap={12} p={16}>
-              <TextInput
-                label="Search"
-                placeholder="Title or description"
-                value={search}
-                onChange={event => {
-                  setSearch(event.currentTarget.value);
-                }}
-                flex={1}
-              />
-              <Box w={{ base: '100%', sm: 220 }}>
-                <CountryFilter
-                  countries={countries}
-                  value={selectedCountries}
+      {loading ? (
+        <AdminQuizListSkeleton withHeader={false} />
+      ) : (
+        <PaginatedList
+          items={matching}
+          page={Number(searchParams.get('page'))}
+          pageSize={PAGE_SIZE}
+          itemName="quiz"
+          itemsName="quizzes"
+          onPageChange={value => {
+            updateParams({ page: value === 1 ? '' : String(value) });
+          }}
+        >
+          {shown => (
+            <Paper withBorder radius="lg">
+              <Flex direction={{ base: 'column', sm: 'row' }} gap={12} p={16}>
+                <TextInput
+                  label="Search"
+                  placeholder="Title or description"
+                  value={search}
+                  onChange={event => {
+                    setSearch(event.currentTarget.value);
+                  }}
+                  flex={1}
+                />
+                <Box w={{ base: '100%', sm: 220 }}>
+                  <CountryFilter
+                    countries={countries}
+                    value={selectedCountries}
+                    onChange={value => {
+                      updateParams({ countries: value.join(','), page: '' });
+                    }}
+                  />
+                </Box>
+                <Select
+                  label="Retakes"
+                  data={Object.entries(retakesOptions).map(([value, option]) => ({ value, label: option.label }))}
+                  value={retakes}
                   onChange={value => {
-                    updateParams({ countries: value.join(','), page: '' });
+                    updateParams({ retakes: value === 'all' ? '' : (value ?? ''), page: '' });
+                  }}
+                  allowDeselect={false}
+                  w={{ base: '100%', sm: 150 }}
+                />
+                <Select
+                  label="Sort by"
+                  data={Object.entries(sortOptions).map(([value, option]) => ({ value, label: option.label }))}
+                  value={sort}
+                  onChange={value => {
+                    updateParams({ sort: value === 'title_asc' ? '' : (value ?? ''), page: '' });
+                  }}
+                  allowDeselect={false}
+                  w={{ base: '100%', sm: 220 }}
+                />
+              </Flex>
+
+              {hasFailed && (
+                <Text c="dimmed" p={16} pt={0}>
+                  The quizzes could not be loaded. Try reloading the page.
+                </Text>
+              )}
+
+              {!hasFailed && quizzes.length === 0 && (
+                <Stack align="flex-start" gap={12} p={16} pt={0}>
+                  <Text c="dimmed">There are no quizzes yet.</Text>
+                  <Button component={Link} to="/admin/quizzes/new">
+                    New quiz
+                  </Button>
+                </Stack>
+              )}
+
+              {quizzes.length > 0 && matching.length === 0 && (
+                <Stack align="flex-start" gap={12} p={16} pt={0}>
+                  <Text c="dimmed">
+                    {debouncedSearch.trim()
+                      ? `No quizzes match "${debouncedSearch.trim()}".`
+                      : 'No quizzes match these filters.'}
+                  </Text>
+                  <Button
+                    variant="default"
+                    onClick={() => {
+                      setSearch('');
+                      updateParams({ countries: '', retakes: '', page: '' });
+                    }}
+                  >
+                    Clear filters
+                  </Button>
+                </Stack>
+              )}
+
+              {shown.length > 0 && (
+                <AdminQuizList
+                  quizzes={shown}
+                  countries={countries}
+                  onExport={quiz => {
+                    exportQuiz(quiz).catch(() => {
+                      notifications.show({
+                        color: 'orange',
+                        message: `Couldn't export ${quiz.title}. It may have been deleted.`
+                      });
+                    });
+                  }}
+                  onDelete={quiz => {
+                    confirmDelete(quiz, deleteQuiz);
                   }}
                 />
-              </Box>
-              <Select
-                label="Retakes"
-                data={Object.entries(retakesOptions).map(([value, option]) => ({ value, label: option.label }))}
-                value={retakes}
-                onChange={value => {
-                  updateParams({ retakes: value === 'all' ? '' : (value ?? ''), page: '' });
-                }}
-                allowDeselect={false}
-                w={{ base: '100%', sm: 150 }}
-              />
-              <Select
-                label="Sort by"
-                data={Object.entries(sortOptions).map(([value, option]) => ({ value, label: option.label }))}
-                value={sort}
-                onChange={value => {
-                  updateParams({ sort: value === 'title_asc' ? '' : (value ?? ''), page: '' });
-                }}
-                allowDeselect={false}
-                w={{ base: '100%', sm: 220 }}
-              />
-            </Flex>
-
-            {loading && (
-              <Stack gap={8} p={16} pt={0}>
-                {[1, 2, 3].map(index => (
-                  <Skeleton key={index} h={56} />
-                ))}
-              </Stack>
-            )}
-
-            {!loading && hasFailed && (
-              <Text c="dimmed" p={16} pt={0}>
-                The quizzes could not be loaded. Try reloading the page.
-              </Text>
-            )}
-
-            {!loading && !hasFailed && quizzes.length === 0 && (
-              <Stack align="flex-start" gap={12} p={16} pt={0}>
-                <Text c="dimmed">There are no quizzes yet.</Text>
-                <Button component={Link} to="/admin/quizzes/new">
-                  New quiz
-                </Button>
-              </Stack>
-            )}
-
-            {!loading && quizzes.length > 0 && matching.length === 0 && (
-              <Stack align="flex-start" gap={12} p={16} pt={0}>
-                <Text c="dimmed">
-                  {debouncedSearch.trim()
-                    ? `No quizzes match "${debouncedSearch.trim()}".`
-                    : 'No quizzes match these filters.'}
-                </Text>
-                <Button
-                  variant="default"
-                  onClick={() => {
-                    setSearch('');
-                    updateParams({ countries: '', retakes: '', page: '' });
-                  }}
-                >
-                  Clear filters
-                </Button>
-              </Stack>
-            )}
-
-            {!loading && shown.length > 0 && (
-              <AdminQuizList
-                quizzes={shown}
-                countries={countries}
-                onExport={quiz => {
-                  exportQuiz(quiz).catch(() => {
-                    notifications.show({
-                      color: 'orange',
-                      message: `Couldn't export ${quiz.title}. It may have been deleted.`
-                    });
-                  });
-                }}
-                onDelete={quiz => {
-                  confirmDelete(quiz, deleteQuiz);
-                }}
-              />
-            )}
-          </Paper>
-        )}
-      </PaginatedList>
+              )}
+            </Paper>
+          )}
+        </PaginatedList>
+      )}
     </Stack>
   );
 };

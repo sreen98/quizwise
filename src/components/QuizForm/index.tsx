@@ -181,7 +181,7 @@ export const QuizForm = ({ initialValues, countries, isNew, onSubmit }: QuizForm
   return (
     <Box component="form" noValidate onSubmit={step === 'details' ? handleNext : handleSave}>
       <Flex
-        pos={{ base: 'static', sm: 'sticky' }}
+        pos="sticky"
         top={{ base: 60, sm: 68 }}
         bg="var(--bg)"
         wrap="wrap"
@@ -209,7 +209,7 @@ export const QuizForm = ({ initialValues, countries, isNew, onSubmit }: QuizForm
           </Title>
           {form.isDirty() && <Badge color="orange">Unsaved changes</Badge>}
         </Group>
-        <Group gap={12}>
+        <Group gap={12} justify="space-between" w={{ base: '100%', sm: 'auto' }}>
           <Button component={Link} to="/admin" variant="default">
             Cancel
           </Button>

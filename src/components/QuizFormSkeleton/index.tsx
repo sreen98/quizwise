@@ -67,7 +67,7 @@ export const QuizFormSkeleton = ({ isNew }: QuizFormSkeletonProps) => {
             {isNew ? 'New quiz' : 'Edit quiz'}
           </Title>
         </Group>
-        <Group gap={12}>
+        <Group gap={12} justify="space-between" w={{ base: '100%', sm: 'auto' }}>
           <Skeleton h={44} w={82} />
           <Skeleton h={44} w={isNew ? 68 : 100} />
         </Group>

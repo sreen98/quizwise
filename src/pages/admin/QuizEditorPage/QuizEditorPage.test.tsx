@@ -202,6 +202,23 @@ describe('QuizEditorPage', () => {
     expect(screen.queryByRole('textbox', { name: 'Option 5' })).not.toBeInTheDocument();
   });
 
+  it('keeps two options and says why when trying to remove another', async () => {
+    const user = userEvent.setup();
+    renderRoute('/admin/quizzes/q5/edit');
+
+    await user.click(await screen.findByRole('button', { name: 'Edit question 1' }));
+    await user.click(screen.getByRole('button', { name: 'Remove option 4' }));
+    await user.click(screen.getByRole('button', { name: 'Remove option 3' }));
+
+    const remove = screen.getByRole('button', { name: 'Remove option 2' });
+    expect(remove).toHaveAttribute('aria-disabled', 'true');
+    await user.hover(remove);
+    expect(await screen.findByText('A question needs at least 2 options')).toBeInTheDocument();
+
+    await user.click(remove);
+    expect(screen.getByRole('textbox', { name: 'Option 2' })).toBeInTheDocument();
+  });
+
   it('collapses and deletes questions', async () => {
     const user = userEvent.setup();
     renderRoute('/admin/quizzes/q5/edit');

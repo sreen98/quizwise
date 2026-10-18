@@ -10,6 +10,7 @@ import {
   Switch,
   Text,
   TextInput,
+  Tooltip,
   UnstyledButton
 } from '@mantine/core';
 import { IconChevronUp, IconPlus, IconTrash, IconX } from '@tabler/icons-react';
@@ -23,6 +24,7 @@ export const QuestionEditor = ({ form, question, index, onClose, handle }: Quest
   const number = String(index + 1);
   const path = `questions.${String(index)}`;
   const problems = Object.keys(form.errors).filter(key => key.startsWith(`${path}.`)).length;
+  const canRemoveOption = question.options.length > 2;
 
   const changeType = (type: QuestionType) => {
     form.setFieldValue(`${path}.type`, type);
@@ -116,18 +118,25 @@ export const QuestionEditor = ({ form, question, index, onClose, handle }: Quest
                       Correct
                     </Text>
                   </Group>
-                  <ActionIcon
-                    variant="subtle"
-                    color="gray"
-                    size={44}
-                    aria-label={`Remove option ${optionNumber}`}
-                    disabled={question.options.length <= 2}
-                    onClick={() => {
-                      removeOption(optionIndex, option.id);
-                    }}
+                  <Tooltip
+                    label="A question needs at least 2 options"
+                    disabled={canRemoveOption}
+                    events={{ hover: true, focus: true, touch: false }}
                   >
-                    <IconX size={18} aria-hidden />
-                  </ActionIcon>
+                    <ActionIcon
+                      variant="subtle"
+                      color="gray"
+                      size={44}
+                      aria-label={`Remove option ${optionNumber}`}
+                      aria-disabled={!canRemoveOption}
+                      data-disabled={!canRemoveOption || undefined}
+                      onClick={() => {
+                        if (canRemoveOption) removeOption(optionIndex, option.id);
+                      }}
+                    >
+                      <IconX size={18} aria-hidden />
+                    </ActionIcon>
+                  </Tooltip>
                 </Group>
               );
             })}

@@ -14,6 +14,7 @@ import { formatCount } from '../../../format';
 import { useAdminQuizzes } from '../../../hooks/useAdminQuizzes';
 import { useDebouncedSearch } from '../../../hooks/useDebouncedSearch';
 import type { AdminQuizItem } from '../../../service/types';
+import classes from './AdminQuizListPage.module.css';
 
 const PAGE_SIZE = 10;
 
@@ -129,7 +130,18 @@ export const AdminQuizListPage = () => {
   return (
     <Stack gap={24}>
       <title>Manage quizzes - Quizwise</title>
-      <Flex wrap="wrap" justify="space-between" align="flex-end" gap={16}>
+      <Flex
+        pos="sticky"
+        top={{ base: 60, sm: 68 }}
+        bg="var(--bg)"
+        wrap="wrap"
+        justify="space-between"
+        align="flex-end"
+        gap={16}
+        py={12}
+        mt={-12}
+        className={classes.toolbar}
+      >
         <Box>
           <Title order={1} fz={{ base: 28, sm: 36 }} lts="-0.01em">
             Manage quizzes
@@ -140,7 +152,7 @@ export const AdminQuizListPage = () => {
             </Text>
           </Skeleton>
         </Box>
-        <Group gap={10}>
+        <Group gap={10} justify="space-between" w={{ base: '100%', sm: 'auto' }}>
           <ImportQuizButton onImport={importQuiz} />
           <Button component={Link} to="/admin/quizzes/new">
             New quiz

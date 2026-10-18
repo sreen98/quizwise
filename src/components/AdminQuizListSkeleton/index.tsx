@@ -87,14 +87,14 @@ export const AdminQuizListSkeleton = ({ withHeader }: AdminQuizListSkeletonProps
 
   return (
     <Stack gap={24}>
-      <Flex wrap="wrap" justify="space-between" align="flex-end" gap={16}>
+      <Flex wrap="wrap" justify="space-between" align="flex-end" gap={16} py={12} mt={-12}>
         <Box>
           <Title order={1} fz={{ base: 28, sm: 36 }} lts="-0.01em">
             Manage quizzes
           </Title>
           <Skeleton h={25} w={230} mt={8} />
         </Box>
-        <Group gap={10}>
+        <Group gap={10} justify="space-between" w={{ base: '100%', sm: 'auto' }}>
           <Skeleton h={44} w={123} />
           <Skeleton h={44} w={98} />
         </Group>

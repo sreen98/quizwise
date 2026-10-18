@@ -141,9 +141,7 @@ export const AttemptPage = () => {
                     Question {question ? question.index + 1 : 1} of {question?.total ?? 1}
                   </Text>
                 </Skeleton>
-                <Box visibleFrom="sm">
-                  <KeyboardHint />
-                </Box>
+                <KeyboardHint />
                 <Skeleton visible={!question} w="fit-content">
                   <Text c="dimmed" fz={14}>
                     {answeredLabel(question?.answered ?? [])}

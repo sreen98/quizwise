@@ -16,6 +16,7 @@ import { IconFileOff, IconSearch } from '@tabler/icons-react';
 import { useEffect } from 'react';
 import { Link, useNavigate, useParams, useSearchParams } from 'react-router';
 import { EmptyState } from '../../components/EmptyState';
+import { GlobalBoard } from '../../components/GlobalBoard';
 import { MessageCard } from '../../components/MessageCard';
 import { PodiumCard } from '../../components/PodiumCard';
 import { RankBanner } from '../../components/RankBanner';
@@ -37,6 +38,8 @@ const topOptions = [
 const PAGE_SIZE = 10;
 
 const PODIUM_SIZE = 3;
+
+const GLOBAL = 'all';
 
 const matchesSearch = (entry: LeaderboardEntry, query: string) =>
   !query || `${entry.userName} ${entry.countryName}`.toLowerCase().includes(query);
@@ -134,7 +137,14 @@ export const LeaderboardPage = () => {
   const { search, setSearch, debouncedSearch, query } = useDebouncedSearch();
   const top = topOptions.some(option => option.value === searchParams.get('top')) ? searchParams.get('top') : '10';
   const limit = top === 'all' ? Number.POSITIVE_INFINITY : Number(top);
-  const { quizId: firstQuizId, quizzes, leaderboard, loading } = useLeaderboard(routeQuizId, limit, userId);
+  const isGlobal = routeQuizId === GLOBAL;
+  const {
+    quizId: firstQuizId,
+    quizzes,
+    leaderboard,
+    loading
+  } = useLeaderboard(isGlobal ? '' : routeQuizId, limit, userId);
+
   const quizId = routeQuizId || firstQuizId;
 
   useEffect(() => {
@@ -142,7 +152,7 @@ export const LeaderboardPage = () => {
     void navigate({ pathname: `/leaderboard/${firstQuizId}`, search: searchParams.toString() }, { replace: true });
   }, [routeQuizId, firstQuizId, searchParams, navigate]);
 
-  if (!loading && !leaderboard) {
+  if (!isGlobal && !loading && !leaderboard) {
     return (
       <MessageCard
         icon={<IconFileOff size={38} />}
@@ -173,6 +183,12 @@ export const LeaderboardPage = () => {
     if (value) setSearchParams({ top: value });
   };
 
+  const quizOptions = [
+    { value: GLOBAL, label: 'All quizzes' },
+    ...quizzes.map(quiz => ({ value: quiz.id, label: quiz.title }))
+  ];
+  const page = Number(searchParams.get('page'));
+
   return (
     <Stack gap={24}>
       <title>Leaderboard - Quizwise</title>
@@ -182,7 +198,9 @@ export const LeaderboardPage = () => {
             Leaderboard
           </Title>
           <Text c="dimmed" fz={{ base: 14, sm: 16 }} mt={{ base: 4, sm: 8 }}>
-            Best attempt per player. Ties go to the faster time.
+            {isGlobal
+              ? 'Best attempt per quiz, added up. Ties go to the lower total time.'
+              : 'Best attempt per player. Ties go to the faster time.'}
           </Text>
         </Box>
         <Group gap={12} wrap="nowrap" align="flex-end" w={{ base: '100%', sm: 'auto' }}>
@@ -191,8 +209,8 @@ export const LeaderboardPage = () => {
               label="Quiz"
               searchLabel="Search quizzes"
               nothingFoundMessage="No quizzes found"
-              data={quizzes.map(quiz => ({ value: quiz.id, label: quiz.title }))}
-              value={quizId || null}
+              data={quizOptions}
+              value={quizId}
               onChange={handleQuizChange}
             />
           </Box>
@@ -209,7 +227,9 @@ export const LeaderboardPage = () => {
         </Group>
       </Flex>
 
-      {loading && (
+      {isGlobal && <GlobalBoard limit={limit} userId={userId} page={page} onPageChange={changePage} />}
+
+      {!isGlobal && loading && (
         <Stack gap={28}>
           <Skeleton h={{ base: 314, sm: 114 }} radius="lg" />
           <SimpleGrid cols={{ base: 1, sm: 3 }} spacing={{ base: 12, sm: 20 }}>
@@ -226,7 +246,7 @@ export const LeaderboardPage = () => {
         </Stack>
       )}
 
-      {!loading && leaderboard && leaderboard.rankedCount === 0 && (
+      {!isGlobal && !loading && leaderboard && leaderboard.rankedCount === 0 && (
         <Paper withBorder radius="lg" p={24}>
           <Text fw={700} mb={4}>
             No results yet
@@ -240,7 +260,8 @@ export const LeaderboardPage = () => {
         </Paper>
       )}
 
-      {!loading &&
+      {!isGlobal &&
+        !loading &&
         leaderboard &&
         leaderboard.rankedCount > 0 &&
         board(leaderboard, {
@@ -253,7 +274,7 @@ export const LeaderboardPage = () => {
             setSearch(value);
             changePage(1);
           },
-          page: Number(searchParams.get('page')),
+          page,
           onPageChange: changePage
         })}
     </Stack>

@@ -53,6 +53,23 @@ export interface Leaderboard {
   rankedCount: number;
 }
 
+export interface GlobalLeaderboardEntry {
+  rank: number;
+  userId: string;
+  userName: string;
+  country: string;
+  countryName: string;
+  totalScore: number;
+  quizzesCompleted: number;
+  totalTimeSeconds: number;
+}
+
+export interface GlobalLeaderboard {
+  entries: GlobalLeaderboardEntry[];
+  currentUser: GlobalLeaderboardEntry | null;
+  rankedCount: number;
+}
+
 export interface StartedAttempt {
   attemptId: string;
   resumed: boolean;

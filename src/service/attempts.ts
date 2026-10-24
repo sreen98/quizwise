@@ -1,4 +1,4 @@
-import type { Answer, Attempt, AttemptEndReason, PublicQuestion, Question, Quiz } from '../types/models';
+import type { Answer, Attempt, AttemptEndReason, PublicQuestion, Question, Quiz, QuizInput } from '../types/models';
 import { isAnswerCorrect, summariseAttempt } from './scoring';
 import { getDeadlines } from './timing';
 
@@ -93,3 +93,8 @@ const catchUp = (attempt: Attempt, quiz: Quiz, now: number): Attempt => {
 
   return current;
 };
+
+const attemptRules = ({ questions, timeLimitSeconds, perQuestionSeconds }: QuizInput) =>
+  JSON.stringify({ questions, timeLimitSeconds, perQuestionSeconds });
+
+export const changesAttempts = (quiz: QuizInput, input: QuizInput) => attemptRules(quiz) !== attemptRules(input);

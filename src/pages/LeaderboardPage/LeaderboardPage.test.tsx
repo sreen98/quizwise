@@ -38,6 +38,42 @@ describe('LeaderboardPage', () => {
     expect(screen.getByRole('list', { name: 'Top players' })).toBeInTheDocument();
   });
 
+  it('ranks players across all quizzes by total score, then total time', async () => {
+    renderRoute('/leaderboard/all');
+
+    const mine = await screen.findByRole('region', { name: 'Your global standing' });
+
+    expect(mine).toHaveTextContent('#3 of 4');
+    expect(mine).toHaveTextContent(/Total score\s*11/);
+    expect(mine).toHaveTextContent(/Quizzes\s*2/);
+    expect(mine).toHaveTextContent(/Total time\s*5:16/);
+    expectStandings(['Fatima Al Mansoori', 'Oliver Smith', 'Aarav Menon', 'Diya Nair']);
+    expect(tableRows()[2]).toHaveAttribute('aria-current', 'true');
+  });
+
+  it('shows the global rank of a player outside the top list', async () => {
+    asUser('u4');
+    renderRoute('/leaderboard/all?top=3');
+
+    const mine = await screen.findByRole('region', { name: 'Your global standing' });
+
+    expect(mine).toHaveTextContent('#4 of 4');
+    expectStandings(['Fatima Al Mansoori', 'Oliver Smith', 'Aarav Menon']);
+  });
+
+  it('updates the global rank after a quiz is completed', async () => {
+    asUser('u5');
+    renderRoute('/leaderboard/all');
+    expect(await screen.findByText('Not ranked yet')).toBeInTheDocument();
+
+    const { attemptId } = await quizService.startOrResumeAttempt('q2', 'u5');
+    await quizService.completeAttempt(attemptId);
+
+    await waitFor(() => {
+      expect(screen.getByRole('region', { name: 'Your global standing' })).toHaveTextContent('#5 of 5');
+    });
+  });
+
   it('shows the top three on a podium in rank order for screen readers', async () => {
     renderRoute('/leaderboard/q1');
 

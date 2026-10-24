@@ -55,7 +55,7 @@ describe('ResultsPage', () => {
   });
 
   it('hides the breakdown when the quiz has changed since the attempt', async () => {
-    await quizService.updateQuiz('q1', { ...(await quizService.getQuizForEdit('q1')), description: 'Revised' });
+    await quizService.updateQuiz('q1', { ...(await quizService.getQuizForEdit('q1')), timeLimitSeconds: 999 });
     renderRoute('/attempts/a1/results');
 
     expect(

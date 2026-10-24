@@ -76,7 +76,7 @@ const limitInput = (form: UseFormReturnType<QuizInput>, row: LimitRow) => {
         />
         <NumberInput
           aria-label={row.inputLabel}
-          value={seconds === null ? '' : seconds / row.secondsPerUnit}
+          value={seconds === null || seconds === 0 ? '' : seconds / row.secondsPerUnit}
           onChange={value => {
             form.setFieldValue(row.field, typeof value === 'number' ? value * row.secondsPerUnit : 0);
           }}

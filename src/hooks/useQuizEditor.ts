@@ -55,7 +55,10 @@ export const useQuizEditor = (quizId: string | undefined) => {
     else await quizService.createQuiz(values);
   };
 
+  const countEndedAttempts = (values: QuizInput) =>
+    quizId ? quizService.countAttemptsEndedBy(quizId, values) : Promise.resolve(0);
+
   const state: QuizEditorState = loaded?.key === key ? loaded.state : { status: 'loading' };
 
-  return { state, save };
+  return { state, save, countEndedAttempts };
 };

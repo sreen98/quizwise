@@ -124,7 +124,7 @@ describe('useQuizAttempt', () => {
   it('reports a quiz that was edited during the attempt', async () => {
     const { result } = await renderAttempt(await startAttempt('q1'));
     const quiz = await quizService.getQuizForEdit('q1');
-    await quizService.updateQuiz('q1', { ...quiz, title: 'JavaScript Basics, revised' });
+    await quizService.updateQuiz('q1', { ...quiz, timeLimitSeconds: 999 });
 
     act(() => {
       result.current.submit();

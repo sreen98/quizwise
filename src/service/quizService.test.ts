@@ -205,6 +205,72 @@ describe('getLeaderboard', () => {
   });
 });
 
+describe('getGlobalLeaderboard', () => {
+  const finishQ1 = async (context: Awaited<ReturnType<typeof startQ1>>, pick: (index: number) => string[]) => {
+    const { attemptId } = await context.service.startOrResumeAttempt('q1', 'u5');
+    for (const [index, question] of context.questions.entries()) {
+      await context.service.submitAnswer(attemptId, question.id, pick(index));
+    }
+  };
+
+  it('adds up the best attempt per quiz and breaks ties by the lower total time', async () => {
+    const { entries } = await setup().service.getGlobalLeaderboard(10, 'u1');
+
+    expect(
+      entries.map(entry => [
+        entry.rank,
+        entry.userName,
+        entry.totalScore,
+        entry.quizzesCompleted,
+        entry.totalTimeSeconds
+      ])
+    ).toEqual([
+      [1, 'Fatima Al Mansoori', 15, 3, 474],
+      [2, 'Oliver Smith', 15, 3, 519],
+      [3, 'Aarav Menon', 11, 2, 316],
+      [4, 'Diya Nair', 10, 2, 207]
+    ]);
+  });
+
+  it("returns the current user's entry even outside the limit", async () => {
+    const leaderboard = await setup().service.getGlobalLeaderboard(2, 'u4');
+
+    expect(leaderboard.entries).toHaveLength(2);
+    expect(leaderboard.currentUser).toMatchObject({ rank: 4, userId: 'u4' });
+    expect(leaderboard.rankedCount).toBe(4);
+  });
+
+  it('returns no entry for a user who has not completed a quiz', async () => {
+    const leaderboard = await setup().service.getGlobalLeaderboard(10, 'u5');
+
+    expect(leaderboard.currentUser).toBeNull();
+  });
+
+  it('counts a newly completed quiz and keeps only the best attempt', async () => {
+    const context = await startQ1();
+    await finishQ1(context, context.correct);
+    await finishQ1(context, context.wrong);
+
+    const { currentUser } = await context.service.getGlobalLeaderboard(10, 'u5');
+
+    expect(currentUser).toMatchObject({ rank: 5, totalScore: 6, quizzesCompleted: 1, totalTimeSeconds: 0 });
+  });
+
+  it('leaves out the results of a deleted quiz', async () => {
+    const { service } = setup();
+    await service.deleteQuiz('q5');
+
+    const { entries } = await service.getGlobalLeaderboard(10, 'u1');
+
+    expect(entries.map(entry => [entry.userName, entry.totalScore])).toEqual([
+      ['Oliver Smith', 15],
+      ['Aarav Menon', 11],
+      ['Diya Nair', 10],
+      ['Fatima Al Mansoori', 10]
+    ]);
+  });
+});
+
 describe('subscribe', () => {
   it('calls the listener when data changes and stops after unsubscribing', () => {
     const { store, service } = setup();
@@ -651,7 +717,7 @@ describe('getAttemptResult', () => {
 
   it('leaves out the breakdown once the quiz has changed since the attempt', async () => {
     const { service } = setup();
-    await service.updateQuiz('q1', { ...(await service.getQuizForEdit('q1')), title: 'JavaScript Basics, revised' });
+    await service.updateQuiz('q1', { ...(await service.getQuizForEdit('q1')), timeLimitSeconds: 999 });
 
     expect(await service.getAttemptResult('a1')).toMatchObject({ score: 5, breakdown: null });
   });
@@ -694,7 +760,7 @@ describe('getEndedAttempt', () => {
   it('keeps the earlier best result when the quiz was updated during the attempt', async () => {
     const { service } = setup();
     const { attemptId } = await service.startOrResumeAttempt('q1', 'u1');
-    await service.updateQuiz('q1', { ...(await service.getQuizForEdit('q1')), description: 'Revised' });
+    await service.updateQuiz('q1', { ...(await service.getQuizForEdit('q1')), timeLimitSeconds: 999 });
 
     expect(await service.getEndedAttempt(attemptId)).toMatchObject({
       quizTitle: 'JavaScript Basics',
@@ -768,21 +834,50 @@ describe('createQuiz', () => {
 });
 
 describe('updateQuiz', () => {
-  it('saves the changes, keeps the id and increases the version', async () => {
+  it('saves a new title and keeps the id and version', async () => {
     const { service } = setup();
     const created = await service.createQuiz(newQuiz());
 
     const updated = await service.updateQuiz(created.id, { ...newQuiz(), title: 'World capitals' });
 
-    expect(updated).toMatchObject({ id: created.id, title: 'World capitals', version: 2 });
+    expect(updated).toMatchObject({ id: created.id, title: 'World capitals', version: 1 });
     expect(await service.getQuiz(created.id)).toMatchObject({ title: 'World capitals' });
   });
 
-  it('closes an attempt that is in progress on the updated quiz', async () => {
+  it('increases the version when the questions or time limits change', async () => {
+    const { service } = setup();
+    const created = await service.createQuiz(newQuiz());
+
+    const timed = await service.updateQuiz(created.id, { ...newQuiz(), perQuestionSeconds: 20 });
+    const answered = await service.updateQuiz(created.id, { ...newQuiz(['rome']), perQuestionSeconds: 20 });
+
+    expect(timed.version).toBe(2);
+    expect(answered.version).toBe(3);
+  });
+
+  it('keeps an attempt in progress when only the title, description, countries or retakes change', async () => {
     const { service, attemptId } = await startQ1();
     const q1 = await service.getQuizForEdit('q1');
 
-    await service.updateQuiz('q1', { ...q1, title: 'JavaScript Basics, revised' });
+    await service.updateQuiz('q1', {
+      ...q1,
+      title: 'JavaScript Basics, revised',
+      description: 'Revised',
+      countries: ['GB'],
+      retakesAllowed: !q1.retakesAllowed
+    });
+
+    expect(await service.getCurrentQuestion(attemptId)).toMatchObject({
+      status: 'in_progress',
+      quizTitle: 'JavaScript Basics, revised'
+    });
+  });
+
+  it('closes an attempt that is in progress when the questions change', async () => {
+    const { service, attemptId } = await startQ1();
+    const q1 = await service.getQuizForEdit('q1');
+
+    await service.updateQuiz('q1', { ...q1, questions: q1.questions.slice(1) });
 
     expect(await service.getCurrentQuestion(attemptId)).toEqual({ status: 'closed', endReason: 'quiz_changed' });
   });
@@ -799,6 +894,22 @@ describe('updateQuiz', () => {
 
   it('rejects an unknown quiz', async () => {
     await expect(setup().service.updateQuiz('q99', newQuiz())).rejects.toThrow('Quiz not found');
+  });
+});
+
+describe('countAttemptsEndedBy', () => {
+  it('counts no attempts when only the title changes', async () => {
+    const { service } = await startQ1();
+    const q1 = await service.getQuizForEdit('q1');
+
+    expect(await service.countAttemptsEndedBy('q1', { ...q1, title: 'JavaScript Basics, revised' })).toBe(0);
+  });
+
+  it('counts the attempts in progress when the time limit changes', async () => {
+    const { service } = await startQ1();
+    const q1 = await service.getQuizForEdit('q1');
+
+    expect(await service.countAttemptsEndedBy('q1', { ...q1, timeLimitSeconds: 999 })).toBe(1);
   });
 });
 

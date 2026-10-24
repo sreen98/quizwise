@@ -39,7 +39,12 @@ export const useLeaderboard = (quizId: string, limit: number, userId: string) =>
       const quizzes = await quizService.getQuizzes(userId, []);
       const firstQuizId = quizzes[0]?.id ?? '';
       const leaderboard = await loadBoard(firstQuizId);
-      return { keys: [key, keyFor(firstQuizId, limit, userId)], quizId: firstQuizId, quizzes, leaderboard };
+      return {
+        keys: [key, keyFor(firstQuizId, limit, userId)],
+        quizId: firstQuizId,
+        quizzes,
+        leaderboard
+      };
     };
 
     load()

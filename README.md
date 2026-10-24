@@ -14,9 +14,10 @@ Quizwise is a quiz platform frontend built with React, TypeScript and Vite for t
 - One question at a time, single and multiple choice, "Question X of N" and a segmented progress bar.
 - Overall and per-question timers worked out from stored timestamps, so they stay correct after a reload or in a background tab. The answer on screen is submitted automatically when time runs out.
 - Resume an attempt where you left off. An attempt that expired while you were away is finished and explained.
-- If an admin edits or deletes a quiz during an attempt, the attempt is closed without a score and the user is told why.
+- If an admin changes the questions or time limits of a quiz, or deletes it, during an attempt, the attempt is closed without a score and the user is told why. The admin is asked to confirm first. Changes to the title, description, countries or retakes leave attempts running.
 - Results with score, percentage, correct and incorrect counts, time taken, best rank and a question by question breakdown.
 - Leaderboard per quiz: a "Your rank" card, a podium for the top three and searchable standings. Ties go to the faster time, and the current user is highlighted and ranked even outside the top list.
+- Global leaderboard ("All quizzes" in the quiz picker): ranks players by the total of their best score in each quiz, then by the lower total time, and shows the quizzes completed. The current user's global rank is shown even outside the top list.
 
 **Admin**
 
@@ -160,7 +161,7 @@ Libraries:
 
 The seed shapes are kept, with these additions:
 
-- `Quiz.version`: starts at 1 and increases on every real change.
+- `Quiz.version`: starts at 1 and increases when the questions or time limits change.
 - `Attempt.quizVersion`: the quiz version when the attempt started.
 - `Attempt.draftOptionIds`: the current selection, so it survives a reload and can be submitted on timeout.
 - `Attempt.status` can also be `closed` (the quiz was edited or deleted during the attempt), and `Attempt.endReason` records why an attempt ended: `submitted`, `timeout`, `quiz_changed` or `quiz_deleted`.
@@ -173,16 +174,16 @@ All the functions from the brief are in `quizService`: `getQuizzes`, `getQuiz`, 
 - `getLeaderboard(quizId, limit, userId)` takes the user, so their rank is returned even outside the limit.
 - Attempt methods take an optional `userId` and reject another user's attempt as not found.
 - `submitAnswer` ignores an answer for a question that is no longer current, which stops double answers.
-- `updateQuiz` only increases the version when something changed, and `deleteQuiz` also deletes the quiz's completed attempts.
+- `updateQuiz` only increases the version when the questions or time limits changed, and `deleteQuiz` also deletes the quiz's completed attempts.
 
-Added functions: `saveDraft`, `getQuizSummary`, `getAttemptResult`, `getEndedAttempt`, `getAdminQuizzes`, `getQuizForEdit`, `exportQuiz`, `importQuiz`, `getUsers`, `getCountries`, `resetData`, `loadTestData` and `subscribe`.
+Added functions: `saveDraft`, `getQuizSummary`, `getAttemptResult`, `getEndedAttempt`, `getAdminQuizzes`, `getQuizForEdit`, `countAttemptsEndedBy`, `getGlobalLeaderboard`, `exportQuiz`, `importQuiz`, `getUsers`, `getCountries`, `resetData`, `loadTestData` and `subscribe`.
 
 ## Assumptions
 
 - The country filter defaults to the current user's country, and no selection means all countries.
 - The admin section is for the seed's Admin User only. The Admin tab is hidden for other users and admin URLs show an "Admins only" message. There is no real login, so this follows the data model and is not security.
 - The leaderboard shows each user's best attempt.
-- An attempt whose quiz was edited is closed without a score and doesn't count as completed, so the user can start again even when retakes are off.
+- An attempt whose questions or time limits were edited is closed without a score and doesn't count as completed, so the user can start again even when retakes are off.
 - The question breakdown on the results page is shown only if the quiz hasn't changed since the attempt.
 - Submit answer is disabled until something is selected; only a timeout submits an empty answer, which counts as missed and incorrect.
 - Percentages are rounded to one decimal place.

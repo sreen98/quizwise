@@ -2,8 +2,17 @@ import type { StoreApi } from 'zustand/vanilla';
 import { dataStore, resetDataStore, seedUsers } from '../data/store';
 import { parseQuizInput, quizInputSchema } from '../data/schema';
 import type { Attempt, Quiz, QuizData, QuizInput } from '../types/models';
-import { finishAttempt, hasSelection, recordAnswer, settleAttempt, toPublicQuestion, toSelection } from './attempts';
+import {
+  changesAttempts,
+  finishAttempt,
+  hasSelection,
+  recordAnswer,
+  settleAttempt,
+  toPublicQuestion,
+  toSelection
+} from './attempts';
 import { describeProblems } from './importProblems';
+import { rankUsersGlobally, toLeaderboardEntry } from './leaderboard';
 import { simulatedDelay } from './latency';
 import { rankBestAttempts } from './ranking';
 import { getDeadlines } from './timing';
@@ -13,9 +22,9 @@ import type {
   AttemptResultView,
   CurrentQuestion,
   EndedAttempt,
+  GlobalLeaderboard,
   ImportResult,
   Leaderboard,
-  LeaderboardEntry,
   QuizDetails,
   QuizListItem,
   StartedAttempt
@@ -83,23 +92,6 @@ const toListItem = (quiz: Quiz, quizAttempts: Attempt[], userId: string): QuizLi
       : null,
     rank: rankIndex === -1 ? null : rankIndex + 1,
     rankedCount: ranked.length
-  };
-};
-
-const toLeaderboardEntry = (attempt: Attempt, index: number, { users, countries }: QuizData): LeaderboardEntry => {
-  const user = users.find(item => item.id === attempt.userId);
-
-  return {
-    rank: index + 1,
-    userId: attempt.userId,
-    userName: user?.name ?? 'Unknown user',
-    country: user?.country ?? '',
-    countryName: countries.find(country => country.code === user?.country)?.name ?? '',
-    score: attempt.score ?? 0,
-    totalQuestions: attempt.totalQuestions,
-    percentage: attempt.percentage ?? 0,
-    timeTakenSeconds: attempt.timeTakenSeconds ?? 0,
-    completedAt: attempt.completedAt
   };
 };
 
@@ -222,14 +214,25 @@ export const createQuizService = (
       respond((): Leaderboard => {
         const quiz = findQuiz(quizId);
         const state = store.getState();
-        const quizAttempts = state.attempts.filter(attempt => attempt.quizId === quiz.id);
+
+        const allAttempts = [...state.attempts];
+        const quizAttempts = allAttempts.filter(attempt => attempt.quizId === quiz.id);
         const entries = rankBestAttempts(quizAttempts).map((attempt, index) =>
           toLeaderboardEntry(attempt, index, state)
         );
-
         return {
           quizTitle: quiz.title,
           retakesAllowed: quiz.retakesAllowed,
+          entries: entries.slice(0, limit),
+          currentUser: entries.find(entry => entry.userId === userId) ?? null,
+          rankedCount: entries.length
+        };
+      }),
+
+    getGlobalLeaderboard: (limit: number, userId: string) =>
+      respond((): GlobalLeaderboard => {
+        const entries = rankUsersGlobally(store.getState());
+        return {
           entries: entries.slice(0, limit),
           currentUser: entries.find(entry => entry.userId === userId) ?? null,
           rankedCount: entries.length
@@ -397,6 +400,18 @@ export const createQuizService = (
 
     getQuizForEdit: (quizId: string) => respond(() => findQuiz(quizId)),
 
+    countAttemptsEndedBy: (quizId: string, data: QuizInput) =>
+      respond(() => {
+        const quiz = findQuiz(quizId);
+        if (!changesAttempts(quiz, parseQuizInput(data))) return 0;
+        const time = now();
+        return store
+          .getState()
+          .attempts.filter(
+            attempt => attempt.quizId === quizId && settleAttempt(attempt, quiz, time).status === 'in_progress'
+          ).length;
+      }),
+
     createQuiz: (data: QuizInput) =>
       respond((): Quiz => {
         const quiz: Quiz = { ...parseQuizInput(data), id: crypto.randomUUID(), version: 1 };
@@ -409,7 +424,8 @@ export const createQuizService = (
         const existing = findQuiz(quizId);
         const input = parseQuizInput(data);
         if (JSON.stringify(input) === JSON.stringify(toInput(existing))) return existing;
-        const quiz: Quiz = { ...input, id: existing.id, version: existing.version + 1 };
+        const version = changesAttempts(existing, input) ? existing.version + 1 : existing.version;
+        const quiz: Quiz = { ...input, id: existing.id, version };
         store.setState(state => ({ quizzes: state.quizzes.map(item => (item.id === quizId ? quiz : item)) }));
         return quiz;
       }),

@@ -82,6 +82,70 @@ describe('QuizEditorPage', () => {
     });
   });
 
+  it('clears the time limit field with Backspace and shows the number typed next', async () => {
+    const user = userEvent.setup();
+    renderRoute('/admin/quizzes/q5/edit');
+    await titleInput();
+    const minutes = screen.getByRole('textbox', { name: 'Minutes for the whole quiz' });
+
+    await user.click(minutes);
+    await user.keyboard('{End}{Backspace}');
+    expect(minutes).toHaveValue('');
+    await user.keyboard('7');
+
+    expect(minutes).toHaveValue('7');
+  });
+
+  it('saves a new title without asking while an attempt is in progress', async () => {
+    const user = userEvent.setup();
+    const { attemptId } = await quizService.startOrResumeAttempt('q5', 'u1');
+    const { router } = renderRoute('/admin/quizzes/q5/edit');
+
+    await user.type(await titleInput(), ' Quiz');
+    await user.click(screen.getByRole('button', { name: 'Save quiz' }));
+
+    await waitFor(() => {
+      expect(router.state.location.pathname).toBe('/admin');
+    });
+    await expect(quizService.getCurrentQuestion(attemptId)).resolves.toMatchObject({ status: 'in_progress' });
+  });
+
+  it('asks before a change to the time limit ends the attempts in progress', async () => {
+    const user = userEvent.setup();
+    const { attemptId } = await quizService.startOrResumeAttempt('q5', 'u1');
+    const { router } = renderRoute('/admin/quizzes/q5/edit');
+    await titleInput();
+    const minutes = screen.getByRole('textbox', { name: 'Minutes for the whole quiz' });
+    await user.clear(minutes);
+    await user.type(minutes, '7');
+
+    await user.click(screen.getByRole('button', { name: 'Save quiz' }));
+    const dialog = await screen.findByRole('dialog', { name: 'End attempts in progress?' });
+    expect(dialog).toHaveTextContent('1 attempt in progress will end');
+    await user.click(within(dialog).getByRole('button', { name: 'Cancel' }));
+
+    await waitFor(() => {
+      expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
+    });
+    expect(router.state.location.pathname).toBe('/admin/quizzes/q5/edit');
+    await expect(quizService.getCurrentQuestion(attemptId)).resolves.toMatchObject({ status: 'in_progress' });
+
+    await user.click(screen.getByRole('button', { name: 'Save quiz' }));
+    await user.click(
+      within(await screen.findByRole('dialog', { name: 'End attempts in progress?' })).getByRole('button', {
+        name: 'Yes'
+      })
+    );
+
+    await waitFor(() => {
+      expect(router.state.location.pathname).toBe('/admin');
+    });
+    await expect(quizService.getCurrentQuestion(attemptId)).resolves.toEqual({
+      status: 'closed',
+      endReason: 'quiz_changed'
+    });
+  });
+
   it('marks the form as having unsaved changes after an edit', async () => {
     const user = userEvent.setup();
     renderRoute('/admin/quizzes/q5/edit');

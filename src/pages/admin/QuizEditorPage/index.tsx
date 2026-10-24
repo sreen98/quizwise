@@ -1,17 +1,39 @@
-import { Button } from '@mantine/core';
+import { Button, Text } from '@mantine/core';
+import { modals } from '@mantine/modals';
 import { notifications } from '@mantine/notifications';
 import { IconFileOff } from '@tabler/icons-react';
 import { Link, useNavigate, useParams } from 'react-router';
+import { formatCount } from '../../../format';
 import { MessageCard } from '../../../components/MessageCard';
 import { QuizForm } from '../../../components/QuizForm';
 import { QuizFormSkeleton } from '../../../components/QuizFormSkeleton';
 import { useQuizEditor } from '../../../hooks/useQuizEditor';
 import type { QuizInput } from '../../../types/models';
 
+const confirmEndAttempts = (count: number) =>
+  new Promise<boolean>(resolve => {
+    modals.openConfirmModal({
+      title: 'End attempts in progress?',
+      children: (
+        <Text size="sm">
+          {formatCount(count, 'attempt')} in progress will end, because the questions or time limits changed.
+        </Text>
+      ),
+      labels: { confirm: 'Yes', cancel: 'Cancel' },
+      confirmProps: { color: 'orange' },
+      onConfirm: () => {
+        resolve(true);
+      },
+      onClose: () => {
+        resolve(false);
+      }
+    });
+  });
+
 export const QuizEditorPage = () => {
   const { quizId } = useParams();
   const navigate = useNavigate();
-  const { state, save } = useQuizEditor(quizId);
+  const { state, save, countEndedAttempts } = useQuizEditor(quizId);
 
   if (state.status === 'missing') {
     return (
@@ -35,6 +57,8 @@ export const QuizEditorPage = () => {
 
   const handleSubmit = async (values: QuizInput) => {
     try {
+      const endedCount = await countEndedAttempts(values);
+      if (endedCount > 0 && !(await confirmEndAttempts(endedCount))) return;
       await save(values);
     } catch {
       notifications.show({
